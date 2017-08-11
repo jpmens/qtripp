@@ -76,6 +76,16 @@ static struct table {
 	NULL, 0,		{ }
 };
 
+static struct device_type {
+	char *type;
+	char *model;
+} device_types[] = {
+	{ "31",		"GV65" 		},
+	{ "36",		"GV500"		},
+	{ "38",		"GV65+"		},
+	{ "42",		"GMT200N"	},
+	{ NULL,		NULL		}
+};
 
 int main()
 {
@@ -108,12 +118,27 @@ int main()
 	
 			if (strcmp(subtype, tabs[n].subtype) == 0) {
 				int rep = 0, nreports = atoi(parts[tabs[n].multi]);	/* "Number" from docs */
+				char *protov = GET_S(1);	/* VVJJMM
+								 * VV = model
+								 * JJ = major
+								 * MM = minor 
+								 */
+				char *device_model = "unknown";
+				struct device_type *dt;
+
+				for (dt = device_types; dt->type != NULL; dt++) {
+					if (!strncmp(dt->type, protov, 2)) {
+						device_model = dt->model;
+						break;
+					}
+				}
+
 
 				if (nparts == 31) {  // FIXME: GV500 
 					nreports = atoi(parts[tabs[n].multi + 1]);
 				}
 
-				printf("**** special %d ** (nparts=%d) LINE=%s\n", nreports, nparts, line);
+				printf("**** model=%s special %d ** (nparts=%d, proto=%s) LINE=%s\n", device_model, nreports, nparts, protov, line);
 				printf("[[%s]]\n", tabs[n].subtype);
 
 				/* handle sub-reports of e.g GTFRI. Even if a subtype
