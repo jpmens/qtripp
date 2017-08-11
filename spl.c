@@ -3,9 +3,54 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-
 #include "util.h"
+#include "uthash.h"
+#include "ini.h"        /* https://github.com/benhoyt/inih */
+
 #define MAXLINELEN	8192
+
+typedef struct config {
+        const char *host;
+        int port;
+        struct my_model {
+		char *type;              /* key, type*/
+		char *model;
+		UT_hash_handle hh;
+	} *models;
+        const char *listen_port;
+} config;
+
+static config cf = {
+	.host           = "localhost",
+	.port           = 1883
+};
+
+#define _eq(n) (strcmp(key, n) == 0)
+static int ini_handler(void *cf, const char *section, const char *key, const char *val)
+{
+	config *c = (config *)cf;
+
+	printf("section=[%s]  >%s<-->%s\n", section, key, val);
+
+
+        if (!strcmp(section, "models")) {
+                /*
+                 *      [models]
+                 *      [models]
+		 *	31: GV65,
+		 *	36: GV500
+                 */
+
+                struct my_model *d = (struct my_model *)malloc(sizeof (struct my_model));
+                d->type = strdup(key);
+                d->model = strdup(val);
+                HASH_ADD_KEYPTR(hh, c->models, d->type, strlen(d->type), d);
+
+
+        }
+
+	return (1);
+}
 
 /*
  * Normalize `line', ensure it's bounded by + and $
@@ -43,16 +88,15 @@ char **clean_split(char *line, int *nparts)
 #define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
 
 typedef enum vtype { D, S } vtype;
-struct tab {
-	char *fieldname;
-	vtype vt;
-	int slab;
-};
 
 static struct table {
 	char *subtype;
 	int multi;		/* Has multiple reports (e.g. GTFRI); 0=no, >0 field number */
-	struct tab tab[10];
+	struct tab {
+		char *fieldname;
+		vtype vt;
+		int slab;
+	} tab[10];
 } tabs[] = {
 	"GTSTT", 0,	{
 				{ "imei",	S,	2 },
@@ -76,22 +120,33 @@ static struct table {
 	NULL, 0,		{ }
 };
 
-static struct device_type {
-	char *type;
-	char *model;
-} device_types[] = {
-	{ "31",		"GV65" 		},
-	{ "36",		"GV500"		},
-	{ "38",		"GV65+"		},
-	{ "42",		"GMT200N"	},
-	{ NULL,		NULL		}
-};
+/* protov is VVJJMM; use VV. */
+static char *protov_to_model(char *protov)
+{
+	struct my_model *mo;
+	char dev[3];
+
+	dev[0] = protov[0];
+	dev[1] = protov[1];
+	dev[2] = 0;
+
+	HASH_FIND_STR(cf.models, dev,  mo);
+	return(mo->model);
+}
 
 int main()
 {
 	char line[MAXLINELEN], **parts, *typeparts[4];
 	int n, nparts;
 	char *abr, *subtype;		/* abr= ACK, BUFF, RESP, i.e. the bit before : */
+	// JsonNode *device_models;
+	// device_models = load_types("device-types.json");
+
+	if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
+		fprintf(stderr, "Can't load/parse ini file.\n");
+		return (1);
+	}
+
 
 	while (fgets(line, sizeof(line) - 1, stdin) != NULL) {
 		if (*line == '#')
@@ -123,16 +178,7 @@ int main()
 								 * JJ = major
 								 * MM = minor 
 								 */
-				char *device_model = "unknown";
-				struct device_type *dt;
-
-				for (dt = device_types; dt->type != NULL; dt++) {
-					if (!strncmp(dt->type, protov, 2)) {
-						device_model = dt->model;
-						break;
-					}
-				}
-
+				char *device_model = protov_to_model(protov);
 
 				if (nparts == 31) {  // FIXME: GV500 
 					nreports = atoi(parts[tabs[n].multi + 1]);
@@ -164,28 +210,6 @@ int main()
 				} while (++rep < nreports);
 				break;
 			}
-
-#if 0
-
-			/* multiple positions per report */
-
-			if (strcmp(subtype, "GTFRI") == 0) {
-				int rep, nreports = atoi(parts[6]);	/* "Number" from docs */
-				printf("**** special %d **\n", nreports);
-
-				for (rep = 0; rep < nreports; rep++) {
-					int pos = (rep * 12) + 13;
-
-					double lon = GET_D((rep * 12) + 11);
-					double lat = GET_D((rep * 12) + 12);
-					char *utc  = GET_S((rep * 12) + 13);
-					//
-
-					printf("** pos=%d utc: %s %.6lf %.6lf\n", pos, utc, lat, lon);
-				}
-
-			}
-#endif
 		}
 
 		splitterfree(typeparts);

@@ -52,3 +52,60 @@ void splitterfree(char **parts)
 	for (n = 0; parts[n] != NULL; n++)
 		free(parts[n]);
 }
+
+
+char *slurp_file(char *filename, int fold_newlines)
+{
+	FILE *fp;
+	char *buf, *bp;
+	off_t len;
+	int ch;
+
+	if ((fp = fopen(filename, "rb")) == NULL)
+		return (NULL);
+
+	if (fseeko(fp, 0, SEEK_END) != 0) {
+		fclose(fp);
+		return (NULL);
+	}
+	len = ftello(fp);
+	fseeko(fp, 0, SEEK_SET);
+
+	if ((bp = buf = malloc(len + 1)) == NULL) {
+		fclose(fp);
+		return (NULL);
+	}
+	while ((ch = fgetc(fp)) != EOF) {
+		if (ch == '\n') {
+			if (!fold_newlines)
+				*bp++ = ch;
+		} else *bp++ = ch;
+	}
+	*bp = 0;
+	fclose(fp);
+
+	return (buf);
+}
+
+#if 0
+JsonNode *load_types(char *filename)
+{
+	char *data = slurp_file(filename, true);
+	JsonNode *obj = NULL;
+
+	if (data != NULL) {
+		obj = json_decode(data);
+	}
+	return (obj);
+}
+
+char *get_model(JsonNode *models, char *type)
+{
+	JsonNode *o = json_find_member(models, type);
+
+	if (o == NULL)
+		return ("huh?");
+
+	return o->string_;
+}
+#endif

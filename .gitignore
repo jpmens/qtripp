@@ -1,0 +1,6 @@
+*.o
+*.dSYM
+.DS_Store
+obsolete/
+codesign.sh
+sundry/
