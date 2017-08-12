@@ -1,8 +1,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "reports.h"
-#include "data_reports.i"	/* generated from reports.j2 */
+#include "reports.i"	/* generated from reports.j2 */
 
 static struct _report *myhash = NULL;
 

@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "devices.h"
-#include "data_devices.i"	/* generated from devices.j2 */
+#include "devices.i"	/* generated from devices.j2 */
 
 static struct _device *myhash = NULL;
 

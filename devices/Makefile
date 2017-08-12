@@ -1,6 +1,10 @@
 CFLAGS=-I.. -Wall -Werror
 
+D2C=./d2c.py
+DEPS= devices.yml
 LIBDEV=../libdev.a
+
+.DELETE_ON_ERROR:
 
 OBJS=$(LIBDEV)(reports.o) \
 	$(LIBDEV)(models.o) \
@@ -9,23 +13,15 @@ OBJS=$(LIBDEV)(reports.o) \
 
 all: $(OBJS)
 
-reports.o: reports.c reports.h data_reports.i
-data_reports.i: reports.j2 devices.yml d2c.py
-	./d2c.py reports devices.yml > data_reports.i
+%.i: %.j2 $(D2C) $(DEPS)
+	$(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
 
-models.o: models.c models.h data_models.i
-data_models.i: models.j2 devices.yml d2c.py
-	./d2c.py models devices.yml > data_models.i
-
-devices.o: devices.c devices.h data_devices.i
-data_devices.i: devices.j2 devices.yml d2c.py
-	./d2c.py devices devices.yml > data_devices.i
-
-ignores.o: ignores.c ignores.h data_ignores.i
-data_ignores.i: ignores.j2 devices.yml d2c.py
-	./d2c.py ignores devices.yml > data_ignores.i
+reports.o: reports.c reports.h reports.i
+models.o: models.c models.h models.i
+devices.o: devices.c devices.h devices.i
+ignores.o: ignores.c ignores.h ignores.i
 
 clean:
-	rm -f *.o data_reports.i data_models.i data_devices.i
+	rm -f *.o *.i *.tmp
 clobber: clean
 	rm -f $(LIBDEV)

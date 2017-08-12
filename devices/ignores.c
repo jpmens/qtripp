@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "ignores.h"
-#include "data_ignores.i"	/* generated from ignores.j2 */
+#include "ignores.i"	/* generated from ignores.j2 */
 
 static struct _ignore *myhash = NULL;
 

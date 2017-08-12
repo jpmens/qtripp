@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "models.h"
-#include "data_models.i"	/* generated from models.j2 */
+#include "models.i"	/* generated from models.j2 */
 
 static struct _model *myhash = NULL;
 
