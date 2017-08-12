@@ -11,8 +11,9 @@
 #include "models.h"
 #include "devices.h"
 #include "reports.h"
+#include "ignores.h"
 
-#define MAXLINELEN	8192
+#define MAXLINELEN	(8192 * 2)
 
 static config cf = {
 	.host           = "localhost",
@@ -21,7 +22,6 @@ static config cf = {
 };
 
 #define GET_D(n)	((n <= nparts && *parts[n]) ? atof(parts[n]) : NAN)
-#define GET_I(n)	((n <= nparts && *parts[n]) ? atol(parts[n]) : 0L)
 #define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
 
 int main()
@@ -30,6 +30,7 @@ int main()
 	int n, nparts;
 	char *abr, *subtype;		/* abr= ACK, BUFF, RESP, i.e. the bit before : */
 	struct _device *dp;
+	struct _ignore *ip;
 	long linecounter = 0L;
 
 	if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
@@ -40,6 +41,7 @@ int main()
 	load_models();
 	load_reports();
 	load_devices();
+	load_ignores();
 
 	while (fgets(line, sizeof(line) - 1, stdin) != NULL) {
 		printf("#%ld\n", ++linecounter);
@@ -61,6 +63,11 @@ int main()
 		struct _report *rp = lookup_reports(subtype);
 		printf("%s:%s %s\n", abr, subtype, rp ? rp->desc : "unknown");
 
+		if ((ip = lookup_ignores(subtype)) != NULL) {
+			printf("Ignoring %s because %s\n", subtype, ip->reason);
+			continue;
+		}
+
 		for (n = 0; parts[n]; n++) {
 			printf("\t%2d %s\n", n, parts[n]);
 		}
@@ -69,6 +76,7 @@ int main()
 			continue;
 		}
 
+		char topic[BUFSIZ];
 		char *imei = GET_S(2);
 		char *protov = GET_S(1);	/* VVJJMM
 						 * VV = model
@@ -76,6 +84,15 @@ int main()
 						 * MM = minor 
 						 */
 		char tmpmodel[3];
+
+		/*
+		 * If we have neither IMEI nor protov forget the rest; impossible to
+		 * handle.
+		 */
+
+		if (!imei || !*imei || !protov || !*protov) {
+			continue;
+		}
 
 		if ((dp = lookup_devices(subtype, protov + 2)) == NULL) {
 			printf("MISSING: device definition for %s-%s\n", subtype, protov+2);
@@ -87,6 +104,8 @@ int main()
 		tmpmodel[2] = 0;
 		struct _model *model = lookup_models(tmpmodel);
 		int rep = 0, nreports = atoi(GET_S(dp->num));	/* "Number" from docs */
+
+		snprintf(topic, sizeof(topic), "owntracks/qtripp/%s", imei);
 
 
 		printf("**** model=%s special %d ** (nparts=%d, proto=%s) LINE=%s\n",
@@ -145,7 +164,7 @@ int main()
 				json_append_member(obj, "tst", json_mknumber(epoch));
 			}
 
-			json_append_member(obj, "imei", json_mkstring(imei));
+			json_append_member(obj, "_type", json_mkstring("location"));
 
 			if ((s = GET_S(pos + dp->acc)) != NULL) {
 				json_append_member(obj, "acc", json_mknumber(atoi(s)));
@@ -160,7 +179,7 @@ int main()
 			}
 
 			if ((js = json_encode(obj)) != NULL) {
-				printf("%s\n", js);
+				printf("%s %s\n", topic, js);
 				free(js);
 			}
 			json_delete(obj);
