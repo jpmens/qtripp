@@ -8,6 +8,7 @@ struct _device {
 	int num;
 	int imei;
 	int acc;
+	int cog;
 	int alt;
 	int vel;
 	int lon;

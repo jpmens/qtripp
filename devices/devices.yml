@@ -77,6 +77,7 @@
   number: 7
   acc: 8
   vel: 9
+  cog: 10
   alt: 11
   lon: 12
   lat: 13
@@ -87,6 +88,7 @@
   imei: 2
   acc: 6
   vel: 7
+  cog: 8
   alt: 9
   lon: 10
   lat: 11
@@ -96,6 +98,7 @@
   imei: 2
   acc: 5
   vel: 6
+  cog: 7
   alt: 8
   lon: 9
   lat: 10
@@ -106,6 +109,7 @@
   imei: 2
   acc: 7
   vel: 8
+  cog: 9
   alt: 10
   lon: 11
   lat: 12
@@ -115,6 +119,7 @@
   imei: 2
   acc: 9
   vel: 10
+  cog: 11
   alt: 12
   lon: 13
   lat: 14
@@ -136,6 +141,7 @@
   number: 6
   acc: 7
   vel: 8
+  cog: 9
   alt: 10
   lon: 11
   lat: 12
@@ -147,6 +153,7 @@
   number: 7
   acc: 8
   vel: 9
+  cog: 10
   alt: 11
   lon: 12
   lat: 13
@@ -157,27 +164,18 @@
   imei: 2
   acc: 4
   vel: 5
+  cog: 6
   alt: 7
   lon: 8
   lat: 9
   utc: 10
-- subtypes: [ GTANT, GTBPL ]
+- subtypes: [ GTANT, GTBPL, GTSTT, GTIGN, GTIGF ]
   versions: [ "0000", "0603" ]
   imei: 2
   acc: 5
   vel: 6
+  cog: 7
   alt: 8
   lon: 9
   lat: 10
   utc: 11
-- subtypes: [ GTSTT, GTIGN, GTIGF ]
-  versions: [ "0000", "0603" ]
-  imei: 2
-  acc: 5
-  vel: 6
-  alt: 8
-  lon: 9
-  lat: 10
-  utc: 11
-
-
