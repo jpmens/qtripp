@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdarg.h>
 #include "util.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -167,3 +168,24 @@ int str_time_to_secs(char *s, time_t *secs)
 
 	return (1);
 }
+
+void debug(char *fmt, ...)
+{
+	va_list ap;
+	time_t now = time(0);
+
+	fprintf(stderr, "%s %ld ", tstamp(now), now);
+	va_start(ap, fmt);
+
+	vfprintf(stderr, fmt, ap);
+
+	va_end(ap);
+}
+
+const char *tstamp(time_t t) {
+        static char buf[] = "YYYY-MM-DDTHH:MM:SSZ";
+
+        strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&t));
+        return(buf);
+}
+

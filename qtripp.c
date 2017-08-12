@@ -32,6 +32,7 @@ int main()
 	struct _device *dp;
 	struct _ignore *ip;
 	long linecounter = 0L;
+	bool debugging = false;
 
 	if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
 		fprintf(stderr, "Can't load/parse ini file.\n");
@@ -44,7 +45,7 @@ int main()
 	load_ignores();
 
 	while (fgets(line, sizeof(line) - 1, stdin) != NULL) {
-		printf("#%ld\n", ++linecounter);
+		++linecounter;
 		if (*line == '#')
 			continue;
 		parts = clean_split(line, &nparts);
@@ -61,15 +62,18 @@ int main()
 		subtype = typeparts[1];
 
 		struct _report *rp = lookup_reports(subtype);
-		printf("%s:%s %s\n", abr, subtype, rp ? rp->desc : "unknown");
+
+		debug("%s:%s %s\n", abr, subtype, rp ? rp->desc : "unknown");
 
 		if ((ip = lookup_ignores(subtype)) != NULL) {
 			printf("Ignoring %s because %s\n", subtype, ip->reason);
 			continue;
 		}
 
-		for (n = 0; parts[n]; n++) {
-			printf("\t%2d %s\n", n, parts[n]);
+		if (debugging) {
+			for (n = 0; parts[n]; n++) {
+				debug("\t%2d %s\n", n, parts[n]);
+			}
 		}
 
 		if (strcmp(abr, "ACK") == 0) {
@@ -95,7 +99,7 @@ int main()
 		}
 
 		if ((dp = lookup_devices(subtype, protov + 2)) == NULL) {
-			printf("MISSING: device definition for %s-%s\n", subtype, protov+2);
+			debug("MISSING: device definition for %s-%s\n", subtype, protov+2);
 			continue;
 		}
 
@@ -108,8 +112,11 @@ int main()
 		snprintf(topic, sizeof(topic), "owntracks/qtripp/%s", imei);
 
 
-		printf("**** model=%s special %d ** (nparts=%d, proto=%s) LINE=%s\n",
-			(model) ? model->desc : "unknown", nreports, nparts, protov, line);
+		debug("+++ C=%ld I=%s M=%s N=%d np=%d P=%s LINE=%s\n",
+			linecounter,
+			imei,
+			(model) ? model->desc : "unknown",
+			nreports, nparts, protov, line);
 
 
 		/* handle sub-reports of e.g GTFRI. Even if a subtype
@@ -122,7 +129,7 @@ int main()
 			char *s, *js;
 			JsonNode *obj;
 
-			printf("--> REP==%d dp->num==%d\n", rep, dp->num);
+			debug("--> REP==%d dp->num==%d\n", rep, dp->num);
 
 			int pos = (rep * 12); /* 12 elements in green area */
 
@@ -131,10 +138,9 @@ int main()
 				continue;
 			}
 
-			printf("    pos=%5d UTC =[%s]\n", pos + dp->utc, s);
-
-				s = GET_S(pos + dp->lat);
-				printf("    pos=%5d LAT =[%s]\n", pos + dp->lat, s);
+			// printf("    pos=%5d UTC =[%s]\n", pos + dp->utc, s);
+			// s = GET_S(pos + dp->lat);
+			// printf("    pos=%5d LAT =[%s]\n", pos + dp->lat, s);
 
 			lat = GET_D(pos + dp->lat);
 			lon = GET_D(pos + dp->lon);
@@ -176,6 +182,10 @@ int main()
 
 			if ((s = GET_S(pos + dp->alt)) != NULL) {
 				json_append_member(obj, "alt", json_mknumber(atoi(s)));
+			}
+
+			if ((s = GET_S(pos + dp->cog)) != NULL) {
+				json_append_member(obj, "cog", json_mknumber(atoi(s)));
 			}
 
 			if ((js = json_encode(obj)) != NULL) {
