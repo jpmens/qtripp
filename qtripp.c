@@ -21,14 +21,27 @@ static config cf = {
 	.listen_port    = 5004
 };
 
+void process(char *imei, JsonNode *obj)
+{
+	char *js;
+	char topic[BUFSIZ];
+
+	snprintf(topic, sizeof(topic), "owntracks/qtripp/%s", imei);
+
+	if ((js = json_encode(obj)) != NULL) {
+		printf("%s %s\n", topic, js);
+		free(js);
+	}
+}
+
 #define GET_D(n)	((n <= nparts && *parts[n]) ? atof(parts[n]) : NAN)
 #define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
 
 int main()
 {
-	char line[MAXLINELEN], **parts, *typeparts[4];
+	char line[MAXLINELEN], **parts;
 	int n, nparts;
-	char *abr, *subtype;		/* abr= ACK, BUFF, RESP, i.e. the bit before : */
+	char *ap, *abr, *subtype;		/* abr= ACK, BUFF, RESP, i.e. the bit before : */
 	struct _device *dp;
 	struct _ignore *ip;
 	long linecounter = 0L;
@@ -48,26 +61,26 @@ int main()
 		++linecounter;
 		if (*line == '#')
 			continue;
-		parts = clean_split(line, &nparts);
-		if (parts == NULL) {
+
+		if ((parts = clean_split(line, &nparts)) == NULL) {
 			printf("Can't split\n");
 			continue;
 		}
 
-		if ((n = splitter(parts[0], ":", typeparts)) != 2) {
-			printf("Can't split ABR:SUBTYPE\n");
-			continue;
+		/*
+		 * parts[0] contains "RESP:GTFRI". Point `abr' to the initial
+		 * portion and subtype to the second; chop at the ':'
+		 */
+
+		if ((ap = strchr(abr = parts[0], ':')) != NULL) {
+			*ap = 0;
+			subtype = ++ap;
 		}
-		abr = typeparts[0];
-		subtype = typeparts[1];
 
-		struct _report *rp = lookup_reports(subtype);
-
-		debug("%s:%s %s\n", abr, subtype, rp ? rp->desc : "unknown");
 
 		if ((ip = lookup_ignores(subtype)) != NULL) {
 			printf("Ignoring %s because %s\n", subtype, ip->reason);
-			continue;
+			goto finish;
 		}
 
 		if (debugging) {
@@ -77,18 +90,15 @@ int main()
 		}
 
 		if (strcmp(abr, "ACK") == 0) {
-			continue;
+			goto finish;
 		}
 
-		char topic[BUFSIZ];
 		char *imei = GET_S(2);
 		char *protov = GET_S(1);	/* VVJJMM
 						 * VV = model
 						 * JJ = major
 						 * MM = minor 
 						 */
-		char tmpmodel[3];
-
 		/*
 		 * If we have neither IMEI nor protov forget the rest; impossible to
 		 * handle.
@@ -100,23 +110,21 @@ int main()
 
 		if ((dp = lookup_devices(subtype, protov + 2)) == NULL) {
 			debug("MISSING: device definition for %s-%s\n", subtype, protov+2);
-			continue;
+			goto finish;
 		}
 
-		tmpmodel[0] = protov[0];
-		tmpmodel[1] = protov[1];
-		tmpmodel[2] = 0;
-		struct _model *model = lookup_models(tmpmodel);
+		struct _model *model = lookup_models(protov);
 		int rep = 0, nreports = atoi(GET_S(dp->num));	/* "Number" from docs */
 
-		snprintf(topic, sizeof(topic), "owntracks/qtripp/%s", imei);
+		struct _report *rp = lookup_reports(subtype);
 
-
-		debug("+++ C=%ld I=%s M=%s N=%d np=%d P=%s LINE=%s\n",
-			linecounter,
+		debug("+++ I=%s M=%s N=%d np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
 			imei,
 			(model) ? model->desc : "unknown",
-			nreports, nparts, protov, line);
+			nreports, nparts, protov,
+			linecounter,
+			abr, subtype, (rp ? rp->desc : "unknown"),
+			line);
 
 
 		/* handle sub-reports of e.g GTFRI. Even if a subtype
@@ -126,7 +134,7 @@ int main()
 
 		do {
 			double lat, lon, d;
-			char *s, *js;
+			char *s;
 			JsonNode *obj;
 
 			debug("--> REP==%d dp->num==%d\n", rep, dp->num);
@@ -188,16 +196,12 @@ int main()
 				json_append_member(obj, "cog", json_mknumber(atoi(s)));
 			}
 
-			if ((js = json_encode(obj)) != NULL) {
-				printf("%s %s\n", topic, js);
-				free(js);
-			}
+			process(imei, obj);
 			json_delete(obj);
-
 
 		} while (++rep < nreports);
 
-		splitterfree(typeparts);
+	  finish:
 		splitterfree(parts);
 	}
 	return (0);
