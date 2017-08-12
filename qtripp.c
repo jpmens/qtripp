@@ -7,6 +7,7 @@
 #include "uthash.h"
 #include "json.h"
 #include "conf.h"
+#include "udata.h"
 
 #include "models.h"
 #include "devices.h"
@@ -21,7 +22,7 @@ static config cf = {
 	.listen_port    = 5004
 };
 
-void process(char *imei, JsonNode *obj)
+void process(struct udata *ud, char *imei, JsonNode *obj)
 {
 	char *js;
 	char topic[BUFSIZ];
@@ -45,7 +46,9 @@ int main()
 	struct _device *dp;
 	struct _ignore *ip;
 	long linecounter = 0L;
-	bool debugging = false;
+	struct udata udata, *ud = &udata;
+
+	ud->debugging		= false;
 
 	if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
 		fprintf(stderr, "Can't load/parse ini file.\n");
@@ -83,9 +86,9 @@ int main()
 			goto finish;
 		}
 
-		if (debugging) {
+		if (ud->debugging) {
 			for (n = 0; parts[n]; n++) {
-				debug("\t%2d %s\n", n, parts[n]);
+				debug(ud, "\t%2d %s\n", n, parts[n]);
 			}
 		}
 
@@ -109,7 +112,7 @@ int main()
 		}
 
 		if ((dp = lookup_devices(subtype, protov + 2)) == NULL) {
-			debug("MISSING: device definition for %s-%s\n", subtype, protov+2);
+			debug(ud, "MISSING: device definition for %s-%s\n", subtype, protov+2);
 			goto finish;
 		}
 
@@ -118,7 +121,7 @@ int main()
 
 		struct _report *rp = lookup_reports(subtype);
 
-		debug("+++ I=%s M=%s N=%d np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
+		debug(ud, "+++ I=%s M=%s N=%d np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
 			imei,
 			(model) ? model->desc : "unknown",
 			nreports, nparts, protov,
@@ -137,7 +140,7 @@ int main()
 			char *s;
 			JsonNode *obj;
 
-			debug("--> REP==%d dp->num==%d\n", rep, dp->num);
+			debug(ud, "--> REP==%d dp->num==%d\n", rep, dp->num);
 
 			int pos = (rep * 12); /* 12 elements in green area */
 
@@ -196,7 +199,7 @@ int main()
 				json_append_member(obj, "cog", json_mknumber(atoi(s)));
 			}
 
-			process(imei, obj);
+			process(ud, imei, obj);
 			json_delete(obj);
 
 		} while (++rep < nreports);

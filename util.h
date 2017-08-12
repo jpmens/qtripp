@@ -3,6 +3,7 @@
 
 #include <time.h>
 #include "json.h"
+#include "udata.h"
 
 #ifndef MAXSPLITPARTS
 # define MAXSPLITPARTS 400
@@ -14,6 +15,6 @@ char *slurp_file(char *filename, int fold_newlines);
 char **clean_split(char *line, int *nparts);
 int str_time_to_secs(char *s, time_t *secs);
 const char *tstamp(time_t t);
-void debug(char *fmt, ...);
+void debug(struct udata *ud, char *fmt, ...);
 
 #endif

@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <ctype.h>
+#include "udata.h"
 
 #ifndef LINESIZE
 # define LINESIZE 8192
@@ -169,10 +170,13 @@ int str_time_to_secs(char *s, time_t *secs)
 	return (1);
 }
 
-void debug(char *fmt, ...)
+void debug(struct udata *ud, char *fmt, ...)
 {
 	va_list ap;
 	time_t now = time(0);
+
+	if (ud->debugging == false)
+		return;
 
 	fprintf(stderr, "%s %ld ", tstamp(now), now);
 	va_start(ap, fmt);
