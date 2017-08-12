@@ -33,8 +33,16 @@ void free_models()
 struct _model *lookup_models(char *key)
 {
 	struct _model *s;
+	char t[3];
 
-	HASH_FIND_STR(myhash, key, s);
+	if (!key || strlen(key) < 2)
+		return (NULL);
+
+	t[0] = *key++;
+	t[1] = *key++;
+	t[2] = 0;
+
+	HASH_FIND_STR(myhash, t, s);
 	return (s);
 }
 
