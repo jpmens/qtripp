@@ -8,7 +8,6 @@ static struct _report *myhash = NULL;
 
 void load_reports()
 {
-	struct _report *s;
 	struct _report *rp;
 
 	for (rp = reports; rp->id != NULL; rp++) {

@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include "uthash.h"
 
-/* This enum enumerates the position of the elements in struct _device below */
-typedef enum vpos { ID, NUM, IMEI, ACC, ALT, VEL, LON, LAT, UTC, DIST, __LASTONE } vpos;
-
 struct _device {
 	char *id;		/* "GTFRI-jjmm" */
 

@@ -1,0 +1,10 @@
+
+{# warning: this turns into C source code #}
+
+struct _ignore ignores[] = {
+{% for rep in ignores  %}
+	{ "{{ rep }}", "{{ ignores[rep] }}" },
+{% endfor %}
+	{ NULL, NULL }
+};
+

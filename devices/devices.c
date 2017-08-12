@@ -9,13 +9,15 @@ static struct _device *myhash = NULL;
 
 void load_devices()
 {
-	struct _device *rp;
+	struct _device *rp, *s;
 
 	for (rp = devices; rp->id != NULL; rp++) {
-		// s = (struct _report *)malloc(sizeof(struct _report));
-		// s->id = rp->id;
-		// s->desc = rp->desc;
-		// HASH_ADD_KEYPTR(hh, myhash, s->id, strlen(s->id), s);
+		HASH_FIND_STR(myhash, rp->id, s);
+		if (s != NULL) {
+			fprintf(stderr, "Fatal: device hash for %s already in hash\n", rp->id);
+			exit(7);
+		}
+
 		HASH_ADD_KEYPTR(hh, myhash, rp->id, strlen(rp->id), rp);
 	}
 }

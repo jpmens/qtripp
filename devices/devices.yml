@@ -1,4 +1,17 @@
 #
+# 
+# ignores
+#
+- ignores:
+     GTGPS: no implemented
+     GTIOS: no implemented
+     GTPDP: no implemented
+     GTPFA: no implemented
+     GTPNA: no implemented
+     GTSTC: no implemented
+     GTSTT: no implemented
+     GTVER: no implemented
+
 #
 # models
 #
@@ -14,6 +27,10 @@
 #
 - reports:
     GTHBD: heartbeat
+    GTANT: external GPS antenna status reported
+    GTOPN: connecting with vehicle through OBDII interface
+    GTOPF: disconnecting with vehicle through OBDII interface
+    GTBPN: battery backup connected
     GTTOW: motion sensor detects tow
     GTGEO: entering/exiting Geo fence
     GTSPD: speed alarm detected
@@ -32,6 +49,7 @@
     GTMPF: disconnected main power supply
     GTBTC: backup battery starts charging
     GTSTC: backup battery stops charging
+    GTBPF: backup battery removed
     GTBPL: backup battery low
     GTSTT: device motion state changed
     GTPDP: GPRS connection establishment
@@ -73,6 +91,16 @@
   lon: 10
   lat: 11
   utc: 12
+- subtypes: [ GTOPN, GTOPF ]
+  versions: [ "0701" ]
+  imei: 2
+  acc: 5
+  vel: 6
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+
 - subtypes: [ GTIDN, GTSTR, GTSTP, GTSLP, GTIDF ]
   versions: [ "0701" ]
   imei: 2
@@ -124,3 +152,32 @@
   lat: 13
   utc: 14
   dist: 20
+- subtypes: [ GTBTC, GTMPN, GTCRA, GTMPF, GTBPF, GTJDR ]
+  versions: [ "0000", "0603" ]
+  imei: 2
+  acc: 4
+  vel: 5
+  alt: 7
+  lon: 8
+  lat: 9
+  utc: 10
+- subtypes: [ GTANT, GTBPL ]
+  versions: [ "0000", "0603" ]
+  imei: 2
+  acc: 5
+  vel: 6
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+- subtypes: [ GTSTT, GTIGN, GTIGF ]
+  versions: [ "0000", "0603" ]
+  imei: 2
+  acc: 5
+  vel: 6
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+
+
