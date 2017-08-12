@@ -5,88 +5,24 @@
 #include <math.h>
 #include "util.h"
 #include "uthash.h"
-#include "ini.h"        /* https://github.com/benhoyt/inih */
+#include "conf.h"
+
+#include "models.h"
+#include "devices.h"
+#include "reports.h"
 
 #define MAXLINELEN	8192
 
-typedef struct config {
-        const char *host;
-        int port;
-        struct my_model {
-		char *type;              /* key, type*/
-		char *model;
-		UT_hash_handle hh;
-	} *models;
-        const char *listen_port;
-} config;
-
 static config cf = {
 	.host           = "localhost",
-	.port           = 1883
+	.port           = 1883,
+	.listen_port    = 5004
 };
-
-#define _eq(n) (strcmp(key, n) == 0)
-static int ini_handler(void *cf, const char *section, const char *key, const char *val)
-{
-	config *c = (config *)cf;
-
-	printf("section=[%s]  >%s<-->%s\n", section, key, val);
-
-
-        if (!strcmp(section, "models")) {
-                /*
-                 *      [models]
-                 *      [models]
-		 *	31: GV65,
-		 *	36: GV500
-                 */
-
-                struct my_model *d = (struct my_model *)malloc(sizeof (struct my_model));
-                d->type = strdup(key);
-                d->model = strdup(val);
-                HASH_ADD_KEYPTR(hh, c->models, d->type, strlen(d->type), d);
-
-
-        }
-
-	return (1);
-}
-
-/*
- * Normalize `line', ensure it's bounded by + and $
- * then split CSV into array and return that or NULL.
- */
-
-char **clean_split(char *line, int *nparts)
-{
-	static char *parts[MAXSPLITPARTS];
-	char *lp;
-	int llen = strlen(line) - 1;
-
-
-	if (line[llen] == '\n')
-		line[llen--] = 0;
-
-	// printf("LINE: [%s]\n", line);
-	if (line[0] != '+' || line[llen] != '$') {
-		printf("expecting + .. $ on LINE [%s]", line);
-		return (NULL);
-	}
-
-	lp = &line[1];
-	line[llen] = 0;	/* chop $ */
-
-	// printf("[%s]\n", lp);
-
-	if ((*nparts = splitter(lp, ",", parts)) < 1)
-		return (NULL);
-
-	return (parts);
-}
 
 #define GET_D(n)	((n <= nparts && *parts[n]) ? atof(parts[n]) : NAN)
 #define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
 
+#if 0
 typedef enum vtype { D, S } vtype;
 
 static struct table {
@@ -119,34 +55,23 @@ static struct table {
 			},
 	NULL, 0,		{ }
 };
-
-/* protov is VVJJMM; use VV. */
-static char *protov_to_model(char *protov)
-{
-	struct my_model *mo;
-	char dev[3];
-
-	dev[0] = protov[0];
-	dev[1] = protov[1];
-	dev[2] = 0;
-
-	HASH_FIND_STR(cf.models, dev,  mo);
-	return(mo->model);
-}
+#endif /* 0 */
 
 int main()
 {
 	char line[MAXLINELEN], **parts, *typeparts[4];
 	int n, nparts;
 	char *abr, *subtype;		/* abr= ACK, BUFF, RESP, i.e. the bit before : */
-	// JsonNode *device_models;
-	// device_models = load_types("device-types.json");
+	struct _device *dp;
 
 	if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
 		fprintf(stderr, "Can't load/parse ini file.\n");
 		return (1);
 	}
 
+	load_models();
+	load_reports();
+	load_devices();
 
 	while (fgets(line, sizeof(line) - 1, stdin) != NULL) {
 		if (*line == '#')
@@ -164,38 +89,79 @@ int main()
 		abr = typeparts[0];
 		subtype = typeparts[1];
 
+		struct _report *rp = lookup_reports(subtype);
+
+		printf("%s:%s %s\n", abr, subtype, rp ? rp->desc : "unknown");
+
 		if (strcmp(abr, "ACK") == 0) {
 			continue;
 		}
 
-		for (n = 0; tabs[n].subtype != NULL; n++) {
-			struct tab *ta;
-	
-			if (strcmp(subtype, tabs[n].subtype) == 0) {
-				int rep = 0, nreports = atoi(parts[tabs[n].multi]);	/* "Number" from docs */
-				char *protov = GET_S(1);	/* VVJJMM
-								 * VV = model
-								 * JJ = major
-								 * MM = minor 
-								 */
-				char *device_model = protov_to_model(protov);
+		char *protov = GET_S(1);	/* VVJJMM
+						 * VV = model
+						 * JJ = major
+						 * MM = minor 
+						 */
+		char tmpmodel[3];
 
-				if (nparts == 31) {  // FIXME: GV500 
-					nreports = atoi(parts[tabs[n].multi + 1]);
+		if ((dp = lookup_devices(subtype, protov + 2)) == NULL) {
+			printf("MISSING: device definition for %s-%s\n", subtype, protov+2);
+			continue;
+		}
+
+		tmpmodel[0] = protov[0];
+		tmpmodel[1] = protov[1];
+		tmpmodel[2] = 0;
+		struct _model *model = lookup_models(tmpmodel);
+		int rep = 0, nreports = atoi(GET_S(dp->num));	/* "Number" from docs */
+
+
+		printf("**** model=%s special %d ** (nparts=%d, proto=%s) LINE=%s\n",
+			(model) ? model->desc : "unknown", nreports, nparts, protov, line);
+
+
+		/* handle sub-reports of e.g GTFRI. Even if a subtype
+		 * doesn't have sub-reports, we enter this and do it
+		 * just once.
+		 */
+
+		do {
+			double d;
+			char *s;
+
+			printf("--> REP==%d dp->num==%d\n", rep, dp->num);
+
+			// for (int slab = 0; slab < __LASTONE; slab++) {
+				// int pos = (rep * 12) + -1 + dp->num; /* 12 elements in green area */
+				int pos = (rep * 12); /* 12 elements in green area */
+
+				pos = (pos < 0) ? 0 : pos;
+				printf("    pos=%5d UTC=%d\n", pos, dp->utc);//  UTC);
+
+				s = GET_S(pos + dp->utc);
+				printf("    pos=%5d UTC =[%s]\n", pos + dp->utc, s);
+
+				s = GET_S(pos + dp->lat);
+				printf("    pos=%5d LAT =[%s]\n", pos + dp->lat, s);
+
+				/*
+				switch (slab) {
+					case UTC:
+						s = GET_S(pos);
+						printf("    pos=%5d UTC =[%s]\n", pos, s);
+						break;
+					// default: printf("HALP!\n"); break;
 				}
+				*/
+			// }
 
-				printf("**** model=%s special %d ** (nparts=%d, proto=%s) LINE=%s\n", device_model, nreports, nparts, protov, line);
-				printf("[[%s]]\n", tabs[n].subtype);
 
-				/* handle sub-reports of e.g GTFRI. Even if a subtype
-				 * doesn't have sub-reports, we enter this and do it
-				 * just once.
-				 */
+		} while (++rep < nreports);
 
+
+#if 0
 				do {
 					for (ta = &tabs[n].tab[0]; ta->fieldname; ta++) {
-						double d;
-						char *s;
 						int pos = (rep * 12) + ta->slab;
 	
 						printf("** pos=%d  %s: ", pos, ta->fieldname);
@@ -211,6 +177,7 @@ int main()
 				break;
 			}
 		}
+#endif /* 000 */
 
 		splitterfree(typeparts);
 		splitterfree(parts);
