@@ -1,7 +1,9 @@
-*.o
+*.[oa]
 *.dSYM
 .DS_Store
 obsolete/
 codesign.sh
 sundry/
+*.ini
 g
+
