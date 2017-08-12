@@ -5,6 +5,7 @@
 #include <math.h>
 #include "util.h"
 #include "uthash.h"
+#include "json.h"
 #include "conf.h"
 
 #include "models.h"
@@ -20,42 +21,8 @@ static config cf = {
 };
 
 #define GET_D(n)	((n <= nparts && *parts[n]) ? atof(parts[n]) : NAN)
+#define GET_I(n)	((n <= nparts && *parts[n]) ? atol(parts[n]) : 0L)
 #define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
-
-#if 0
-typedef enum vtype { D, S } vtype;
-
-static struct table {
-	char *subtype;
-	int multi;		/* Has multiple reports (e.g. GTFRI); 0=no, >0 field number */
-	struct tab {
-		char *fieldname;
-		vtype vt;
-		int slab;
-	} tab[10];
-} tabs[] = {
-	"GTSTT", 0,	{
-				{ "imei",	S,	2 },
-				{ "acc",	D,	5 },
-				{ "vel",	D,	6 },
-				{ "alt",	D,	8 },
-				{ "lon",	D,	9 },
-				{ "lat",	D,	10 },
-				{ "utc",	S,	11 },
-				{ NULL, 	D, 	-1 }
-			},
-	"GTFRI", 6,	{
-				{ "imei",	S,	 2 },
-				{ "vel",	D,	 8 },
-				{ "alt",	D,	10 },
-				{ "lon",	D,	11 },
-				{ "lat",	D,	12 },
-				{ "utc",	S,	13 },
-				{ NULL, 	D, 	-1 }
-			},
-	NULL, 0,		{ }
-};
-#endif /* 0 */
 
 int main()
 {
@@ -63,6 +30,7 @@ int main()
 	int n, nparts;
 	char *abr, *subtype;		/* abr= ACK, BUFF, RESP, i.e. the bit before : */
 	struct _device *dp;
+	long linecounter = 0L;
 
 	if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
 		fprintf(stderr, "Can't load/parse ini file.\n");
@@ -74,6 +42,7 @@ int main()
 	load_devices();
 
 	while (fgets(line, sizeof(line) - 1, stdin) != NULL) {
+		printf("#%ld\n", ++linecounter);
 		if (*line == '#')
 			continue;
 		parts = clean_split(line, &nparts);
@@ -90,13 +59,17 @@ int main()
 		subtype = typeparts[1];
 
 		struct _report *rp = lookup_reports(subtype);
-
 		printf("%s:%s %s\n", abr, subtype, rp ? rp->desc : "unknown");
+
+		for (n = 0; parts[n]; n++) {
+			printf("\t%2d %s\n", n, parts[n]);
+		}
 
 		if (strcmp(abr, "ACK") == 0) {
 			continue;
 		}
 
+		char *imei = GET_S(2);
 		char *protov = GET_S(1);	/* VVJJMM
 						 * VV = model
 						 * JJ = major
@@ -126,58 +99,74 @@ int main()
 		 */
 
 		do {
-			double d;
-			char *s;
+			double lat, lon, d;
+			char *s, *js;
+			JsonNode *obj;
 
 			printf("--> REP==%d dp->num==%d\n", rep, dp->num);
 
-			// for (int slab = 0; slab < __LASTONE; slab++) {
-				// int pos = (rep * 12) + -1 + dp->num; /* 12 elements in green area */
-				int pos = (rep * 12); /* 12 elements in green area */
+			int pos = (rep * 12); /* 12 elements in green area */
 
-				pos = (pos < 0) ? 0 : pos;
-				printf("    pos=%5d UTC=%d\n", pos, dp->utc);//  UTC);
+			if ((s = GET_S(pos + dp->utc)) == NULL) {
+				/* no fix */
+				continue;
+			}
 
-				s = GET_S(pos + dp->utc);
-				printf("    pos=%5d UTC =[%s]\n", pos + dp->utc, s);
+			printf("    pos=%5d UTC =[%s]\n", pos + dp->utc, s);
 
 				s = GET_S(pos + dp->lat);
 				printf("    pos=%5d LAT =[%s]\n", pos + dp->lat, s);
 
-				/*
-				switch (slab) {
-					case UTC:
-						s = GET_S(pos);
-						printf("    pos=%5d UTC =[%s]\n", pos, s);
-						break;
-					// default: printf("HALP!\n"); break;
+			lat = GET_D(pos + dp->lat);
+			lon = GET_D(pos + dp->lon);
+
+			if (isnan(lat) || isnan(lon)) {
+				continue;
+			}
+
+			obj = json_mkobject();
+			json_append_member(obj, "lat", json_mknumber(lat));
+			json_append_member(obj, "lon", json_mknumber(lon));
+
+			if (dp->dist > 0) {
+				d = GET_D(pos + dp->dist);
+				if (!isnan(d)) {
+					json_append_member(obj, "dist", json_mknumber(d));
 				}
-				*/
-			// }
+			}
+
+			if ((s = GET_S(pos + dp->utc)) != NULL) {
+				time_t epoch;
+
+				if (str_time_to_secs(s, &epoch) != 1) {
+					printf("Cannot convert time\n");
+					continue;
+				}
+				json_append_member(obj, "tst", json_mknumber(epoch));
+			}
+
+			json_append_member(obj, "imei", json_mkstring(imei));
+
+			if ((s = GET_S(pos + dp->acc)) != NULL) {
+				json_append_member(obj, "acc", json_mknumber(atoi(s)));
+			}
+
+			if ((s = GET_S(pos + dp->vel)) != NULL) {
+				json_append_member(obj, "vel", json_mknumber(atoi(s)));
+			}
+
+			if ((s = GET_S(pos + dp->alt)) != NULL) {
+				json_append_member(obj, "alt", json_mknumber(atoi(s)));
+			}
+
+			if ((js = json_encode(obj)) != NULL) {
+				printf("%s\n", js);
+				free(js);
+			}
+			json_delete(obj);
 
 
 		} while (++rep < nreports);
-
-
-#if 0
-				do {
-					for (ta = &tabs[n].tab[0]; ta->fieldname; ta++) {
-						int pos = (rep * 12) + ta->slab;
-	
-						printf("** pos=%d  %s: ", pos, ta->fieldname);
-						if (ta->vt == D) {
-							d = GET_D(pos);
-							printf("%.6lf\n", d);
-						} else if (ta->vt == S) {
-							s = GET_S(pos);
-							printf("%s\n", s);
-						}
-					}
-				} while (++rep < nreports);
-				break;
-			}
-		}
-#endif /* 000 */
 
 		splitterfree(typeparts);
 		splitterfree(parts);
