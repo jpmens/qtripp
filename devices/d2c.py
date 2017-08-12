@@ -49,7 +49,13 @@ if __name__ == '__main__':
     doc = loadf(path)
     # print json.dumps(doc, indent=4)
 
+    devicelist = []
+
     for o in doc:
+        if 'subtypes' in o:
+            devicelist.append(o)
+            continue
+
         if otype in o:
             data = {
                 otype : o[otype],
@@ -58,4 +64,13 @@ if __name__ == '__main__':
             output = render_template('%s.j2' % otype, data)
             print output
             sys.exit(0)
+
+    if len(devicelist):
+        # print json.dumps(devicelist, indent=4)
+        data = {
+            'devices' : devicelist,
+        }
+        output = render_template('devices.j2', data)
+        print output
+        sys.exit(0)
 

@@ -7,3 +7,7 @@ struct _model {
 	char *desc;		/* "GV65" */
         UT_hash_handle hh;
 };
+
+void load_models();
+void free_models();
+struct _model *lookup_models(char *key);

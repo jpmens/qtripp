@@ -1,0 +1,31 @@
+{# warning: this turns into C source code #}
+{#
+
+ #}
+
+struct _device devices[] = {
+{% for dev in devices -%}
+{%   for vv in dev['versions'] -%}
+{%      for st in dev['subtypes'] -%}
+		{% set key = st + '-' + vv -%}
+		{% set num = dev['number'] | default(0) -%}
+		{% set imei = dev['imei'] -%}
+		{% set acc  = dev['acc'] | default(-1) -%}
+		{% set alt  = dev['alt'] | default(-1) -%}
+		{% set utc =  dev['utc'] | default(-1) -%}
+		{% set lon =  dev['lon'] | default(-1) -%}
+		{% set lat =  dev['lat'] | default(-1) -%}
+		{% set vel =  dev['vel'] | default(-1) -%}
+		{% set dist = dev['dist'] | default(-1) %}
+    { "{{key}}", {{num}}, {{imei}}, {{acc}}, {{alt}}, {{vel}}, {{lon}}, {{lat}}, {{utc}}, {{dist}} },
+{%      endfor %}
+{%   endfor %}
+//
+{% endfor %}
+    { NULL, -1 }
+};
+
+
+
+
+

@@ -1,0 +1,10 @@
+
+{# warning: this turns into C source code #}
+
+struct _report reports[] = {
+{% for rep in reports  %}
+	{ "{{ rep }}", "{{ reports[rep] }}" },
+{% endfor %}
+	{ NULL, NULL }
+};
+

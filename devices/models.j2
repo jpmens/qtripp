@@ -1,0 +1,10 @@
+
+{# warning: this turns into C source code #}
+
+struct _model models[] = {
+{% for rep in models  %}
+	{ "{{ rep }}", "{{ models[rep] }}" },
+{% endfor %}
+	{ NULL, NULL }
+};
+
