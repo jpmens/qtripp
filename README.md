@@ -5,5 +5,6 @@ Queclink Track (air) Interface Protocol Processor and OwnTracks
 
 ## credits
 
-* [assets/travelluggagecompanion-300px.png](https://openclipart.org/detail/273877/suitcase-with-stickers-no-trademarks-remix)
-
+* [uthash](https://troydhanson.github.io/uthash/), by Troy D. Hanson
+* [json.c](https://ccodearchive.net/info/json.html), by Joey Adams
+* [ini.c](https://github.com/benhoyt/inih), by Ben Hoyt
