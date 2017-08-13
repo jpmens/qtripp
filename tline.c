@@ -43,7 +43,9 @@ static void stat_incr(char *subtype, char *protov)
 	struct my_stat *ms;
 	char key[BUFSIZ];
 
-	snprintf(key, sizeof(key), "%s-%s", subtype, protov);
+	snprintf(key, sizeof(key), "%s-%s",
+		(subtype && *subtype) ? subtype : "unknown",
+		(protov  && *protov ) ? protov  : "unknown");
 
 	HASH_FIND_STR(report_stats, key, ms);
 	if (!ms) {
@@ -143,13 +145,6 @@ char *handle_report(struct udata *ud, char *line)
 	strcpy(subtype, tparts[1]);
 	splitterfree(tparts);
 
-	struct _report *rp = lookup_reports(subtype);
-
-	if ((ip = lookup_ignores(subtype)) != NULL) {
-		xlog(ud, "Ignoring %s because %s (%s)\n",
-			subtype, ip->reason, rp->desc ? rp->desc : "unknown report type");
-		goto finish;
-	}
 
 	char *imei = GET_S(2);
 	char *protov = GET_S(1);	/* VVJJMM
@@ -167,6 +162,13 @@ char *handle_report(struct udata *ud, char *line)
 	}
 
 	stat_incr(subtype, protov);
+
+	struct _report *rp = lookup_reports(subtype);
+	if ((ip = lookup_ignores(subtype)) != NULL) {
+		xlog(ud, "Ignoring %s because %s (%s)\n",
+			subtype, ip->reason, rp->desc ? rp->desc : "unknown report type");
+		goto finish;
+	}
 
 	imei_dup = strdup(imei);
 
