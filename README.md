@@ -2,6 +2,8 @@
 
 The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for Queclink devices: _qtripp_ obtains GPS positions from these devices and publishes it over MQTT in [OwnTracks JSON format](http://owntracks.org/booklet/tech/json/) as `_location_ objects.
 
+![qtripp](assets/qtripp.png)
+
 ## requirements
 
 * an Internet-facing server with an open TCP port
