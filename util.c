@@ -94,26 +94,23 @@ char *slurp_file(char *filename, int fold_newlines)
  * then split CSV into array and return that or NULL.
  */
 
-char **clean_split(char *line, int *nparts)
+char **clean_split(struct udata *ud, char *line, int *nparts)
 {
 	static char *parts[MAXSPLITPARTS];
 	char *lp;
-	int llen = strlen(line) - 1;
+	int llen;
 
-
-	if (line[llen] == '\n')
-		line[llen--] = 0;
+	chomp(line);
+	llen = strlen(line) - 1;
 
 	// printf("LINE: [%s]\n", line);
 	if (line[0] != '+' || line[llen] != '$') {
-		printf("expecting + .. $ on LINE [%s]", line);
+		xlog(ud, "expecting + .. $ on LINE [%s]\n", line);
 		return (NULL);
 	}
 
 	lp = &line[1];
 	line[llen] = 0;	/* chop $ */
-
-	// printf("[%s]\n", lp);
 
 	if ((*nparts = splitter(lp, ",", parts)) < 1)
 		return (NULL);
@@ -170,19 +167,19 @@ int str_time_to_secs(char *s, time_t *secs)
 	return (1);
 }
 
-void debug(struct udata *ud, char *fmt, ...)
+void xlog(struct udata *ud, char *fmt, ...)
 {
 	va_list ap;
 	time_t now = time(0);
+	FILE *fp;
 
-	if (ud->debugging == false)
-		return;
+	fp = (ud == NULL) ? stderr : ud->logfp;
 
-	fprintf(stderr, "%s %ld ", tstamp(now), now);
+	fprintf(fp, "%s %ld ", tstamp(now), now);
 	va_start(ap, fmt);
 
-	vfprintf(stderr, fmt, ap);
-
+	vfprintf(fp, fmt, ap);
+	fflush(fp);
 	va_end(ap);
 }
 
@@ -191,5 +188,57 @@ const char *tstamp(time_t t) {
 
         strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", gmtime(&t));
         return(buf);
+}
+
+void chomp(char *s)
+{
+	char *bp;
+
+	for (bp = s + strlen(s) - 1; bp >= s; bp--) {
+		if (isspace(*bp)) {
+			*bp = 0;
+		} else {
+			return;
+		}
+	}
+}
+
+/*
+ * Find a topic name to use for publishing to for device `did`.
+ * We stab at the hash and a match uses that topic. If no match
+ * is found but the wildcard `*' exists, we use that topic, appending
+ * the `did' to it.
+ */
+
+char *device_to_topic(config *cf, char *did)
+{
+	static char buf[BUFSIZ];
+	struct my_device *d;
+
+	HASH_FIND_STR(cf->devices, did, d);
+	if (!d) {
+		HASH_FIND_STR(cf->devices, "*", d);
+		if (!d)
+			return (NULL);
+		snprintf(buf, sizeof(buf), "%s%s", d->topic, did);
+		return (buf);
+	}
+
+	return (d->topic);
+}
+
+JsonNode *extra_json(config *cf, char *did)
+{
+	char path[BUFSIZ];
+	char *bp = NULL;
+	JsonNode *j = NULL;
+
+	snprintf(path, sizeof(path), "%s/%s", cf->extra_json, did);
+
+	if ((bp = slurp_file(path, true)) != NULL) {
+		j = json_decode(bp);
+		free(bp);
+	}
+	return (j);
 }
 

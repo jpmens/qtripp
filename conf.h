@@ -1,23 +1,35 @@
+#ifndef _CONF_H_INCL_
+# define _CONF_H_INCL_
+
 #include <stdio.h>
 #include "uthash.h"
+#include "json.h"
 #include "ini.h"        /* https://github.com/benhoyt/inih */
 
+struct my_device {
+	char *did;              /* key, deviceId*/
+	char *topic;
+	UT_hash_handle hh;
+};
+
 typedef struct config {
-        int listen_port;
+        const char *listen_port;
+        const char *debughex;
         const char *host;
 	int port;
+	const char *datalog;
+	const char *logfile;
 	const char *username;
 	const char *password;
 	const char *cafile;
 	const char *certfile;
 	const char *keyfile;
 	const char *client_id;
-	// struct my_model {
-	// 	char *type;              /* key, type*/
-	// 	char *model;
-	// 	UT_hash_handle hh;
-	// } *models;
+	JsonNode *subscriptions;
+	struct my_device *devices;
+	const char *extra_json;
 } config;
 
 int ini_handler(void *cf, const char *section, const char *key, const char *val);
-// char *protov_to_model(config *cf, char *protov);
+
+#endif
