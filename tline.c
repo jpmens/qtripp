@@ -101,9 +101,11 @@ char *handle_report(struct udata *ud, char *line)
 	strcpy(subtype, tparts[1]);
 	splitterfree(tparts);
 
+	struct _report *rp = lookup_reports(subtype);
 
 	if ((ip = lookup_ignores(subtype)) != NULL) {
-		xlog(ud, "Ignoring %s because %s\n", subtype, ip->reason);
+		xlog(ud, "Ignoring %s because %s (%s)\n",
+			subtype, ip->reason, rp->desc ? rp->desc : "unknown report type");
 		goto finish;
 	}
 
@@ -125,7 +127,6 @@ char *handle_report(struct udata *ud, char *line)
 	imei_dup = strdup(imei);
 
 	struct _model *model = lookup_models(protov);
-	struct _report *rp = lookup_reports(subtype);
 
 	xlog(ud, "+++ I=%s M=%s np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
 		imei,
