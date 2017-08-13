@@ -146,7 +146,8 @@ char *handle_report(struct udata *ud, char *line)
 		goto finish;
 	}
 
-	int rep = 0, nreports = atoi(GET_S(dp->num));	/* "Number" from docs */
+	char *dpn = GET_S(dp->num);
+	int rep = 0, nreports = atoi(dpn ? dpn : "0");	/* "Number" from docs */
 
 	xlog(ud, "++. N=%d\n", nreports);
 
