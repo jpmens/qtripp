@@ -1,3 +1,22 @@
+/*
+ * qtripp
+ * Copyright (C) 2017 Jan-Piet Mens <jp@mens.de>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -124,29 +143,35 @@ char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *
 }
 
 
-#if 0
-void lwt(struct udata *ud, char *imei)
+/*
+ * A connection has been closed, probably by a device. Publish a
+ * pseudo LWT for this device. (Pseudo b/c we have the central
+ * connection to a broker and are going to pretend the device
+ * actually has that.)
+ */
+
+void pseudo_lwt(struct udata *ud, char *imei)
 {
 	JsonNode *o = json_mkobject();
-	char *js;
-	char topic[1024];
+	char *js, *topic;
 
 	if (!imei || !*imei)
 		return;
 
-	json_append_member(o, "_type", json_mkstring("lwt"));
-	json_append_member(o, "imei", json_mkstring(imei));
-	json_append_member(o, "tst", json_mknumber(time(0)));
+	if ((topic = device_to_topic(ud->cf, imei)) != NULL) {
+		json_append_member(o, "_type", json_mkstring("lwt"));
+		json_append_member(o, "imei", json_mkstring(imei));
+		json_append_member(o, "tst", json_mknumber(time(0)));
 
-	sprintf(topic, "owntracks/aplicom/%s", imei);
+		xlog(ud, "Sending LWT for %s to %s\n", imei, topic);
 
-	if ((js = json_stringify(o, NULL)) != NULL) {
-		pub(ud, topic, js, false);
-		free(js);
+		if ((js = json_stringify(o, NULL)) != NULL) {
+			pub(ud, topic, js, false);
+			free(js);
+		}
 	}
 	json_delete(o);
 }
-#endif
 
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 {
@@ -203,7 +228,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 				xlog(ud, "Disconnected from %s IMEI <%s>\n",
 					co->client_ip ? co->client_ip : "unknown",
 					co->imei ? co->imei : "");
-				// lwt(ud, co->imei);
+				pseudo_lwt(ud, co->imei);
 
 				delete_conn(co);
 				nc->user_data = NULL;
@@ -289,6 +314,7 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
 		return;
 	}
 	write_to_connection(mgr, device_id, (char *)m->payload);
+	free(device_id);
 }
 int main(int argc, char **argv)
 {

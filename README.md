@@ -20,6 +20,7 @@ The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for
 * list devices connected (console & MQTT)
 * statistics over MQTT
 * statistics dump including _subtype_ stats and _IMEI_ stats.
+* (pseudo-) LWT for devices
 
 ```
 -t owntracks/qtripp/*/cmd -m list
