@@ -21,6 +21,7 @@
 struct my_stat {
 	char key[24];		/* key: subtype-protov */
 	long counter;
+	bool ignored;
 	UT_hash_handle hh;
 };
 static struct my_stat *report_stats = NULL;
@@ -38,7 +39,7 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 	}
 }
 
-static void stat_incr(char *subtype, char *protov)
+static void stat_incr(char *subtype, char *protov, bool ig)
 {
 	struct my_stat *ms;
 	char key[BUFSIZ];
@@ -53,10 +54,12 @@ static void stat_incr(char *subtype, char *protov)
 		ms = (struct my_stat *)malloc(sizeof(struct my_stat));
 		strncpy(ms->key, key, 20);
 		ms->counter = 1L;
+		ms->ignored = ig;
 		HASH_ADD_STR(report_stats, key, ms);
 	} else {
 		puts("replacing hash");
 		ms->counter++;
+		ms->ignored = ig;
 	}
 }
 
@@ -66,7 +69,10 @@ void print_stats(struct udata *ud)
 	char buf[BUFSIZ];
 
 	HASH_ITER(hh, report_stats, ms, tmp) {
-		snprintf(buf, sizeof(buf), "%s %ld", ms->key, ms->counter);
+		snprintf(buf, sizeof(buf), "%s %c %ld",
+			ms->key,
+			ms->ignored ? 'I' : '-',
+			ms->counter);
 		xlog(ud, "stats: %s\n", buf);
 		if (ud->cf->reporttopic)
 			pub(ud, (char *)ud->cf->reporttopic, buf, false);
@@ -125,6 +131,7 @@ char *handle_report(struct udata *ud, char *line)
 	char abr[24], subtype[24];	/* abr= ACK, BUFF, RESP, i.e. the bit before : */
 	struct _device *dp;
 	struct _ignore *ip;
+	bool subtype_ignored = false;
 
 	++linecounter;
 
@@ -161,10 +168,13 @@ char *handle_report(struct udata *ud, char *line)
 		goto finish;
 	}
 
-	stat_incr(subtype, protov);
-
 	struct _report *rp = lookup_reports(subtype);
 	if ((ip = lookup_ignores(subtype)) != NULL) {
+		subtype_ignored = true;
+	}
+	stat_incr(subtype, protov, subtype_ignored);
+
+	if (subtype_ignored) {
 		xlog(ud, "Ignoring %s because %s (%s)\n",
 			subtype, ip->reason, rp->desc ? rp->desc : "unknown report type");
 		goto finish;
