@@ -206,9 +206,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			if (ud->cf->debughex) {
 				mg_hexdump_connection(nc, ud->cf->debughex, io->buf, io->len, ev);
 			}
-			// write(1, io->buf, io->len);
-			write(ud->datalog, io->buf, io->len);
-			write(ud->datalog, "\n", 1);
+			if (ud->datalog) {
+				write(ud->datalog, io->buf, io->len);
+				if (io->buf[io->len - 1] != '\n')
+					write(ud->datalog, "\n", 1);
+			}
 
 			imei = process(ud, io->buf, io->len, nc);
 
@@ -386,9 +388,10 @@ int main(int argc, char **argv)
 	if (rc) {
 		if (rc == MOSQ_ERR_ERRNO) {
 			strerror_r(errno, err, 1024);
-			xlog(ud, "Error: %s\n", err);
+			xlog(ud, "connecting to MQTT on %s:%d: Error: %s\n",
+				cf.host, cf.port, err);
 		} else {
-			xlog(ud, "Unable to connect (%d).\n", rc);
+			xlog(ud, "Unable to connect to MQTT (%d).\n", rc);
 		}
 		return (-2);
 	}
@@ -401,9 +404,11 @@ int main(int argc, char **argv)
 	mosquitto_loop_start(mosq);
 
 	udata.mosq	= mosq;
-	udata.datalog	= open(cf.datalog, O_WRONLY | O_APPEND | O_CREAT, 0666);
+	udata.datalog 	= 0;
 
-	puts("starting..");
+	if (cf.datalog) {
+		udata.datalog	= open(cf.datalog, O_WRONLY | O_APPEND | O_CREAT, 0666);
+	}
 
 	mg_mgr_init(&mgr, NULL);
 
@@ -415,6 +420,8 @@ int main(int argc, char **argv)
 #endif
 	bind_opts.error_string = &e;
 	bind_opts.user_data = NULL;
+
+	xlog(ud, "Listening for GPRS on port %s\n", cf.listen_port);
 
 	c = mg_bind_opt(&mgr, cf.listen_port, ev_handler, bind_opts);
 	if (c == NULL) {
