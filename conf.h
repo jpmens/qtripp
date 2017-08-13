@@ -29,6 +29,7 @@ typedef struct config {
 	JsonNode *subscriptions;
 	struct my_device *devices;
 	const char *extra_json;
+	const char *reporttopic;
 } config;
 
 int ini_handler(void *cf, const char *section, const char *key, const char *val);

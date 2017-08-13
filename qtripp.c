@@ -97,9 +97,15 @@ void print_conns(struct udata *ud)
 	struct conndata *co;
 
 	for (co = conns_by_sock; co != NULL; co = (struct conndata *)(co->hh.next)) {
-		xlog(ud, "sock %d: %s (%s)\n", co->sock,
+		char buf[BUFSIZ];
+
+		snprintf(buf, sizeof(buf), "sock %d: %s (%s)", co->sock,
 			co->imei ? co->imei : "nil",
 			co->client_ip ? co->client_ip : "nil");
+
+		xlog(ud, "%s\n", buf);
+		if (ud->cf->reporttopic)
+			pub(ud, (char *)ud->cf->reporttopic, buf, false);
 	}
 }
 
@@ -274,7 +280,10 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
 	device_id = topic_to_device((char *)m->topic);
 
 	if (!strcmp(device_id, "*")) {
-		print_conns(ud);
+		if (strcmp((char *)m->payload, "list") == 0)
+			print_conns(ud);
+		else if (strcmp((char *)m->payload, "stats") == 0)
+			print_stats(ud);
 		return;
 	}
 	write_to_connection(mgr, device_id, (char *)m->payload);

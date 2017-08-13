@@ -18,6 +18,13 @@
 #define MAXLINELEN	(8192 * 2)
 #define QOS 		1
 
+struct my_stat {
+	char key[24];		/* key: subtype-protov */
+	long counter;
+	UT_hash_handle hh;
+};
+static struct my_stat *report_stats = NULL;
+
 void pub(struct udata *ud, char *topic, char *payload, bool retain)
 {
 	int rc;
@@ -29,6 +36,41 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 			mosquitto_reconnect(ud->mosq);
 		}
 	}
+}
+
+static void stat_incr(char *subtype, char *protov)
+{
+	struct my_stat *ms;
+	char key[BUFSIZ];
+
+	snprintf(key, sizeof(key), "%s-%s", subtype, protov);
+
+	HASH_FIND_STR(report_stats, key, ms);
+	if (!ms) {
+		puts("adding hash");
+		ms = (struct my_stat *)malloc(sizeof(struct my_stat));
+		strncpy(ms->key, key, 20);
+		ms->counter = 1L;
+		HASH_ADD_STR(report_stats, key, ms);
+	} else {
+		puts("replacing hash");
+		ms->counter++;
+	}
+}
+
+void print_stats(struct udata *ud)
+{
+	struct my_stat *ms, *tmp;
+	char buf[BUFSIZ];
+
+	HASH_ITER(hh, report_stats, ms, tmp) {
+		snprintf(buf, sizeof(buf), "%s %ld", ms->key, ms->counter);
+		xlog(ud, "stats: %s\n", buf);
+		if (ud->cf->reporttopic)
+			pub(ud, (char *)ud->cf->reporttopic, buf, false);
+	}
+
+	/* FIXME: consider deleting keys when they've been listed? */
 }
 
 /*
@@ -123,6 +165,8 @@ char *handle_report(struct udata *ud, char *line)
 	if (!imei || !*imei || !protov || !*protov) {
 		goto finish;
 	}
+
+	stat_incr(subtype, protov);
 
 	imei_dup = strdup(imei);
 

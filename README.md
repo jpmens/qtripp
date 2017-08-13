@@ -2,6 +2,21 @@
 
 Queclink Track (air) Interface Protocol Processor and OwnTracks
 
+## features
+
+* copious debugging
+* ignore specific reports
+* configurable reports per/device and per/firmware basis
+* fast
+* OwnTracks JSON support
+* MQTT
+* list devices connected (console & MQTT)
+* periodic statistics over MQTT
+
+```
+-t owntracks/qtripp/*/cmd -m list
+-t owntracks/qtripp/*/cmd -m stats
+```
 
 ## credits
 

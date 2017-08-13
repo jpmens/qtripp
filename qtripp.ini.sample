@@ -35,4 +35,4 @@ cafile =
 certfile =
 keyfile =
 subscribe=	owntracks/qtripp/+/cmd
-
+reporttopic = owntracks/qtripp
