@@ -24,7 +24,7 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 
 	rc = mosquitto_publish(ud->mosq, NULL, topic, strlen(payload), payload, QOS, retain);
 	if (rc) {
-		xlog(ud, "Publish failed: rc=%d...", rc);
+		xlog(ud, "Publish failed: rc=%d...\n", rc);
 		if (rc == MOSQ_ERR_NO_CONN) {
 			mosquitto_reconnect(ud->mosq);
 		}
@@ -47,13 +47,18 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 
 	if ((extra = extra_json(ud->cf, imei)) != NULL) {
 		json_foreach(e, extra) {
-			json_append_member(obj, e->key, json_mkstring(e->string_));
+			if (e->tag == JSON_STRING)
+				json_append_member(obj, e->key, json_mkstring(e->string_));
+			else if (e->tag == JSON_NUMBER)
+				json_append_member(obj, e->key, json_mknumber(e->number_));
+			else if (e->tag == JSON_BOOL)
+				json_append_member(obj, e->key, json_mkbool(e->bool_));
 		}
 	}
 
 	if ((js = json_encode(obj)) != NULL) {
-		xlog(ud, "PUBLISH: %s %s", topic, js);
-		pub(ud, topic, js, false);	// FIXME: retain true
+		xlog(ud, "PUBLISH: %s %s\n", topic, js);
+		pub(ud, topic, js, true);
 		free(js);
 	}
 }
@@ -71,9 +76,9 @@ static long linecounter = 0L;
 
 char *handle_report(struct udata *ud, char *line)
 {
-	char **parts, *imei_dup = NULL;
+	char **parts, *tparts[4], *imei_dup = NULL;
 	int n, nparts;
-	char *ap, *abr, *subtype = NULL;	/* abr= ACK, BUFF, RESP, i.e. the bit before : */
+	char abr[24], subtype[24];	/* abr= ACK, BUFF, RESP, i.e. the bit before : */
 	struct _device *dp;
 	struct _ignore *ip;
 
@@ -88,21 +93,18 @@ char *handle_report(struct udata *ud, char *line)
 	 * parts[0] contains "RESP:GTFRI". Point `abr' to the initial
 	 * portion and subtype to the second; chop at the ':'
 	 */
-
-	if ((ap = strchr(abr = parts[0], ':')) != NULL) {
-		*ap = 0;
-		subtype = ++ap;
+	if ((n = splitter(parts[0], ":", tparts)) != 2) {
+		xlog(ud, "Cannot split type from parts[0]\n");
+		goto finish;
 	}
+	strcpy(abr, tparts[0]);
+	strcpy(subtype, tparts[1]);
+	splitterfree(tparts);
+
 
 	if ((ip = lookup_ignores(subtype)) != NULL) {
 		xlog(ud, "Ignoring %s because %s\n", subtype, ip->reason);
 		goto finish;
-	}
-
-	if (ud->debugging) {
-		for (n = 0; parts[n]; n++) {
-			xlog(ud, "\t%2d %s\n", n, parts[n]);
-		}
 	}
 
 	char *imei = GET_S(2);
@@ -122,8 +124,19 @@ char *handle_report(struct udata *ud, char *line)
 
 	imei_dup = strdup(imei);
 
+	struct _model *model = lookup_models(protov);
+	struct _report *rp = lookup_reports(subtype);
+
+	xlog(ud, "+++ I=%s M=%s np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
+		imei,
+		(model) ? model->desc : "unknown",
+		nparts, protov,
+		linecounter,
+		abr, subtype, (rp ? rp->desc : "unknown"),
+		line);
+
+
 	if (strcmp(abr, "ACK") == 0) {
-		fprintf(stderr, "Habemus ACK\n");
 		goto finish;
 	}
 
@@ -133,18 +146,15 @@ char *handle_report(struct udata *ud, char *line)
 		goto finish;
 	}
 
-	struct _model *model = lookup_models(protov);
 	int rep = 0, nreports = atoi(GET_S(dp->num));	/* "Number" from docs */
 
-	struct _report *rp = lookup_reports(subtype);
+	xlog(ud, "++. N=%d\n", nreports);
 
-	xlog(ud, "+++ I=%s M=%s N=%d np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
-		imei,
-		(model) ? model->desc : "unknown",
-		nreports, nparts, protov,
-		linecounter,
-		abr, subtype, (rp ? rp->desc : "unknown"),
-		line);
+	if (ud->debugging) {
+		for (n = 0; parts[n]; n++) {
+			xlog(ud, "\t%2d %s\n", n, parts[n]);
+		}
+	}
 
 
 	/* handle sub-reports of e.g GTFRI. Even if a subtype
@@ -157,7 +167,7 @@ char *handle_report(struct udata *ud, char *line)
 		char *s;
 		JsonNode *obj;
 
-		xlog(ud, "--> REP==%d dp->num==%d\n", rep, dp->num);
+		// xlog(ud, "--> REP==%d dp->num==%d\n", rep, dp->num);
 
 		int pos = (rep * 12); /* 12 elements in green area */
 

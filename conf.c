@@ -20,11 +20,29 @@ int ini_handler(void *cf, const char *section, const char *key, const char *val)
 		if (_eq("extra_json"))	c->extra_json = strdup(val);
 	}
 
+        if (!strcmp(section, "devices")) {
+                /*
+                 *      [devices]
+                 *      imei = topic
+                 *      123456789012345 = "owntracks/gv/12345"
+                 *      * = "owntracks/dump/"
+                 */
+
+                struct my_device *d = (struct my_device *)malloc(sizeof (struct my_device));
+                d->did = strdup(key);
+                d->topic = strdup(val);
+                HASH_ADD_KEYPTR(hh, c->devices, d->did, strlen(d->did), d);
+
+
+        }
+
 	if (!strcmp(section, "mqtt")) {
 		if (_eq("host"))	c->host = strdup(val);
 		if (_eq("username"))    c->username = strdup(val);
 		if (_eq("password"))    c->password = strdup(val);
+		if (_eq("client_id"))   c->client_id = strdup(val);
 		if (_eq("cafile"))      c->cafile = strdup(val);
+		if (_eq("capath"))      c->capath = strdup(val);
 		if (_eq("certfile"))    c->certfile = strdup(val);
 		if (_eq("keyfile"))     c->keyfile = strdup(val);
 		if (_eq("port"))	c->port = atoi(val);

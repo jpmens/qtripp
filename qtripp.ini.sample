@@ -1,0 +1,38 @@
+;
+; do NOT put strings in quotes
+
+[defaults]
+listen_port = 1492
+;
+; datalog will be used to log incoming data from devices
+datalog = data.log
+;
+; logfile is a, well, a log file
+logfile = qtripp.log
+
+; if debughex is set it points to a file into which I/O
+; is written
+; debughex = debug.hex
+
+extra_json = extra-json
+
+; the `[devices]` section lists a topic to publish to for a particular device.
+; For example, the device with the deviceId `543210987654321` will publish to
+; `owntracks/gv65/54321`, and unlisted devices (`*`) will publish
+; to `owntracks/qtripp/<deviceId>`.
+; (The topic branch for the wildcard device `*` MUST end in a slash.)
+
+[devices]
+543210987654321 = owntracks/gv65/54321
+*		= owntracks/qtripp/
+
+[mqtt]
+host = 127.0.0.1
+port = 1883
+#username = 
+#password = 
+cafile =
+certfile =
+keyfile =
+subscribe=	owntracks/qtripp/+/cmd
+

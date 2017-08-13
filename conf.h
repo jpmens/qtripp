@@ -22,6 +22,7 @@ typedef struct config {
 	const char *username;
 	const char *password;
 	const char *cafile;
+	const char *capath;
 	const char *certfile;
 	const char *keyfile;
 	const char *client_id;

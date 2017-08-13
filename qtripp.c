@@ -16,6 +16,9 @@
 #include "reports.h"
 #include "ignores.h"
 
+#define SSL_VERIFY_PEER (1)
+#define SSL_VERIFY_NONE (0)
+
 static config cf = {
         .host           = "localhost",
         .port           = 1883
@@ -317,6 +320,30 @@ int main(int argc, char **argv)
 	}
 
 	mosquitto_message_callback_set(mosq, on_message);
+
+	if (cf.cafile && *cf.cafile) {
+
+                        rc = mosquitto_tls_set(mosq,
+                                cf.cafile,             /* cafile */
+                                cf.capath,             /* capath */
+                                cf.certfile,           /* certfile */
+                                cf.keyfile,            /* keyfile */
+                                NULL                    /* pw_callback() */
+                                );
+                        if (rc != MOSQ_ERR_SUCCESS) {
+                                xlog(ud, "Cannot set TLS CA: %s (check path names)\n",
+                                        mosquitto_strerror(rc));
+                                exit(3);
+                        }
+
+                        mosquitto_tls_opts_set(mosq,
+                                SSL_VERIFY_PEER,
+                                NULL,                   /* tls_version: "tlsv1.2", "tlsv1" */
+                                NULL                    /* ciphers */
+                                );
+
+	}
+
 
 	rc = mosquitto_connect(mosq, cf.host, cf.port, 60);
 	if (rc) {
