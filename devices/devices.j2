@@ -1,7 +1,4 @@
 {# warning: this turns into C source code #}
-{#
-
- #}
 
 struct _device devices[] = {
 {% for dev in devices -%}
@@ -25,8 +22,3 @@ struct _device devices[] = {
 {% endfor %}
     { NULL, -1 }
 };
-
-
-
-
-
