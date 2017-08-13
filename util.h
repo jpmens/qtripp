@@ -1,6 +1,11 @@
 #ifndef _UTIL_H_INCL_
 # define  _UTIL_H_INCL_
 
+#ifndef _XOPEN_SOURCE
+# define _XOPEN_SOURCE
+#endif
+#define __USE_XOPEN
+#define __GNU_SOURCE
 #include <time.h>
 #include "udata.h"
 #include "conf.h"
