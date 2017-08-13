@@ -21,3 +21,7 @@ libdev:
 clean:
 	rm -f *.o
 	$(MAKE) -C devices clean
+
+clobber: clean
+	rm -f qtripp
+	$(MAKE) -C devices clobber
