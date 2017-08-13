@@ -26,6 +26,7 @@
 #
 - reports:
     GTHBD: heartbeat
+    GTRTO: acknowledgement message of the AT+GTRTO terminal command
     GTANT: external GPS antenna status reported
     GTOPN: connecting with vehicle through OBDII interface
     GTOPF: disconnecting with vehicle through OBDII interface
