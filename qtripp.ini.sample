@@ -16,6 +16,10 @@ logfile = qtripp.log
 
 extra_json = extra-json
 
+; for commands which cause qtripp to store something
+; this directory, if configured, must exist and be writeable
+dumpdir = dump/
+
 ; the `[devices]` section lists a topic to publish to for a particular device.
 ; For example, the device with the deviceId `543210987654321` will publish to
 ; `owntracks/gv65/54321`, and unlisted devices (`*`) will publish

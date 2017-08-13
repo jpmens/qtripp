@@ -26,6 +26,14 @@ struct my_stat {
 };
 static struct my_stat *report_stats = NULL;
 
+struct my_imeistat {
+	char key[18];
+	long reports;
+	time_t last_seen;
+	UT_hash_handle hh;
+};
+static struct my_imeistat *imei_stats = NULL;
+
 void pub(struct udata *ud, char *topic, char *payload, bool retain)
 {
 	int rc;
@@ -36,6 +44,25 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 		if (rc == MOSQ_ERR_NO_CONN) {
 			mosquitto_reconnect(ud->mosq);
 		}
+	}
+}
+
+static void imei_incr(char *imei, int reports)
+{
+	struct my_imeistat *is;
+
+	HASH_FIND_STR(imei_stats, imei, is);
+	if (!is) {
+		is = (struct my_imeistat *)malloc(sizeof(struct my_imeistat));
+		strncpy(is->key, imei, 16);
+		is->last_seen	= time(0);
+		is->reports	= reports;
+		HASH_ADD_STR(imei_stats, key, is);
+		// printf("---------------------- add %d\n", reports);
+	} else {
+		is->last_seen	= time(0);
+		is->reports	+= reports;
+		// printf("---------------------- repl %d\n", reports);
 	}
 }
 
@@ -50,14 +77,12 @@ static void stat_incr(char *subtype, char *protov, bool ig)
 
 	HASH_FIND_STR(report_stats, key, ms);
 	if (!ms) {
-		puts("adding hash");
 		ms = (struct my_stat *)malloc(sizeof(struct my_stat));
 		strncpy(ms->key, key, 20);
 		ms->counter = 1L;
 		ms->ignored = ig;
 		HASH_ADD_STR(report_stats, key, ms);
 	} else {
-		puts("replacing hash");
 		ms->counter++;
 		ms->ignored = ig;
 	}
@@ -80,6 +105,65 @@ void print_stats(struct udata *ud)
 
 	/* FIXME: consider deleting keys when they've been listed? */
 }
+
+void dump_stats(struct udata *ud)
+{
+	char path[BUFSIZ];
+	FILE *fp;
+
+	if (!ud->cf->dumpdir) {
+		xlog(ud, "Cannot dump_stats because dumpdir not configured\n");
+		return;
+	}
+	snprintf(path, sizeof(path), "%s/stats.json", ud->cf->dumpdir);
+
+	if ((fp = fopen(path, "w")) != NULL) {
+		JsonNode *obj = json_mkobject(), *o;
+		struct my_stat *ms, *tmp;
+		char *js;
+
+		HASH_ITER(hh, report_stats, ms, tmp) {
+			o = json_mkobject();
+			json_append_member(o, "counter", json_mknumber(ms->counter));
+			json_append_member(o, "ignored", json_mkbool(ms->ignored));
+
+			json_append_member(obj, ms->key, o);
+		}
+
+		if ((js = json_stringify(obj, "  ")) != NULL) {
+			fprintf(fp, "%s\n", js);
+			free(js);
+		}
+		json_delete(obj);
+		fclose(fp);
+	}
+
+	/* IMEI_STATS */
+
+	snprintf(path, sizeof(path), "%s/imei.json", ud->cf->dumpdir);
+
+	if ((fp = fopen(path, "w")) != NULL) {
+		JsonNode *obj = json_mkobject(), *o;
+		struct my_imeistat *is, *tmp;
+		char *js;
+
+		HASH_ITER(hh, imei_stats, is, tmp) {
+			o = json_mkobject();
+			json_append_member(o, "last_seen", json_mknumber(is->last_seen));
+			json_append_member(o, "reports", json_mknumber(is->reports));
+
+			json_append_member(obj, is->key, o);
+		}
+
+		if ((js = json_stringify(obj, "  ")) != NULL) {
+			fprintf(fp, "%s\n", js);
+			free(js);
+		}
+		json_delete(obj);
+		fclose(fp);
+	}
+}
+
 
 /*
  * The JSON object we obtained from the tracker is complete and
@@ -175,7 +259,7 @@ char *handle_report(struct udata *ud, char *line)
 	stat_incr(subtype, protov, subtype_ignored);
 
 	if (subtype_ignored) {
-		xlog(ud, "Ignoring %s because %s (%s)\n",
+		xlog(ud, "Ignoring %s: %s (%s)\n",
 			subtype, ip->reason, rp->desc ? rp->desc : "unknown report type");
 		goto finish;
 	}
@@ -206,6 +290,7 @@ char *handle_report(struct udata *ud, char *line)
 	char *dpn = GET_S(dp->num);
 	int rep = 0, nreports = atoi(dpn ? dpn : "0");	/* "Number" from docs */
 
+	imei_incr(imei, nreports);
 	xlog(ud, "++. N=%d\n", nreports);
 
 	if (ud->debugging) {

@@ -16,6 +16,7 @@ Queclink Track (air) Interface Protocol Processor and OwnTracks
 ```
 -t owntracks/qtripp/*/cmd -m list
 -t owntracks/qtripp/*/cmd -m stats
+-t owntracks/qtripp/*/cmd -m dump
 ```
 
 ## credits

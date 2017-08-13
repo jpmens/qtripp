@@ -30,6 +30,7 @@ typedef struct config {
 	struct my_device *devices;
 	const char *extra_json;
 	const char *reporttopic;
+	const char *dumpdir;
 } config;
 
 int ini_handler(void *cf, const char *section, const char *key, const char *val);

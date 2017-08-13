@@ -284,6 +284,8 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
 			print_conns(ud);
 		else if (strcmp((char *)m->payload, "stats") == 0)
 			print_stats(ud);
+		else if (strcmp((char *)m->payload, "dump") == 0)
+			dump_stats(ud);
 		return;
 	}
 	write_to_connection(mgr, device_id, (char *)m->payload);

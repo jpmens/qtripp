@@ -18,6 +18,7 @@ int ini_handler(void *cf, const char *section, const char *key, const char *val)
 		if (_eq("logfile"))	c->logfile = strdup(val);
 		if (_eq("debughex"))	c->debughex = strdup(val);
 		if (_eq("extra_json"))	c->extra_json = strdup(val);
+		if (_eq("dumpdir"))     c->dumpdir = strdup(val);
 	}
 
         if (!strcmp(section, "devices")) {
