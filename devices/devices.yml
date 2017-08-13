@@ -5,11 +5,10 @@
 - ignores:
      GTGPS: no implemented
      GTIOS: no implemented
-     GTPDP: no implemented
+     GTPDP: not implemented because report carries no GPS data
      GTPFA: no implemented
-     GTPNA: no implemented
+     GTPNA: not implemented because no GPS information in report
      GTSTC: no implemented
-     GTSTT: no implemented
      GTVER: no implemented
 
 #
