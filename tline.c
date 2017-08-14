@@ -181,6 +181,7 @@ void dump_stats(struct udata *ud)
 		json_delete(obj);
 		fclose(fp);
 	}
+	xlog(ud, "Statistics dumped.\n");
 }
 
 
@@ -309,8 +310,11 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	if (strcmp(abr, "ACK") == 0) {
 		char rr[BUFSIZ];
-		snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
-		*response = strdup(rr);
+
+		if (!strcmp(subtype, "GTHBD")) {
+			snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
+			*response = strdup(rr);
+		}
 		goto finish;
 	}
 
