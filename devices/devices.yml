@@ -23,13 +23,13 @@
 # ignores
 #
 - ignores:
-     GTGPS: no implemented
-     GTIOS: no implemented
+     GTGPS: not-imp
+     GTIOS: not-imp
      GTPDP: not implemented because report carries no GPS data
      GTPFA: not implemented
      GTPNA: not implemented because no GPS information in report
-     GTSTC: no implemented
-     GTVER: no implemented
+     GTSTC: not-imp
+     GTVER: not-imp
 
 #
 # models
