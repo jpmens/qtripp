@@ -29,8 +29,10 @@ struct udata {
         int mqtt_port;
         struct mosquitto *mosq;
         int datalog;
-        struct mg_mgr *mgr;     /* mongoose manager */
+        struct mg_mgr *mgr;     	/* mongoose manager */
         struct config *cf;
+	struct mg_connection *coco;	/* if configured, the mirror connection */
+	bool cocorun;			/* true if connected; false if to be connected */
 };
 
 #endif

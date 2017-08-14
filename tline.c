@@ -190,6 +190,7 @@ void dump_stats(struct udata *ud)
  * to add to it.
  */
 
+// #include "mongoose.h"	// FIXME: remove
 void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 {
 	JsonNode *e, *extra;
@@ -212,6 +213,10 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 	if ((js = json_encode(obj)) != NULL) {
 		xlog(ud, "PUBLISH: %s %s\n", topic, js);
 		pub(ud, topic, js, true);
+
+//		if (ud->cocorun) mg_printf(ud->coco, "%s", js);	// FIXME remove
+//		fprintf(stderr, "@@@@@@@@@ %d\n", ud->coco->sock);
+
 		free(js);
 	}
 }
@@ -227,7 +232,13 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 
 static long linecounter = 0L;
 
-char *handle_report(struct udata *ud, char *line)
+/*
+ * If anything is to be written back to the device, do so by
+ * allocating a string and putting it at `*response'; the caller
+ * will write to device and free the string.
+ */
+
+char *handle_report(struct udata *ud, char *line, char **response)
 {
 	char **parts, *tparts[4], *imei_dup = NULL;
 	int n, nparts;
@@ -297,6 +308,9 @@ char *handle_report(struct udata *ud, char *line)
 
 
 	if (strcmp(abr, "ACK") == 0) {
+		char rr[BUFSIZ];
+		snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
+		*response = strdup(rr);
 		goto finish;
 	}
 
@@ -401,12 +415,13 @@ char *handle_report(struct udata *ud, char *line)
 int handle_file_reports(struct udata *ud, FILE *fp)
 {
 	char line[MAXLINELEN];
+	char *response = NULL;
 
 	while (fgets(line, sizeof(line) - 1, fp) != NULL) {
 		if (*line == '#' || *line == '\n')
 			continue;
 
-		handle_report(ud, line);
+		handle_report(ud, line, &response);
 	}
 	return (0);
 }
