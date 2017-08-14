@@ -44,5 +44,6 @@ void chomp(char *s);
 char *device_to_topic(config *cf, char *did);
 JsonNode *extra_json(config *cf, char *did);
 double temp(char *hexs);
+double haversine_dist(double th1, double ph1, double th2, double ph2);
 
 #endif
