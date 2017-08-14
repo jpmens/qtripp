@@ -358,7 +358,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		if (eribits & 0x0002) {
 #define D_UART (6)
 			int offset = ((nreports - 1) * 12) + dp->dist + D_UART;
-			int uart_type  = atoi(GET_S(offset));
+			char *val = GET_S(offset);
+			int uart_type  = atoi(val && *val ? val : "0");
 			xlog(ud, "UART Type: %d: %s temperature\n",
 					uart_type, (uart_type) ? "Use" : "Skip");
 
