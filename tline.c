@@ -336,6 +336,16 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 	}
 
+	if (!strcmp(subtype, "GTERI")) {
+		/* How the heck do I know if ERI mask has this set??? */
+
+		char *t = GET_S(nparts - 3);
+
+		if (t && *t) {
+			xlog(ud, "Temperature %.2lfC\n", temp(t));
+		}
+	}
+
 
 	/* handle sub-reports of e.g GTFRI. Even if a subtype
 	 * doesn't have sub-reports, we enter this and do it

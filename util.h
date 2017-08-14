@@ -43,5 +43,6 @@ void xlog(struct udata *ud, char *fmt, ...);
 void chomp(char *s);
 char *device_to_topic(config *cf, char *did);
 JsonNode *extra_json(config *cf, char *did);
+double temp(char *hexs);
 
 #endif

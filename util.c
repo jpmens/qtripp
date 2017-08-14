@@ -261,3 +261,12 @@ JsonNode *extra_json(config *cf, char *did)
 	return (j);
 }
 
+double temp(char *hexs)
+{
+	double celsius;
+	long l;
+
+	l = strtol(hexs, NULL, 16);
+	celsius = (double)(l * 0.0625);
+	return (celsius);
+}
