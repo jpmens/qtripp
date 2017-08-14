@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS= -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
-LDFLAGS=-L /usr/local/lib -lmosquitto
+LDFLAGS=-L /usr/local/lib -lmosquitto -lm
 
 LIBDEV=libdev.a
 
