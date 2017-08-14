@@ -141,7 +141,7 @@ char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *
 
 	imei = handle_report(ud, buf, &response);
 	if (response != NULL) {
-		xlog(ud, "Respoding to terminal: %s\n", response);
+		xlog(ud, "Responding to terminal: %s\n", response);
 		mg_printf(nc, "%s", response);
 		free(response);
 	}
