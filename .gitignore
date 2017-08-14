@@ -10,3 +10,4 @@ qtripp
 *.log
 *.i
 extra-json/
+tags
