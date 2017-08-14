@@ -262,14 +262,21 @@ JsonNode *extra_json(config *cf, char *did)
 	return (j);
 }
 
+
 double temp(char *hexs)
 {
-	double celsius;
-	long l;
+        double celsius;
+        long l;
 
-	l = strtol((hexs && *hexs) ? hexs : "00", NULL, 16);
-	celsius = (double)(l * 0.0625);
-	return (celsius);
+        l = strtol((hexs && *hexs) ? hexs : "00", NULL, 16);
+        if (l & 0xF800) {
+		l &= 0x07FF;
+		l += 1;
+		l *= -1;
+	}
+
+        celsius = (double)(l * 0.0625);
+        return (celsius);
 }
 
 /* http://rosettacode.org/wiki/Haversine_formula#C */

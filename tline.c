@@ -272,7 +272,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	char *protov = GET_S(1);	/* VVJJMM
 					 * VV = model
 					 * JJ = major
-					 * MM = minor 
+					 * MM = minor
 					 */
 	/*
 	 * If we have neither IMEI nor protov forget the rest; impossible to
@@ -351,11 +351,23 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		char *erimask = GET_S(4);
 		unsigned long eribits = strtoul(erimask ? erimask : "0", NULL, 16);
 
+		// FIXME: this is not accurate; bits are set if temp sensor not connected
+		// what seems to be ok is check if field "UART Device Type" is 0 which means
+		// "no device connected" (if DS18B20 is connected the field is "1")
+		//
 		if (eribits & 0x0002) {
-			char *t = GET_S(nparts - 3);
+#define D_UART (6)
+			int offset = ((nreports - 1) * 12) + dp->dist + D_UART;
+			int uart_type  = atoi(GET_S(offset));
+			xlog(ud, "UART Type: %d: %s temperature\n",
+					uart_type, (uart_type) ? "Use" : "Skip");
 
-			if (t && *t) {
-				json_append_member(jmerge, "temp_c", json_mknumber(temp(t)));
+			if (uart_type != 0) {
+				char *t = GET_S(offset + 3);
+
+				if (t && *t) {
+					json_append_member(jmerge, "temp_c", json_mknumber(temp(t)));
+				}
 			}
 		}
 	}
