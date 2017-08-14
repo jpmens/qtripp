@@ -26,7 +26,7 @@
      GTGPS: no implemented
      GTIOS: no implemented
      GTPDP: not implemented because report carries no GPS data
-     GTPFA: no implemented
+     GTPFA: not implemented
      GTPNA: not implemented because no GPS information in report
      GTSTC: no implemented
      GTVER: no implemented
