@@ -3104,7 +3104,8 @@ struct mg_iface *mg_find_iface(struct mg_mgr *mgr,
 /* Amalgamated: #include "mongoose/src/internal.h" */
 /* Amalgamated: #include "mongoose/src/util.h" */
 
-#define MG_TCP_RECV_BUFFER_SIZE 1024
+/* JPM #define MG_TCP_RECV_BUFFER_SIZE 1024 */
+#define MG_TCP_RECV_BUFFER_SIZE 8192	/* JPM */
 #define MG_UDP_RECV_BUFFER_SIZE 1500
 
 static sock_t mg_open_listening_socket(union socket_address *sa, int type,
@@ -3850,7 +3851,8 @@ const struct mg_iface_vtable mg_default_iface_vtable = MG_SOCKET_IFACE_VTABLE;
 /* Amalgamated: #include "mongoose/src/tun.h" */
 /* Amalgamated: #include "mongoose/src/util.h" */
 
-#define MG_TCP_RECV_BUFFER_SIZE 1024
+/* JPM #define MG_TCP_RECV_BUFFER_SIZE 1024 */
+#define MG_TCP_RECV_BUFFER_SIZE 8192 /* JPM */
 #define MG_UDP_RECV_BUFFER_SIZE 1500
 
 void mg_tun_if_connect_tcp(struct mg_connection *nc,
