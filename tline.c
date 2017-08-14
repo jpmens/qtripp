@@ -336,13 +336,28 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 	}
 
+	JsonNode *jmerge = NULL, *jm;
+
 	if (!strcmp(subtype, "GTERI")) {
-		/* How the heck do I know if ERI mask has this set??? */
+		/*
+		 * According to GV65, page 35, et.al (search for "Eri mask")
+		 * if bit 1 is set in the mask, it means AC100 data is
+		 * available (which I interpret to be 1-Wire data).
+		 *
+		 * So, we check for that bit and then grab the temperature
+		 * from our 1-Wire DS18B20.
+		 */
 
-		char *t = GET_S(nparts - 3);
+		char *erimask = GET_S(4);
+		unsigned long eribits = strtoul(erimask ? erimask : "0", NULL, 16);
 
-		if (t && *t) {
-			xlog(ud, "Temperature %.2lfC\n", temp(t));
+		if (eribits & 0x0002) {
+			char *t = GET_S(nparts - 3);
+
+			if (t && *t) {
+				jmerge = json_mkobject();
+				json_append_member(jmerge, "temp_c", json_mknumber(temp(t)));
+			}
 		}
 	}
 
@@ -416,10 +431,24 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "cog", json_mknumber(atoi(s)));
 		}
 
+		/* Add the merge if we have any */
+		json_foreach(jm, jmerge) {
+			if (jm->tag == JSON_STRING)
+				json_append_member(obj, jm->key, json_mkstring(jm->string_));
+			else if (jm->tag == JSON_NUMBER)
+				json_append_member(obj, jm->key, json_mknumber(jm->number_));
+			else if (jm->tag == JSON_BOOL)
+				json_append_member(obj, jm->key, json_mkbool(jm->bool_));
+		}
+
 		transmit_json(ud, imei, obj);
 		json_delete(obj);
 
 	} while (++rep < nreports);
+
+	if (jmerge != NULL) {
+		json_delete(jmerge);
+	}
 
   finish:
 	splitterfree(parts);
