@@ -52,6 +52,7 @@
     GTOPF: disconnecting with vehicle through OBDII interface
     GTBPN: battery backup connected
     GTTOW: motion sensor detects tow
+    GTCFG: global parameter configuration
     GTGEO: entering/exiting Geo fence
     GTSPD: speed alarm detected
     GTRTL: GPS detected
