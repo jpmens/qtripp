@@ -336,7 +336,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 	}
 
-	JsonNode *jmerge = NULL, *jm;
+	JsonNode *jmerge = json_mkobject(), *jm;
 
 	if (!strcmp(subtype, "GTERI")) {
 		/*
@@ -355,20 +355,34 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			char *t = GET_S(nparts - 3);
 
 			if (t && *t) {
-				jmerge = json_mkobject();
 				json_append_member(jmerge, "temp_c", json_mknumber(temp(t)));
 			}
 		}
 	}
 
+	/*
+	 * Some reports contain "blocks" of data which can repeat (GTFI, GTERI
+	 * as shown below), and we want some of the data which is *behind* the
+	 * repetitions. Grab it now.
+	 */
 
-	/* handle sub-reports of e.g GTFRI. Even if a subtype
+	if (nreports > 0) {
+		if (dp->dist > 0) {
+			double d = GET_D(((nreports - 1) * 12) + dp->dist);
+			if (!isnan(d)) {
+				json_append_member(jmerge, "odometer", json_mknumber(d));
+			}
+		}
+	}
+
+	/* handle sub-reports of e.g GTFRI / GTERI. Even if a subtype
 	 * doesn't have sub-reports, we enter this and do it
 	 * just once.
 	 */
 
+	double lastlat = NAN, lastlon = NAN;
 	do {
-		double lat, lon, d;
+		double lat, lon;
 		char *s;
 		JsonNode *obj;
 
@@ -395,13 +409,6 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		obj = json_mkobject();
 		json_append_member(obj, "lat", json_mknumber(lat));
 		json_append_member(obj, "lon", json_mknumber(lon));
-
-		if (dp->dist > 0) {
-			d = GET_D(pos + dp->dist);
-			if (!isnan(d)) {
-				json_append_member(obj, "dist", json_mknumber(d));
-			}
-		}
 
 		if ((s = GET_S(pos + dp->utc)) != NULL) {
 			time_t epoch;
@@ -430,6 +437,14 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		if ((s = GET_S(pos + dp->cog)) != NULL) {
 			json_append_member(obj, "cog", json_mknumber(atoi(s)));
 		}
+
+		if (!isnan(lastlat)) {
+			long meters = haversine_dist(lastlat, lastlon, lat, lon);
+
+			json_append_member(obj, "meters", json_mknumber(meters));
+		}
+		lastlat = lat;
+		lastlon = lon;
 
 		/* Add the merge if we have any */
 		json_foreach(jm, jmerge) {
