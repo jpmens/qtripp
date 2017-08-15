@@ -38,7 +38,7 @@
 /* Amalgamated: #include "mongoose/src/http.h" */
 /* Amalgamated: #include "common/cs_dbg.h" */
 
-#define MG_CTL_MSG_MESSAGE_SIZE 8192
+#define MG_CTL_MSG_MESSAGE_SIZE 1024
 
 /* internals that need to be accessible in unit tests */
 MG_INTERNAL struct mg_connection *mg_do_connect(struct mg_connection *nc,
@@ -3104,8 +3104,7 @@ struct mg_iface *mg_find_iface(struct mg_mgr *mgr,
 /* Amalgamated: #include "mongoose/src/internal.h" */
 /* Amalgamated: #include "mongoose/src/util.h" */
 
-/* JPM #define MG_TCP_RECV_BUFFER_SIZE 1024 */
-#define MG_TCP_RECV_BUFFER_SIZE 8192	/* JPM */
+#define MG_TCP_RECV_BUFFER_SIZE 1024
 #define MG_UDP_RECV_BUFFER_SIZE 1500
 
 static sock_t mg_open_listening_socket(union socket_address *sa, int type,
@@ -3851,8 +3850,7 @@ const struct mg_iface_vtable mg_default_iface_vtable = MG_SOCKET_IFACE_VTABLE;
 /* Amalgamated: #include "mongoose/src/tun.h" */
 /* Amalgamated: #include "mongoose/src/util.h" */
 
-/* JPM #define MG_TCP_RECV_BUFFER_SIZE 1024 */
-#define MG_TCP_RECV_BUFFER_SIZE 8192 /* JPM */
+#define MG_TCP_RECV_BUFFER_SIZE 1024
 #define MG_UDP_RECV_BUFFER_SIZE 1500
 
 void mg_tun_if_connect_tcp(struct mg_connection *nc,
