@@ -226,26 +226,31 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 		case MG_EV_RECV:
 			/*
 			 * A record is +...$\n
-			 * Search for the '\n', cut there, process, and remove what we've
+			 * Search for the '$', cut there, process, and remove what we've
 			 * done thus far from the mbuf and await more data.
 			 */
 
 			// FIXME: ensure we protect some max length in case no $
 			//
-//			fprintf(stderr, "Chunk: %zu/%zu\n", io->len, io->size);
+			fprintf(stderr, "Chunk: %zu/%zu\n", io->len, io->size);
 			for (ml = 0; ml < io->len; ml++) {
-				if (io->buf[ml] == '\n') {
+				if (io->buf[ml] == '$') {
 
-
+					fprintf(stderr, "Char is $ and then %d\n", io->buf[ml + 1]);
 					if (ud->cf->debughex) {
-						mg_hexdump_connection(nc, ud->cf->debughex, io->buf, ml, ev);
+						mg_hexdump_connection(nc, ud->cf->debughex, io->buf,ml+1 , ev);
 					}
 					if (ud->datalog) {
 						write(ud->datalog, io->buf, ml+1);
+						write(ud->datalog, "\n", 1);
 					}
 
-					io->buf[ml] = 0;
-					imei = process(ud, io->buf, ml, nc);
+					// FIXME: I think I'll have to chop at the $
+					// later on I can trust this is a 0-terminated string
+					// and forget about checking for the $
+
+					io->buf[ml+1] = 0;
+					imei = process(ud, io->buf, ml + 1, nc);
 
 					mbuf_remove(io, ml+1);
 
