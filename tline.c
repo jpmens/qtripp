@@ -328,7 +328,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 
 	char *dpn = GET_S(dp->num);
-	int rep = 0, nreports = atoi(dpn ? dpn : "0");	/* "Number" from docs */
+	int nreports = atoi(dpn ? dpn : "0");	/* "Number" from docs */
 
 	imei_incr(imei, nreports);
 	xlog(ud, "++. N=%d\n", nreports);
@@ -397,6 +397,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	 */
 
 	double lastlat = NAN, lastlon = NAN;
+	int rep = 0;
 	do {
 		double lat, lon;
 		char *s;
@@ -455,7 +456,18 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		if (!isnan(lastlat)) {
-			long meters = haversine_dist(lastlat, lastlon, lat, lon);
+			double meters = haversine_dist(lastlat, lastlon, lat, lon);
+
+			// FIXME: Experimental if we haven't moved, skip the publish
+
+			if (meters < 0.1) {
+				lastlat = lat;
+				lastlon = lon;
+				json_delete(obj);
+				xlog(ud, "Dropping segment %2d/%d because %.2lf distance covered\n",
+					rep + 1, nreports, meters);
+				continue;
+			}
 
 			json_append_member(obj, "meters", json_mknumber(meters));
 		}
