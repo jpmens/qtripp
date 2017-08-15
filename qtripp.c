@@ -146,6 +146,7 @@ char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *
 	char *imei, *response = NULL;
 
 	buf[buflen] = 0;
+	// fprintf(stderr, "PROCESS[%s]\n", buf);
 
 	imei = handle_report(ud, buf, &response);
 	if (response != NULL) {
@@ -194,6 +195,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	char buf[512];
 	struct conndata *co;
 	struct udata *ud = (struct udata *)nc->mgr->user_data;
+	size_t ml;	/* mrec len */
+	bool gotrec = false;
 
 	/*
 	 * On a new connection (EV_ACCEPT), add an an entry hashed by socket number
@@ -204,6 +207,10 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	 */
 
 	switch (ev) {
+		case MG_EV_POLL:
+			// mbuf_remove(io, io->len);
+			break;
+
 		case MG_EV_ACCEPT:
 			mg_sock_addr_to_str(ev_data, buf, sizeof(buf), MG_SOCK_STRINGIFY_IP);
 
@@ -217,18 +224,36 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			break;
 			
 		case MG_EV_RECV:
-			if (ud->cf->debughex) {
-				mg_hexdump_connection(nc, ud->cf->debughex, io->buf, io->len, ev);
-			}
-			if (ud->datalog) {
-				write(ud->datalog, io->buf, io->len);
-				if (io->buf[io->len - 1] != '\n')
-					write(ud->datalog, "\n", 1);
+			/*
+			 * A record is +...$\n
+			 * Search for the '\n', cut there, process, and remove what we've
+			 * done thus far from the mbuf and await more data.
+			 */
+
+			// FIXME: ensure we protect some max length in case no $
+			//
+//			fprintf(stderr, "Chunk: %zu/%zu\n", io->len, io->size);
+			for (ml = 0; ml < io->len; ml++) {
+				if (io->buf[ml] == '\n') {
+
+
+					if (ud->cf->debughex) {
+						mg_hexdump_connection(nc, ud->cf->debughex, io->buf, ml, ev);
+					}
+					if (ud->datalog) {
+						write(ud->datalog, io->buf, ml+1);
+					}
+
+					io->buf[ml] = 0;
+					imei = process(ud, io->buf, ml, nc);
+
+					mbuf_remove(io, ml+1);
+
+					gotrec = true;
+				}
 			}
 
-			imei = process(ud, io->buf, io->len, nc);
-
-			if (imei != NULL) {
+			if (gotrec && (imei != NULL)) {
 				if ((co = (struct conndata *)nc->user_data) != NULL) {
 					if (co->imei == NULL) {
 						co->imei = strdup(imei);
@@ -237,7 +262,6 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 				}
 				free(imei);
 			}
-			mbuf_remove(io, io->len);      // Discard data from recv buffer
 			break;
 		case MG_EV_CLOSE:
 			if ((co = (struct conndata *)nc->user_data) != NULL) {
@@ -503,6 +527,7 @@ int main(int argc, char **argv)
 		xlog(ud, "Error starting server: %s\n", *bind_opts.error_string);
 		exit(1);
 	}
+
 
 	udata.mgr = &mgr;
 	udata.cf  = &cf;
