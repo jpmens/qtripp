@@ -56,6 +56,14 @@ int ini_handler(void *cf, const char *section, const char *key, const char *val)
 
 	}
 
+#ifdef WITH_BEAN
+	if (!strcmp(section, "bean")) {
+		if (_eq("host"))	c->bean_host = strdup(val);
+		if (_eq("port"))	c->bean_port = atoi(val);
+		if (_eq("tube"))	c->bean_tube = strdup(val);
+	}
+#endif
+
 	if (!strcmp(section, "mqtt")) {
 		if (_eq("host"))	c->host = strdup(val);
 		if (_eq("username"))    c->username = strdup(val);

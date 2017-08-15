@@ -36,6 +36,11 @@ typedef struct config {
         const char *debughex;
         const char *host;
 	int port;
+#ifdef WITH_BEAN
+        const char *bean_host;
+	int bean_port;
+        const char *bean_tube;
+#endif
 	const char *datalog;
 	const char *logfile;
 	const char *username;

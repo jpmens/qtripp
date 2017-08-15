@@ -28,6 +28,9 @@
 #include "conf.h"
 #include "udata.h"
 #include "tline.h"
+#ifdef WITH_BEAN
+# include "bean.h"
+#endif
 
 #include "models.h"
 #include "devices.h"
@@ -470,6 +473,11 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		transmit_json(ud, imei, obj);
+#ifdef WITH_BEAN
+		json_append_member(obj, "imei", json_mkstring(imei));
+		json_append_member(obj, "raw_line", json_mkstring(line));
+		bean_put(ud, obj);
+#endif
 		json_delete(obj);
 
 	} while (++rep < nreports);

@@ -11,3 +11,5 @@ qtripp
 *.i
 extra-json/
 tags
+*.pyc
+contrib/bean-get

@@ -29,6 +29,9 @@
 #include "uthash.h"
 #include "util.h"
 #include "tline.h"
+#ifdef WITH_BEAN
+# include "bean.h"
+#endif
 
 #include "models.h"
 #include "devices.h"
@@ -40,7 +43,12 @@
 
 static config cf = {
         .host           = "localhost",
-        .port           = 1883
+        .port           = 1883,
+#ifdef WITH_BEAN
+	.bean_host	= "127.0.0.1",
+	.bean_port	= 11300,
+	.bean_tube	= "qtripp",
+#endif
 };
 
 /*
@@ -391,6 +399,24 @@ int main(int argc, char **argv)
         load_devices();
         load_ignores();
 
+#ifdef WITH_BEAN
+	if ((ud->bean_socket = bs_connect(cf.bean_host, cf.bean_port)) == BS_STATUS_FAIL) {
+		xlog(ud, "Cannot conect to beanstalkd on %s:%d: %s\n",
+			cf.bean_host, cf.bean_port, strerror(errno));
+		exit(7);
+	}
+
+	if (bs_use(ud->bean_socket, cf.bean_tube) != BS_STATUS_OK)
+		xlog(ud, "Cannot use tube %s\n", ud->cf->bean_tube);
+	if (bs_watch(ud->bean_socket, cf.bean_tube) != BS_STATUS_OK)
+		xlog(ud, "Cannot watch tube %s\n", ud->cf->bean_tube);
+	if (bs_ignore(ud->bean_socket, "default") != BS_STATUS_OK)
+		xlog(ud, "Cannot ignore tube default\n");
+
+	xlog(ud, "Connected to beanstalkd on %s:%d for tube %s\n",
+			cf.bean_host, cf.bean_port, cf.bean_tube);
+#endif
+
 	mosquitto_lib_init();
 
 	mosq = mosquitto_new(cf.client_id, true, &udata);
@@ -441,6 +467,9 @@ int main(int argc, char **argv)
 		}
 		return (-2);
 	}
+
+	xlog(ud, "Connected to MQTT broker on %s:%d\n",
+			cf.host, cf.port);
 
 	json_foreach(j, cf.subscriptions) {
 		xlog(ud, "subscribing to %s\n", j->string_);

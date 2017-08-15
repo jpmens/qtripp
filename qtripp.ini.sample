@@ -40,3 +40,10 @@ certfile =
 keyfile =
 subscribe=	owntracks/qtripp/+/cmd
 reporttopic = owntracks/qtripp
+
+; beanstalkd support needs to be compiled in to qtripp for these
+; parameters to take effect
+[bean]
+host = 127.0.0.1
+port = 11300
+tube = qtripp

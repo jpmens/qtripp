@@ -17,25 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifndef _UDATA_H_INCL_
-# define  _UDATA_H_INCL_
-
-#include <stdbool.h>
-
-struct udata {
-	bool debugging;
-	FILE *logfp;			/* open logfile */
-        const char *mqtt_host;
-        int mqtt_port;
-        struct mosquitto *mosq;
-        int datalog;
-        struct mg_mgr *mgr;     	/* mongoose manager */
-        struct config *cf;
-	struct mg_connection *coco;	/* if configured, the mirror connection */
-	bool cocorun;			/* true if connected; false if to be connected */
 #ifdef WITH_BEAN
-	int bean_socket;
-#endif
-};
+#ifndef _BEAN_H_INCL_
+# define  _BEAN_H_INCL_
+
+#include <beanstalk.h>
+#include "udata.h"
+
+void bean_put(struct udata *ud, JsonNode *jfull);
 
 #endif
+#endif /* WITH_BEAN */
