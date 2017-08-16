@@ -205,7 +205,6 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	struct conndata *co;
 	struct udata *ud = (struct udata *)nc->mgr->user_data;
 	size_t ml;	/* mb len */
-	bool gotrec = false;
 	struct mbuf *mb = (struct mbuf *)ud->mb;
 
 	/*
@@ -216,9 +215,12 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	 * add an alternate hash to it.
 	 */
 
-	// FIXME: ^^^^^ is that true?
+	/*
+	 * The principle here is that on EV_RECV we fill our own buffer (called `mb')
+	 * and clear out what we received. Then, on EV_POLL, we search throught the
+	 * buffer looking for our records (+....$) and process each individually.
+	 */
 
-	// fprintf(stderr, "EV_ %d\n", ev);
 	switch (ev) {
 		case MG_EV_POLL:
 
@@ -228,32 +230,29 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			 * done thus far from `mb' and await more data.
 			 */
 
-			// fprintf(stderr, "MB len=%zu, size=%zu\n", mb->len, mb->size);
 			for (ml = 0; ml < mb->len; ml++) {
 				if (mb->buf[ml] == '$') {
 					size_t nbytes = ml + 1;
-
-					write(2, mb->buf, nbytes);
-					write(2, "\n", 1);
 
 					if (ud->datalog) {
 						write(ud->datalog, mb->buf, nbytes);
 						write(ud->datalog, "\n", 1);
 					}
 
-
 					imei = process(ud, mb->buf, nbytes, nc);
 
-			if (gotrec && (imei != NULL)) {
-				if ((co = (struct conndata *)nc->user_data) != NULL) {
-					if (co->imei == NULL) {
-						co->imei = strdup(imei);
-						HASH_ADD_KEYPTR(hh_imei, conns_by_imei, co->imei, strlen(co->imei), co);
+					if (imei != NULL) {
+						if ((co = (struct conndata *)nc->user_data) != NULL) {
+							xlog(ud, "Found connection on socket %d: IP is %s: IMEI is %s\n", co->sock, co->client_ip, imei);
+							if (co->imei == NULL) {
+								co->imei = strdup(imei);
+								HASH_ADD_KEYPTR(hh_imei, conns_by_imei, co->imei, strlen(co->imei), co);
+							}
+						}
+						free(imei);
 					}
-				}
-				free(imei);
-			}
 
+					/* Clear what we've used from `mb' */
 					mbuf_remove(mb, nbytes);
 					break;
 				}
@@ -267,6 +266,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 				co = add_conn(nc->sock);
 				co->client_ip = strdup(buf);
 				co->nc = nc;
+				xlog(ud, "Adding connection on socket %d: IP is %s\n", nc->sock, co->client_ip);
 			}
 
 			nc->user_data = co;
@@ -290,9 +290,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
 		case MG_EV_CLOSE:
 			if ((co = (struct conndata *)nc->user_data) != NULL) {
-				xlog(ud, "Disconnected from %s IMEI <%s>\n",
+				xlog(ud, "Disconnected connection on socket %d: IP was %s, IMEI <%s>\n",
+					co->sock,
 					co->client_ip ? co->client_ip : "unknown",
 					co->imei ? co->imei : "");
+
 				pseudo_lwt(ud, co->imei);
 
 				delete_conn(co);
