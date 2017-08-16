@@ -1,6 +1,16 @@
 
 # Point BSC at the directory into which you've built beanstalk-client
-BSC=/Users/jpm/syncthing/tiggr/libs/beanstalk-client
+BSC=/usr/local/src/beanstalk-client
+
+# Optionally override make variables in a file called $(hostname).make
+#
+ifeq ($(host-name),)
+	host-name := $(shell hostname)
+endif
+LOCAL_CONF = $(wildcard $(host-name).make)
+
+-include $(LOCAL_CONF)
+
 BEANSTALK=yes
 #
 CC=gcc
