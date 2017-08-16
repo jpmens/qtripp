@@ -55,6 +55,7 @@ typedef struct config {
 	const char *extra_json;
 	const char *reporttopic;
 	const char *dumpdir;
+	const char *namesdir;
 } config;
 
 int ini_handler(void *cf, const char *section, const char *key, const char *val);

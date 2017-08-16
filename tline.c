@@ -31,6 +31,7 @@
 #ifdef WITH_BEAN
 # include "bean.h"
 #endif
+#include "iinfo.h"
 
 #include "models.h"
 #include "devices.h"
@@ -52,6 +53,7 @@ struct my_imeistat {
 	char key[18];
 	long reports;
 	time_t last_seen;
+	char *name;
 	UT_hash_handle hh;
 };
 static struct my_imeistat *imei_stats = NULL;
@@ -301,9 +303,11 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	imei_dup = strdup(imei);
 
 	struct _model *model = lookup_models(protov);
+	struct _iinfo *iinfo = lookup_iinfo(ud->cf->namesdir, imei);
 
-	xlog(ud, "+++ I=%s M=%s np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
+	xlog(ud, "+++ I=%s (%s) M=%s np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
 		imei,
+		(iinfo) ? iinfo->name : ".",
 		(model) ? model->desc : "unknown",
 		nparts, protov,
 		linecounter,

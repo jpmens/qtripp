@@ -22,6 +22,7 @@ OBJS=	util.o \
 	ini.o \
 	conf.o \
 	mongoose.o \
+	iinfo.o \
 	tline.o
 
 ifeq ($(BEANSTALK),yes)
@@ -41,10 +42,11 @@ qtripp: qtripp.o Makefile $(OBJS) $(LIBDEV)
 
 
 conf.o: conf.c conf.h udata.h
-tline.o: tline.c tline.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h bean.h
+tline.o: tline.c tline.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h bean.h iinfo.h
 qtripp.o: qtripp.c conf.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h tline.h
 util.o: util.c util.h json.h udata.h
 bean.o: bean.c udata.h
+iinfo.o: iinfo.c iinfo.o util.h
 
 .PHONY: libdev
 
