@@ -13,10 +13,12 @@ The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for
 
 ## features
 
+* configurable MQTT publish topics (device lookup)
 * extensible
 * copious debugging
-* ignore specific reports
-* configurable reports per/device and per/firmware basis
+* support for device reports with embedded segments (e.g. GTFRI/GTERI)
+* ignore specific device reports
+* configurable reports per/device and on a per/firmware basis
 * fast
 * extra JSON data can be merged in to data from devices
 * OwnTracks JSON support
@@ -24,10 +26,10 @@ The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for
 * list devices connected (console & MQTT)
 * statistics over MQTT
 * statistics dump including _subtype_ stats and _IMEI_ stats.
-* (pseudo-) LWT for devices
+* (pseudo-) LWT for devices (when a device disconnects, _qtripp_ publishes LWT)
 * support for 1-Wire temperature sensors (on GV65/GV65+)
 * raw data is copied to file for backup, replay, debugging, etc.
-* optional beanstalkd support (requires [beanstalk-client](https://github.com/deepfryed/beanstalk-client)) for mirroring. (A sample worker is provided.)
+* optional beanstalkd support (requires [beanstalk-client](https://github.com/deepfryed/beanstalk-client)) for mirroring. (sample workers are provided.)
 
 ```
 -t owntracks/qtripp/*/cmd -m list
