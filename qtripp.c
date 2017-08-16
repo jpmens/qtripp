@@ -243,7 +243,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
 					if (imei != NULL) {
 						if ((co = (struct conndata *)nc->user_data) != NULL) {
-							xlog(ud, "Found connection on socket %d: IP is %s: IMEI is %s\n", co->sock, co->client_ip, imei);
+							xlog(ud, "Found connection on socket %d: IP is %s: IMEI <%s>\n", co->sock, co->client_ip, imei);
 							if (co->imei == NULL) {
 								co->imei = strdup(imei);
 								HASH_ADD_KEYPTR(hh_imei, conns_by_imei, co->imei, strlen(co->imei), co);
