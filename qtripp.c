@@ -144,16 +144,25 @@ void print_conns(struct udata *ud)
 char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *nc)
 {
 	char *imei, *response = NULL;
+	struct mbuf mcopy;
 
-	buf[buflen] = 0;
-	// fprintf(stderr, "PROCESS[%s]\n", buf);
+	/* I have to turn mbuf into a string and must not modify it; copy  yes,
+	 * ineffective, but ok for now. I could, alternatively chop the $ here,
+	 * and replace by 0
+	 */
 
-	imei = handle_report(ud, buf, &response);
+	mbuf_init(&mcopy, buflen+16);
+
+	mbuf_append(&mcopy, buf, buflen);
+	mbuf_append(&mcopy, "\0\0", 2);
+
+	imei = handle_report(ud, mcopy.buf, &response);
 	if (response != NULL) {
 		xlog(ud, "Responding to terminal: %s\n", response);
 		mg_printf(nc, "%s", response);
 		free(response);
 	}
+	mbuf_free(&mcopy);
 	return (imei);
 }
 
@@ -195,8 +204,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	char buf[512];
 	struct conndata *co;
 	struct udata *ud = (struct udata *)nc->mgr->user_data;
-	size_t ml;	/* mrec len */
+	size_t ml;	/* mb len */
 	bool gotrec = false;
+	struct mbuf *mb = (struct mbuf *)ud->mb;
 
 	/*
 	 * On a new connection (EV_ACCEPT), add an an entry hashed by socket number
@@ -206,9 +216,48 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	 * add an alternate hash to it.
 	 */
 
+	// FIXME: ^^^^^ is that true?
+
+	// fprintf(stderr, "EV_ %d\n", ev);
 	switch (ev) {
 		case MG_EV_POLL:
-			// mbuf_remove(io, io->len);
+
+			/*
+			 * A record is +...$
+			 * Search for the '$', cut there, process, and remove what we've
+			 * done thus far from `mb' and await more data.
+			 */
+
+			// fprintf(stderr, "MB len=%zu, size=%zu\n", mb->len, mb->size);
+			for (ml = 0; ml < mb->len; ml++) {
+				if (mb->buf[ml] == '$') {
+					size_t nbytes = ml + 1;
+
+					write(2, mb->buf, nbytes);
+					write(2, "\n", 1);
+
+					if (ud->datalog) {
+						write(ud->datalog, mb->buf, nbytes);
+						write(ud->datalog, "\n", 1);
+					}
+
+
+					imei = process(ud, mb->buf, nbytes, nc);
+
+			if (gotrec && (imei != NULL)) {
+				if ((co = (struct conndata *)nc->user_data) != NULL) {
+					if (co->imei == NULL) {
+						co->imei = strdup(imei);
+						HASH_ADD_KEYPTR(hh_imei, conns_by_imei, co->imei, strlen(co->imei), co);
+					}
+				}
+				free(imei);
+			}
+
+					mbuf_remove(mb, nbytes);
+					break;
+				}
+			}
 			break;
 
 		case MG_EV_ACCEPT:
@@ -222,52 +271,23 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
 			nc->user_data = co;
 			break;
-			
+
 		case MG_EV_RECV:
+
+			if (ud->cf->debughex) {
+				mg_hexdump_connection(nc, ud->cf->debughex, io->buf, io->len, ev);
+			}
+
 			/*
-			 * A record is +...$\n
-			 * Search for the '$', cut there, process, and remove what we've
-			 * done thus far from the mbuf and await more data.
+			 * shove the bytes into our `mb' buffer, and return, after
+			 * clearing our working buffer;
+			 * we do the real work during POLL.
 			 */
 
-			// FIXME: ensure we protect some max length in case no $
-			//
-			fprintf(stderr, "Chunk: %zu/%zu\n", io->len, io->size);
-			for (ml = 0; ml < io->len; ml++) {
-				if (io->buf[ml] == '$') {
-
-					fprintf(stderr, "Char is $ and then %d\n", io->buf[ml + 1]);
-					if (ud->cf->debughex) {
-						mg_hexdump_connection(nc, ud->cf->debughex, io->buf,ml+1 , ev);
-					}
-					if (ud->datalog) {
-						write(ud->datalog, io->buf, ml+1);
-						write(ud->datalog, "\n", 1);
-					}
-
-					// FIXME: I think I'll have to chop at the $
-					// later on I can trust this is a 0-terminated string
-					// and forget about checking for the $
-
-					io->buf[ml+1] = 0;
-					imei = process(ud, io->buf, ml + 1, nc);
-
-					mbuf_remove(io, ml+1);
-
-					gotrec = true;
-				}
-			}
-
-			if (gotrec && (imei != NULL)) {
-				if ((co = (struct conndata *)nc->user_data) != NULL) {
-					if (co->imei == NULL) {
-						co->imei = strdup(imei);
-						HASH_ADD_KEYPTR(hh_imei, conns_by_imei, co->imei, strlen(co->imei), co);
-					}
-				}
-				free(imei);
-			}
+			mbuf_append(mb, io->buf, io->len);
+			mbuf_remove(io, io->len);
 			break;
+
 		case MG_EV_CLOSE:
 			if ((co = (struct conndata *)nc->user_data) != NULL) {
 				xlog(ud, "Disconnected from %s IMEI <%s>\n",
@@ -422,6 +442,11 @@ int main(int argc, char **argv)
 	memset(&udata, 0, sizeof(udata));
         ud->debugging           = true;
 	ud->logfp		= fopen(cf.logfile, "a");
+
+	struct mbuf mbi;
+	udata.mb = (struct mbuf *)&mbi;
+	mbuf_init(udata.mb, 48);
+
 
         load_models();
         load_reports();

@@ -1,6 +1,6 @@
 
 # Point BSC at the directory into which you've built beanstalk-client
-BSC=/Users/jpm/tmp/python/beanstalk/c/beanstalk-client
+BSC=/Users/jpm/syncthing/tiggr/libs/beanstalk-client
 BEANSTALK=yes
 #
 CC=gcc
