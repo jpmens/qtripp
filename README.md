@@ -29,12 +29,32 @@ The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for
 * (pseudo-) LWT for devices (when a device disconnects, _qtripp_ publishes LWT)
 * support for 1-Wire temperature sensors (on GV65/GV65+)
 * raw data is copied to file for backup, replay, debugging, etc.
-* optional beanstalkd support (requires [beanstalk-client](https://github.com/deepfryed/beanstalk-client)) for mirroring. (sample workers are provided.)
+* optional beanstalkd support (requires [beanstalk-client](https://github.com/deepfryed/beanstalk-client)) for mirroring. (sample workers are provided.) beanstalk host/port/tube are configurable; payload is OwnTracks JSON enriched with a field `imei` and a `raw_line` field which contains original ASCII device data (`+RESP:GT ... $`)
 
 ```
 -t owntracks/qtripp/*/cmd -m list
 -t owntracks/qtripp/*/cmd -m stats
 -t owntracks/qtripp/*/cmd -m dump
+```
+
+## logging
+
+
+```
+2017-08-16T17:25:55Z 1502904355 +++ I=863123456789090 (JP car) M=GV65 np=200 P=310603 C=2 T=RESP:GTERI (scheduled report) LINE=+RESP:GTERI,310603,8...
+---------+---------- ----+-----     +---------------- -+------ +----- +----- +------- +-- +----------  +----------------  +-------------------------
+         |               |          |                  |       |      |      |        |   |            |                  |
+         |               |          |                  |       |      |      |        |   |            |                  +-----------------  raw line received
+         |               |          |                  |       |      |      |        |   |            +------------------------------------  (description of T=)
+         |               |          |                  |       |      |      |        |   +-------------------------------------------------  T=type/subtype
+         |               |          |                  |       |      |      |        +-----------------------------------------------------  C=counter (total reports handled so far)
+         |               |          |                  |       |      |      +--------------------------------------------------------------  P=protov (proto, maj/min)
+         |               |          |                  |       |      +---------------------------------------------------------------------  np=number of parts (csv)
+         |               |          |                  |       +----------------------------------------------------------------------------  M=model (from protov)
+         |               |          |                  +------------------------------------------------------------------------------------  (name)
+         |               |          +-------------------------------------------------------------------------------------------------------  I=<imei>
+         |               +------------------------------------------------------------------------------------------------------------------  epoch
+         +----------------------------------------------------------------------------------------------------------------------------------  date/timestamp ISO (Zulu)
 ```
 
 ## beanstalk
