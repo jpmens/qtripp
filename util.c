@@ -98,10 +98,8 @@ char *slurp_file(char *filename, int fold_newlines)
 		return (NULL);
 	}
 	while ((ch = fgetc(fp)) != EOF) {
-		if (ch == '\n') {
-			if (!fold_newlines)
-				*bp++ = ch;
-		} else *bp++ = ch;
+		if (ch != '\n' || !fold_newlines)
+			*bp++ = ch;
 	}
 	*bp = 0;
 	fclose(fp);
