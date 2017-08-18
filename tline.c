@@ -227,9 +227,33 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 	}
 }
 
+/*
+ * A connection has been closed, probably by a device. Publish a
+ * pseudo LWT for this device. (Pseudo b/c we have the central
+ * connection to a broker and are going to pretend the device
+ * actually has that.)
+ */
+
+void pseudo_lwt(struct udata *ud, char *imei)
+{
+	JsonNode *o = json_mkobject();
+
+	if (!imei || !*imei)
+		return;
+
+	json_append_member(o, "_type", json_mkstring("lwt"));
+	json_append_member(o, "imei", json_mkstring(imei));
+	json_append_member(o, "tst", json_mknumber(time(0)));
+
+	transmit_json(ud, imei, o);
+#ifdef WITH_BEAN
+	bean_put(ud, o);
+#endif
+	json_delete(o);
+}
+
 #define GET_D(n)	((n <= nparts && *parts[n]) ? atof(parts[n]) : NAN)
 #define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
-
 
 /*
  * `line' contains a line of text from a tracker. Do what is necessary,

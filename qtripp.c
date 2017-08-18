@@ -166,37 +166,6 @@ char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *
 	return (imei);
 }
 
-
-/*
- * A connection has been closed, probably by a device. Publish a
- * pseudo LWT for this device. (Pseudo b/c we have the central
- * connection to a broker and are going to pretend the device
- * actually has that.)
- */
-
-void pseudo_lwt(struct udata *ud, char *imei)
-{
-	JsonNode *o = json_mkobject();
-	char *js, *topic;
-
-	if (!imei || !*imei)
-		return;
-
-	if ((topic = device_to_topic(ud->cf, imei)) != NULL) {
-		json_append_member(o, "_type", json_mkstring("lwt"));
-		json_append_member(o, "imei", json_mkstring(imei));
-		json_append_member(o, "tst", json_mknumber(time(0)));
-
-		xlog(ud, "Sending LWT for %s to %s\n", imei, topic);
-
-		if ((js = json_stringify(o, NULL)) != NULL) {
-			pub(ud, topic, js, false);
-			free(js);
-		}
-	}
-	json_delete(o);
-}
-
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 {
 	struct mbuf *io = &nc->recv_mbuf;
