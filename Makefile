@@ -46,7 +46,7 @@ tline.o: tline.c tline.h util.h json.h ini.h devices/devices.h devices/models.h 
 qtripp.o: qtripp.c conf.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h tline.h
 util.o: util.c util.h json.h udata.h
 bean.o: bean.c udata.h
-iinfo.o: iinfo.c iinfo.o util.h
+iinfo.o: iinfo.c iinfo.h util.h
 
 .PHONY: libdev
 
