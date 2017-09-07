@@ -483,6 +483,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "cog", json_mknumber(atoi(s)));
 		}
 
+		json_append_member(obj, "t", json_mkstring(subtype));
+
 		if (!isnan(lastlat)) {
 			double meters = haversine_dist(lastlat, lastlon, lat, lon);
 
