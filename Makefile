@@ -11,7 +11,7 @@ LOCAL_CONF = $(wildcard $(host-name).make)
 
 -include $(LOCAL_CONF)
 
-BEANSTALK=yes
+BEANSTALK=no
 #
 CC=gcc
 CFLAGS= -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
