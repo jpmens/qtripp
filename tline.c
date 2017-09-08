@@ -452,8 +452,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		obj = json_mkobject();
-		json_append_member(obj, "lat", json_mknumber(lat));
-		json_append_member(obj, "lon", json_mknumber(lon));
+		json_append_member(obj, "lat", json_mkdouble(lat, 9));
+		json_append_member(obj, "lon", json_mkdouble(lon, 9));
 
 		if ((s = GET_S(pos + dp->utc)) != NULL) {
 			time_t epoch;
@@ -499,7 +499,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				continue;
 			}
 
-			json_append_member(obj, "meters", json_mknumber(meters));
+			json_append_member(obj, "meters", json_mkdouble(meters, 6));
 		}
 		lastlat = lat;
 		lastlon = lon;

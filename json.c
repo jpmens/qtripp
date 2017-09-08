@@ -342,6 +342,7 @@ static void emit_value              (SB *out, const JsonNode *node);
 static void emit_value_indented     (SB *out, const JsonNode *node, const char *space, int indent_level);
 static void emit_string             (SB *out, const char *str);
 static void emit_number             (SB *out, double num);
+static void emit_double             (SB *out, double num, int width);
 static void emit_array              (SB *out, const JsonNode *array);
 static void emit_array_indented     (SB *out, const JsonNode *array, const char *space, int indent_level);
 static void emit_object             (SB *out, const JsonNode *object);
@@ -520,6 +521,14 @@ JsonNode *json_mknumber(double n)
 {
 	JsonNode *node = mknode(JSON_NUMBER);
 	node->number_ = n;
+	return node;
+}
+
+JsonNode *json_mkdouble(double n, int width)
+{
+	JsonNode *node = mknode(JSON_DOUBLE);
+	node->double_ = n;
+	node->width = width;
 	return node;
 }
 
@@ -987,6 +996,9 @@ static void emit_value(SB *out, const JsonNode *node)
 		case JSON_NUMBER:
 			emit_number(out, node->number_);
 			break;
+		case JSON_DOUBLE:
+			emit_double(out, node->double_, node->width);
+			break;
 		case JSON_ARRAY:
 			emit_array(out, node);
 			break;
@@ -1013,6 +1025,9 @@ void emit_value_indented(SB *out, const JsonNode *node, const char *space, int i
 			break;
 		case JSON_NUMBER:
 			emit_number(out, node->number_);
+			break;
+		case JSON_DOUBLE:
+			emit_double(out, node->double_, node->width);
 			break;
 		case JSON_ARRAY:
 			emit_array_indented(out, node, space, indent_level);
@@ -1232,6 +1247,18 @@ static void emit_number(SB *out, double num)
 	 */
 	char buf[64];
 	sprintf(buf, "%.16g", num);
+
+	if (number_is_valid(buf))
+		sb_puts(out, buf);
+	else
+		sb_puts(out, "null");
+}
+
+static void emit_double(SB *out, double num, int width) // JPM
+{
+	char buf[64], fmt[64];
+	sprintf(fmt, "%%.%dg", width);
+	sprintf(buf, fmt, num);
 	
 	if (number_is_valid(buf))
 		sb_puts(out, buf);

@@ -32,6 +32,7 @@ typedef enum {
 	JSON_BOOL,
 	JSON_STRING,
 	JSON_NUMBER,
+	JSON_DOUBLE,	/* JPM */
 	JSON_ARRAY,
 	JSON_OBJECT,
 } JsonTag;
@@ -57,6 +58,9 @@ struct JsonNode
 		
 		/* JSON_NUMBER */
 		double number_;
+
+		/* JSON_DOUBLE */
+		double double_;
 		
 		/* JSON_ARRAY */
 		/* JSON_OBJECT */
@@ -64,6 +68,8 @@ struct JsonNode
 			JsonNode *head, *tail;
 		} children;
 	};
+	/* only if tag is double_ */
+	int width;
 };
 
 /*** Encoding, decoding, and validation ***/
@@ -94,6 +100,7 @@ JsonNode *json_mknull(void);
 JsonNode *json_mkbool(bool b);
 JsonNode *json_mkstring(const char *s);
 JsonNode *json_mknumber(double n);
+JsonNode *json_mkdouble(double n, int width);
 JsonNode *json_mkarray(void);
 JsonNode *json_mkobject(void);
 
