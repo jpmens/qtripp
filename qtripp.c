@@ -264,7 +264,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 					co->client_ip ? co->client_ip : "unknown",
 					co->imei ? co->imei : "");
 
-				pseudo_lwt(ud, co->imei);
+				if (strcmp(co->imei, "123456789012345") != 0) {
+					pseudo_lwt(ud, co->imei);
+				}
 
 				delete_conn(co);
 				nc->user_data = NULL;
