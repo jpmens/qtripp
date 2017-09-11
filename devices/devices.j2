@@ -37,7 +37,8 @@ struct _device devices[] = {
 		{% set lat =  dev['lat'] | default(-1) -%}
 		{% set vel =  dev['vel'] | default(-1) -%}
 		{% set dist = dev['dist'] | default(-1) %}
-    { "{{key}}", {{num}}, {{imei}}, {{acc}}, {{cog}}, {{alt}}, {{vel}}, {{lon}}, {{lat}}, {{utc}}, {{dist}} },
+		{% set add = dev['add'] | default(-1) %}
+    { "{{key}}", {{num}}, {{imei}}, {{acc}}, {{cog}}, {{alt}}, {{vel}}, {{lon}}, {{lat}}, {{utc}}, {{dist}}, {{add}} },
 {%      endfor %}
 {%   endfor %}
 //

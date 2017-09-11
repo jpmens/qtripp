@@ -34,6 +34,7 @@ struct _device {
 	int lat;
 	int utc;
 	int dist;
+	int add;
 
         UT_hash_handle hh;
 };

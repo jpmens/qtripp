@@ -369,6 +369,14 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	JsonNode *jmerge = json_mkobject(), *jm;
 
+	/* "add" is additional data, e.g. GTSWG */
+	if (dp->add > 0) {
+		double d = GET_D(dp->add);
+		if (!isnan(d)) {
+			json_append_member(jmerge, "add", json_mknumber(d));
+		}
+	}
+
 	if (!strcmp(subtype, "GTERI")) {
 		/*
 		 * According to GV65, page 35, et.al (search for "Eri mask")

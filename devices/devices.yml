@@ -96,6 +96,8 @@
     GTDIS: status change of digital input detected
     GTIOB: I/O combination set/detected
     GTSOS: digital input port triggered SOS
+    GTGCR: Location as Center of Geo-Fence
+    GTSWG: Switched on or off Geo-Fence 0 via function key
 #
 #
 # GV500. p84
@@ -111,6 +113,7 @@
   lat: 13
   utc: 14
   dist: 20
+  add: 6
 - subtypes: [ GTSTT, GTIGN, GTIGF ]
   versions: [ "0701" ]
   imei: 2
@@ -121,7 +124,8 @@
   lon: 10
   lat: 11
   utc: 12
-- subtypes: [ GTOPN, GTOPF ]
+  add: 5
+- subtypes: [ GTOPN, GTOPF, GTMPN, GTMPF, GTBTC, GTCRA ]
   versions: [ "0701" ]
   imei: 2
   acc: 5
@@ -175,6 +179,7 @@
   lat: 12
   utc: 13
   dist: 19
+  add: 5
 - subtypes: [ GTIDA, GTERI ]  #p111 serial port connected with peripheral
   versions: [ "0000", "0603" ]
   imei: 2
@@ -207,3 +212,29 @@
   lon: 9
   lat: 10
   utc: 11
+  add: 4
+
+- subtypes: [ GTGCR ]
+  versions: [ "0600", "0702" ]
+  imei: 2
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+
+# note here we use parameter `add` to indicate we want that field in the JSON
+#
+- subtypes: [ GTSWG ]
+  versions: [ "0600", "0702" ]
+  imei: 2
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  add: 4
