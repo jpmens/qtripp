@@ -467,7 +467,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			time_t epoch;
 
 			if (str_time_to_secs(s, &epoch) != 1) {
-				printf("Cannot convert time\n");
+				xlog(ud, "Cannot convert time from [%s]\n", s);
 				continue;
 			}
 			json_append_member(obj, "tst", json_mknumber(epoch));
