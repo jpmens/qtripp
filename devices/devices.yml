@@ -37,6 +37,8 @@
 - models:
     0F: GV55
     10: GV55LITE
+    2C: GL300W
+    30: GL300N
     31: GV65
     36: GV500
     38: GV65+
@@ -54,6 +56,8 @@
     GTOPN: connecting with vehicle through OBDII interface
     GTOPF: disconnecting with vehicle through OBDII interface
     GTBPN: battery backup connected
+    GTEPN: connected external power supply
+    GTEPF: disconnected external power supply
     GTTOW: motion sensor detects tow
     GTCFG: global parameter configuration
     GTGEO: entering/exiting Geo fence
@@ -183,8 +187,8 @@
   lat: 13
   utc: 14
   dist: 20
-- subtypes: [ GTBTC, GTMPN, GTCRA, GTMPF, GTBPF, GTJDR ]
-  versions: [ "0000", "0603" ]
+- subtypes: [ GTBTC, GTMPN, GTCRA, GTMPF, GTBPF, GTJDR, GTEPN, GTEPF ]
+  versions: [ "0000", "0600", "0603", "0702" ]
   imei: 2
   acc: 4
   vel: 5
