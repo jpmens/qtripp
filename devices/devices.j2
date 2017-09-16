@@ -36,9 +36,11 @@ struct _device devices[] = {
 		{% set lon =  dev['lon'] | default(-1) -%}
 		{% set lat =  dev['lat'] | default(-1) -%}
 		{% set vel =  dev['vel'] | default(-1) -%}
-		{% set dist = dev['dist'] | default(-1) %}
+		{% set odometer = dev['odometer'] | default(-1) %}
+		{% set batt = dev['batt'] | default(-1) %}
 		{% set add = dev['add'] | default(-1) %}
-    { "{{key}}", {{num}}, {{imei}}, {{acc}}, {{cog}}, {{alt}}, {{vel}}, {{lon}}, {{lat}}, {{utc}}, {{dist}}, {{add}} },
+		{% set add_name = dev['add_name'] | default("NULL") %}
+    { "{{key}}", {{num}}, {{imei}}, {{acc}}, {{cog}}, {{alt}}, {{vel}}, {{lon}}, {{lat}}, {{utc}}, {{odometer}}, {{batt}}, {{add}}, {{add_name}} },
 {%      endfor %}
 {%   endfor %}
 //

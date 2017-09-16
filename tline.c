@@ -396,7 +396,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		//
 		if (eribits & 0x0002) {
 #define D_UART (6)
-			int offset = ((nreports - 1) * 12) + dp->dist + D_UART;
+			int offset = ((nreports - 1) * 12) + dp->odometer + D_UART;
 			char *val = GET_S(offset);
 			int uart_type  = atoi(val && *val ? val : "0");
 			xlog(ud, "UART Type: %d: %s temperature\n",
@@ -419,10 +419,16 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	 */
 
 	if (nreports > 0) {
-		if (dp->dist > 0) {
-			double d = GET_D(((nreports - 1) * 12) + dp->dist);
+		if (dp->odometer > 0) {
+			double d = GET_D(((nreports - 1) * 12) + dp->odometer);
 			if (!isnan(d)) {
 				json_append_member(jmerge, "odometer", json_mknumber(d));
+			}
+		}
+		if (dp->batt > 0) {
+			double d = GET_D(((nreports - 1) * 12) + dp->batt);
+			if (!isnan(d)) {
+				json_append_member(jmerge, "batt", json_mknumber(d));
 			}
 		}
 	}

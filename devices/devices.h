@@ -33,8 +33,10 @@ struct _device {
 	int lon;
 	int lat;
 	int utc;
-	int dist;
+	int odometer;
+	int batt;
 	int add;
+	char *add_name;
 
         UT_hash_handle hh;
 };

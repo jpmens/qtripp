@@ -112,7 +112,8 @@
   lon: 12
   lat: 13
   utc: 14
-  dist: 20
+  odometer: 20
+  batt: 21
   add: 6
 - subtypes: [ GTSTT, GTIGN, GTIGF ]
   versions: [ "0701" ]
@@ -168,7 +169,7 @@
 #
 # GV65, p105
 - subtypes: [ GTTOW, GTDIS, GTIOB, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL, GTHBM, GTFRI, GTAIS, GTGEO, GTEPS ]
-  versions: [ "0000", "0201", "0603" ]
+  versions: [ "0000", "0201", "0603", "0101" ]
   imei: 2
   number: 6
   acc: 7
@@ -178,8 +179,25 @@
   lon: 11
   lat: 12
   utc: 13
-  dist: 19
+  odometer: 19
+  batt: 23
   add: 5
+
+- subtypes: [ GTFRI ]  # added for GL300W, GL300 as per ckrey on 2017-09-13
+  versions: [ "0600", "0702", "0800" ]
+  imei: 2
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  odometer: 18
+  batt: 19
+  add: 5
+
 - subtypes: [ GTIDA, GTERI ]  #p111 serial port connected with peripheral
   versions: [ "0000", "0603" ]
   imei: 2
@@ -191,9 +209,10 @@
   lon: 12
   lat: 13
   utc: 14
-  dist: 20
+  odometer: 20
+  batt: 23
 - subtypes: [ GTBTC, GTMPN, GTCRA, GTMPF, GTBPF, GTJDR, GTEPN, GTEPF ]
-  versions: [ "0000", "0600", "0603", "0702" ]
+  versions: [ "0000", "0600", "0603", "0702", "0800" ]
   imei: 2
   acc: 4
   vel: 5
@@ -215,7 +234,7 @@
   add: 4
 
 - subtypes: [ GTGCR ]
-  versions: [ "0600", "0702" ]
+  versions: [ "0600" ]
   imei: 2
   acc: 7
   vel: 8
@@ -223,12 +242,23 @@
   alt: 10
   lon: 11
   lat: 12
-  utc: 14
+  utc: 13
+
+- subtypes: [ GTGCR ]
+  versions: [ "0702", "0800" ]
+  imei: 2
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
 
 # note here we use parameter `add` to indicate we want that field in the JSON
 #
 - subtypes: [ GTSWG ]
-  versions: [ "0600", "0702" ]
+  versions: [ "0600", "0702", "0800" ]
   imei: 2
   acc: 5
   vel: 6
