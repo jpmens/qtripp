@@ -420,10 +420,9 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	if (nreports > 0) {
 		if (dp->odometer > 0) {
-			double d = GET_D(((nreports - 1) * 12) + dp->odometer);
-			if (!isnan(d)) {
-				printf("ODO-=%lf\n", d);
-				json_append_member(jmerge, "odometer", json_mkdouble(d, 1));
+			double odo = GET_D(((nreports - 1) * 12) + dp->odometer);
+			if (!isnan(odo)) {
+				json_append_member(jmerge, "odometer", json_mkdouble(odo, 1));
 			}
 		}
 		if (dp->batt > 0) {
@@ -525,6 +524,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				json_append_member(obj, jm->key, json_mkstring(jm->string_));
 			else if (jm->tag == JSON_NUMBER)
 				json_append_member(obj, jm->key, json_mknumber(jm->number_));
+			else if (jm->tag == JSON_DOUBLE)
+				json_append_member(obj, jm->key, json_mkdouble(jm->number_, jm->width));
 			else if (jm->tag == JSON_BOOL)
 				json_append_member(obj, jm->key, json_mkbool(jm->bool_));
 		}
