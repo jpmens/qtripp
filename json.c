@@ -1257,8 +1257,11 @@ static void emit_number(SB *out, double num)
 static void emit_double(SB *out, double num, int width) // JPM
 {
 	char buf[64], fmt[64];
-	sprintf(fmt, "%%.%dg", width);
+	// sprintf(fmt, "%%.%dg", width);
+	sprintf(fmt, "%%.%dlf", width);
 	sprintf(buf, fmt, num);
+
+	printf("fmt=[%s]\nbuf=[%s]\n", fmt, buf); fflush(stdout);
 	
 	if (number_is_valid(buf))
 		sb_puts(out, buf);

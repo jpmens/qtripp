@@ -422,7 +422,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		if (dp->odometer > 0) {
 			double d = GET_D(((nreports - 1) * 12) + dp->odometer);
 			if (!isnan(d)) {
-				json_append_member(jmerge, "odometer", json_mknumber(d));
+				printf("ODO-=%lf\n", d);
+				json_append_member(jmerge, "odometer", json_mkdouble(d, 1));
 			}
 		}
 		if (dp->batt > 0) {
@@ -466,8 +467,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		obj = json_mkobject();
-		json_append_member(obj, "lat", json_mkdouble(lat, 9));
-		json_append_member(obj, "lon", json_mkdouble(lon, 9));
+		json_append_member(obj, "lat", json_mkdouble(lat, 6));
+		json_append_member(obj, "lon", json_mkdouble(lon, 6));
 
 		if ((s = GET_S(pos + dp->utc)) != NULL) {
 			time_t epoch;
@@ -513,7 +514,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				continue;
 			}
 
-			json_append_member(obj, "meters", json_mkdouble(meters, 6));
+			json_append_member(obj, "meters", json_mknumber(meters));
 		}
 		lastlat = lat;
 		lastlon = lon;
