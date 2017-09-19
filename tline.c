@@ -513,7 +513,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				continue;
 			}
 
-			json_append_member(obj, "meters", json_mknumber(meters));
+			json_append_member(obj, "meters", json_mkdouble(meters, 1));
 		}
 		lastlat = lat;
 		lastlon = lon;
