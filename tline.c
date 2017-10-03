@@ -320,7 +320,10 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	if (subtype_ignored) {
 		xlog(ud, "Ignoring %s: %s (%s)\n",
-			subtype, ip->reason, rp->desc ? rp->desc : "unknown report type");
+			(*subtype) ? subtype : "<nil>",
+			(ip->reason && *ip->reason) ? ip->reason : "<nil>",
+			(rp && rp->desc && *rp->desc) ? rp->desc : "unknown report type");
+		xlog(ud, "Ignored line is: %s\n", line);
 		goto finish;
 	}
 
