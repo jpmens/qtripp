@@ -323,7 +323,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			(*subtype) ? subtype : "<nil>",
 			(ip->reason && *ip->reason) ? ip->reason : "<nil>",
 			(rp && rp->desc && *rp->desc) ? rp->desc : "unknown report type");
-		xlog(ud, "Ignored line is: %s\n", line);
+		xlog(ud, "+++ I=%s Ignored LINE=%s\n", imei, line);
 		goto finish;
 	}
 
