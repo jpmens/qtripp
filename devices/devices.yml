@@ -101,8 +101,8 @@
 #
 #
 # GV500. p84
-- subtypes: [ GTTOW, GTGEO, GTSPD, GTRTL, GTDOG, GTIGL, GTHBM, GTFRI, GTEPS ]
-  versions: [ "0701" ]
+- subtypes: [ GTTOW, GTGEO, GTSPD, GTRTL, GTDOG, GTIGL, GTHBM ]
+  versions: [ "0701", "0801" ]
   imei: 2
   number: 7
   acc: 8
@@ -113,10 +113,23 @@
   lat: 13
   utc: 14
   odometer: 20
-  batt: 21
+  add: 6
+- subtypes: [ GTFRI, GTEPS ]
+  versions: [ "0701", "0801" ]
+  imei: 2
+  number: 7
+  acc: 8
+  vel: 9
+  cog: 10
+  alt: 11
+  lon: 12
+  lat: 13
+  utc: 14
+  odometer: 20
+  batt: 24
   add: 6
 - subtypes: [ GTSTT, GTIGN, GTIGF ]
-  versions: [ "0701" ]
+  versions: [ "0701", "0801" ]
   imei: 2
   acc: 6
   vel: 7
@@ -127,7 +140,7 @@
   utc: 12
   add: 5
 - subtypes: [ GTOPN, GTOPF, GTMPN, GTMPF, GTBTC, GTCRA ]
-  versions: [ "0701" ]
+  versions: [ "0701", "0801" ]
   imei: 2
   acc: 5
   vel: 6
@@ -138,7 +151,7 @@
   utc: 11
 
 - subtypes: [ GTIDN, GTSTR, GTSTP, GTSLP, GTIDF ]
-  versions: [ "0701" ]
+  versions: [ "0701", "0801" ]
   imei: 2
   acc: 7
   vel: 8
@@ -148,7 +161,7 @@
   lat: 12
   utc: 13
 - subtypes: [ GTGSS ]
-  versions: [ "0701" ]
+  versions: [ "0701", "0801" ]
   imei: 2
   acc: 9
   vel: 10
