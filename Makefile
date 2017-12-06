@@ -13,7 +13,7 @@ LOCAL_CONF = $(wildcard $(host-name).make)
 
 BEANSTALK=no
 #
-CC=gcc
+CC=gcc -g
 CFLAGS= -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
 LDFLAGS=-L /usr/local/lib -lmosquitto -lm
 
