@@ -259,12 +259,14 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
 		case MG_EV_CLOSE:
 			if ((co = (struct conndata *)nc->user_data) != NULL) {
-				xlog(ud, "Disconnected connection on socket %d: IP was %s, IMEI <%s>\n",
-					co->sock,
-					co->client_ip ? co->client_ip : "unknown",
-					co->imei ? co->imei : "");
+				if (co->imei) {
+					xlog(ud, "Disconnected connection on socket %d: IP was %s, IMEI <%s>\n",
+						co->sock,
+						co->client_ip ? co->client_ip : "unknown",
+						co->imei ? co->imei : "");
+				}
 
-				if (strcmp(co->imei, "123456789012345") != 0) {
+				if (co->imei && strcmp(co->imei, "123456789012345") != 0) {
 					pseudo_lwt(ud, co->imei);
 				}
 
