@@ -279,6 +279,15 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	++linecounter;
 
+	if (*line == '*') {
+		// xlog(ud, "Control: %s\n", line);
+
+		if (!strncmp(line, "*PING", 5)) {
+			*response = strdup("*PONG");
+		}
+		return (NULL);
+	}
+
 	if ((parts = clean_split(ud, line, &nparts)) == NULL) {
 		xlog(ud, "Cannot split line from csv: %s\n", line);
 		return (NULL);
