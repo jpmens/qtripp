@@ -514,6 +514,19 @@ int main(int argc, char **argv)
 		udata.datalog	= open(cf.datalog, O_WRONLY | O_APPEND | O_CREAT, 0666);
 	}
 
+	udata.cf  = &cf;
+
+	if (argc == 2) {
+		FILE *fp = fopen(argv[1], "r");
+
+		if (fp == NULL) {
+			perror(argv[1]);
+			exit(3);
+		}
+		handle_file_reports(ud, fp);
+		exit(0);
+	}
+
 	mg_mgr_init(&mgr, NULL);
 
 	memset(&bind_opts, 0, sizeof(bind_opts));
@@ -535,7 +548,6 @@ int main(int argc, char **argv)
 
 
 	udata.mgr = &mgr;
-	udata.cf  = &cf;
 	mgr.user_data = &udata; // experiment
 
 #if 0

@@ -570,6 +570,8 @@ int handle_file_reports(struct udata *ud, FILE *fp)
 		if (*line == '#' || *line == '\n')
 			continue;
 
+		line[strcspn(line, "\r\n")] = '\0';
+
 		handle_report(ud, line, &response);
 	}
 	return (0);
