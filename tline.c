@@ -54,6 +54,7 @@ struct my_imeistat {
 	long reports;
 	time_t last_seen;
 	char *name;
+	char *last_json;	/* JSON string of last published position */
 	UT_hash_handle hh;
 };
 static struct my_imeistat *imei_stats = NULL;
@@ -88,6 +89,34 @@ static void imei_incr(char *imei, int reports)
 		is->reports	+= reports;
 		// printf("---------------------- repl %d\n", reports);
 	}
+}
+
+/*
+ * If last_json is not null, store it for imei, else return it
+ */
+
+static char *imei_last_json(char *imei, char *last_json)
+{
+	struct my_imeistat *is;
+	char *lj = NULL;
+
+	HASH_FIND_STR(imei_stats, imei, is);
+	if (!is) {
+		is = (struct my_imeistat *)malloc(sizeof(struct my_imeistat));
+		strncpy(is->key, imei, 16);
+		is->last_seen	= time(0);
+		is->reports	= 0;
+		lj = is->last_json	= strdup(last_json);
+		HASH_ADD_STR(imei_stats, key, is);
+	} else {
+		if (last_json == NULL) {
+			lj = is->last_json;
+		} else {
+			free(is->last_json);
+			lj = is->last_json	= strdup(last_json);
+		}
+	}
+	return (lj);
 }
 
 static void stat_incr(char *subtype, char *protov, bool ig)
@@ -217,8 +246,20 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 	}
 
 	if ((js = json_encode(obj)) != NULL) {
+		JsonNode *j;
+
 		xlog(ud, "PUBLISH: %s %s\n", topic, js);
 		pub(ud, topic, js, true);
+
+		/* We have a full JSON string. Is this a type location? If so, store it
+		 * in IMEI cache for using later on upon heartbeat (HBD).
+		 */
+
+		if ((j = json_find_member(obj, "_type")) != NULL) {
+			if (j->tag == JSON_STRING && !strcmp(j->string_, "location")) {
+				imei_last_json(imei, js);
+			}
+		}
 
 //		if (ud->cocorun) mg_printf(ud->coco, "%s", js);	// FIXME remove
 //		fprintf(stderr, "@@@@@@@@@ %d\n", ud->coco->sock);
@@ -355,8 +396,32 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		char rr[BUFSIZ];
 
 		if (!strcmp(subtype, "GTHBD")) {
+			char *js;
+
 			snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
 			*response = strdup(rr);
+
+			/* If we have a "last_json" for this IMEI, obtain it from cache and
+			 * modify it to replace "t:" with a "p:ing" and update the tst to
+			 * now(). Publish to MQTT in order to pass the heartbeat along to MQTT
+			 * with the last-known good values.
+			 */
+
+			if ((js = imei_last_json(imei, NULL)) != NULL) {
+				JsonNode *obj, *j;
+
+				if ((obj = json_decode(js)) != NULL) {
+					if ((j = json_find_member(obj, "t")) != NULL) {
+						json_remove_from_parent(j);
+						json_append_member(obj, "t", json_mkstring("p"));
+					}
+					if ((j = json_find_member(obj, "tst")) != NULL) {
+						j->number_ = time(0);
+						transmit_json(ud, imei, obj);
+					}
+					json_delete(obj);
+				}
+			}
 		}
 		goto finish;
 	}
@@ -543,6 +608,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		transmit_json(ud, imei, obj);
+
+
 #ifdef WITH_BEAN
 		json_append_member(obj, "imei", json_mkstring(imei));
 		json_append_member(obj, "raw_line", json_mkstring(line));
