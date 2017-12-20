@@ -106,7 +106,7 @@ static char *imei_last_json(char *imei, char *last_json)
 		strncpy(is->key, imei, 16);
 		is->last_seen	= time(0);
 		is->reports	= 0;
-		lj = is->last_json	= strdup(last_json);
+		lj = is->last_json	= (last_json) ? strdup(last_json) : NULL;
 		HASH_ADD_STR(imei_stats, key, is);
 	} else {
 		if (last_json == NULL) {
