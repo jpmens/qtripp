@@ -560,7 +560,40 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		json_append_member(obj, "_type", json_mkstring("location"));
 
 		if ((s = GET_S(pos + dp->acc)) != NULL) {
-			json_append_member(obj, "acc", json_mknumber(atoi(s)));
+
+			// Converting the HDOP value to accuracy in +- meters
+                        // There is no formula, so we use an estimate based on the occurances of the HDOP values:
+			// $ grep GTFRI data-louie.log | cut -d ',' -f 8-8 | sort | uniq -c | sort -n
+			//   109 4
+			//   654 3
+			//   677 2
+			//   730 5
+			//   974 0
+			// 35903 1
+
+			int acc = -1;
+
+			switch (atoi(s)) {
+				case 1:
+					acc = 10;
+					break;
+				case 2:
+					acc = 50;
+					break;
+				case 3:
+					acc = 100;
+					break;
+				case 4:
+					acc = 500;
+					break;
+				case 5:
+					acc = 1000;
+					break;
+				default:
+					acc = 10000;
+					break;
+			}
+			json_append_member(obj, "acc", json_mknumber(acc));
 		}
 
 		vel = GET_D(pos + dp->vel);
