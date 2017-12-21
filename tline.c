@@ -314,6 +314,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	char **parts, *tparts[4], *imei_dup = NULL;
 	int n, nparts;
 	char abr[24], subtype[24];	/* abr= ACK, BUFF, RESP, i.e. the bit before : */
+        char id[64];
 	struct _device *dp;
 	struct _ignore *ip;
 	bool subtype_ignored = false;
@@ -348,10 +349,10 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 
 	char *imei = GET_S(2);
-	char *protov = GET_S(1);	/* VVJJMM
-					 * VV = model
-					 * JJ = major
-					 * MM = minor
+	char *protov = GET_S(1);	/* MOMAMI
+					 * MO = model
+					 * MA = major
+					 * MI = minor
 					 */
 	/*
 	 * If we have neither IMEI nor protov forget the rest; impossible to
@@ -427,9 +428,15 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 
 
-	if ((dp = lookup_devices(subtype, protov + 2)) == NULL) {
-		xlog(ud, "MISSING: device definition for %s-%s\n", subtype, protov+2);
+	//fprintf(stderr, "lookup_devices %s %s\n", subtype, protov ? protov : "NULL");
+	if ((dp = lookup_devices(subtype, protov)) == NULL) {
+		xlog(ud, "MISSING: device definition for %s-%s\n", subtype, protov);
 		goto finish;
+	}
+
+        snprintf(id, sizeof(id), "%s-%s", subtype, protov);
+	if (strcmp(dp->id, id)) {
+		xlog(ud, "DEFAULT: device definition for %s used %s\n", id, dp->id);
 	}
 
 	char *dpn = GET_S(dp->num);

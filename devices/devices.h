@@ -22,7 +22,7 @@
 #include "uthash.h"
 
 struct _device {
-	char *id;		/* "GTFRI-jjmm" */
+	char *id;		/* "GTFRI-momami */
 
 	int num;
 	int imei;
@@ -43,4 +43,4 @@ struct _device {
 
 void load_devices();
 void free_devices();
-struct _device *lookup_devices(char *key, char *jjmm);
+struct _device *lookup_devices(char *key, char *monami);
