@@ -519,6 +519,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	int rep = 0;
 	do {
 		double lat, lon;
+		double vel, alt;
 		char *s;
 		JsonNode *obj;
 
@@ -562,12 +563,14 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "acc", json_mknumber(atoi(s)));
 		}
 
-		if ((s = GET_S(pos + dp->vel)) != NULL) {
-			json_append_member(obj, "vel", json_mknumber(atoi(s)));
+		vel = GET_D(pos + dp->vel);
+		if (!isnan(vel)) {
+			json_append_member(obj, "vel", json_mkdouble(vel, 1));
 		}
 
-		if ((s = GET_S(pos + dp->alt)) != NULL) {
-			json_append_member(obj, "alt", json_mknumber(atoi(s)));
+		alt = GET_D(pos + dp->alt);
+		if (!isnan(alt)) {
+			json_append_member(obj, "alt", json_mkdouble(alt, 1));
 		}
 
 		if ((s = GET_S(pos + dp->cog)) != NULL) {
