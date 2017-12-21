@@ -571,26 +571,30 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			//   974 0
 			// 35903 1
 
-			int acc = -1;
+			double acc;
+			int hdop = atoi(s);
 
-			switch (atoi(s)) {
+			switch (hdop) {
 				case 1:
-					acc = 10;
+					acc = 10.0;
 					break;
 				case 2:
-					acc = 50;
+					acc = 50.0;
 					break;
 				case 3:
-					acc = 100;
+					acc = 100.0;
 					break;
 				case 4:
-					acc = 500;
+					acc = 500.0;
 					break;
 				case 5:
-					acc = 1000;
+					acc = 1000.0;
+					break;
+				case 6:
+					acc = 5000.0;
 					break;
 				default:
-					acc = 10000;
+					acc = -1.0;
 					break;
 			}
 			json_append_member(obj, "acc", json_mknumber(acc));
