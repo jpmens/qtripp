@@ -236,6 +236,18 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 
 	if ((extra = extra_json(ud->cf, imei)) != NULL) {
 		json_foreach(e, extra) {
+			JsonNode *j;
+
+			/* The object we're going to transmit _might_ already have
+			 * these extra variables if (and only if) it's one of the
+			 * object saved in imei_last_json; Remove the elements before
+			 * adding them in again.
+			 */
+
+			if ((j = json_find_member(obj, e->key)) != NULL) {
+				json_remove_from_parent(j);
+			}
+
 			if (e->tag == JSON_STRING)
 				json_append_member(obj, e->key, json_mkstring(e->string_));
 			else if (e->tag == JSON_NUMBER)
