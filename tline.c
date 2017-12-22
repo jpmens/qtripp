@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <mosquitto.h>
+#include <assert.h>
 #include "util.h"
 #include "uthash.h"
 #include "conf.h"
@@ -297,6 +298,24 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 }
 
 /*
+ * Find `elem' in the JSON `obj'. In particular find NUMBERs and convert
+ * to our special JSON DOUBLE type with the specified precision.
+ */
+
+void precision(JsonNode *obj, char *elem, int prec)
+{
+	JsonNode *j;
+	double d;
+
+	if ((j = json_find_member(obj, "lat")) != NULL) {
+		assert(j->tag == JSON_NUMBER || j->tag == JSON_DOUBLE);
+		d = j->number_;
+		json_remove_from_parent(j);
+		json_append_member(obj, elem, json_mkdouble(d, prec));
+	}
+}
+
+/*
  * A connection has been closed, probably by a device. Publish a
  * pseudo LWT for this device. (Pseudo b/c we have the central
  * connection to a broker and are going to pretend the device
@@ -440,6 +459,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			 * modify it to replace "t:" with a "p:ing" and update the tst to
 			 * now(). Publish to MQTT in order to pass the heartbeat along to MQTT
 			 * with the last-known good values.
+			 * Also ensure lat/lon are JSON_DOUBLES so we keep precision.
 			 */
 
 			if ((js = imei_last_json(imei, NULL)) != NULL) {
@@ -448,23 +468,22 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				/* TODO don't decode and readjust, but store JSON object rather than JSON string */
 
 				if ((obj = json_decode(js)) != NULL) {
-					if ((j = json_find_member(obj, "lat")) != NULL) {
-						double lat = j->number_;
-						json_remove_from_parent(j);
-						json_append_member(obj, "lat", json_mkdouble(lat, 6));
-					}
-					if ((j = json_find_member(obj, "lon")) != NULL) {
-						double lon = j->number_;
-						json_remove_from_parent(j);
-						json_append_member(obj, "lon", json_mkdouble(lon, 6));
-					}
+
+					precision(obj, "lat", 6);
+					precision(obj, "lon", 6);
+					precision(obj, "odometer", 1);
+					precision(obj, "meters", 1);
+					precision(obj, "vel", 1);
+					precision(obj, "alt", 1);
+
 					if ((j = json_find_member(obj, "t")) != NULL) {
 						json_append_member(obj, "t", json_mkstring("p"));
 					}
 					if ((j = json_find_member(obj, "tst")) != NULL) {
 						j->number_ = time(0);
-						transmit_json(ud, imei, obj);
 					}
+
+					transmit_json(ud, imei, obj);
 					json_delete(obj);
 				}
 			}
