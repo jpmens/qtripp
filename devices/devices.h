@@ -22,20 +22,29 @@
 #include "uthash.h"
 
 struct _device {
-	char *id;		/* "GTFRI-momami */
+	char *id;		/* e.g. "GTFRI-MOMAMI" for MOdel, MAjor, MInor */
 
-	int num;
 	int imei;
-	int acc;
-	int cog;
-	int alt;
-	int vel;
-	int lon;
-	int lat;
-	int utc;
-	int odometer;
-	int batt;
-	int add;
+	int name;		/* device name */
+	int uext;		/* external power voltage */
+	int rit;		/* report id / report type */
+	int num;		/* number of position entries */
+	int acc;			/* repeats */
+	int cog;			/* repeats */
+	int alt;			/* repeats */
+	int vel;			/* repeats */
+	int lon;			/* repeats */
+	int lat;			/* repeats */
+	int utc;			/* repeats */
+	int mcc;			/* repeats */
+	int mnc;			/* repeats */
+	int lac;			/* repeats */
+	int cid;			/* repeats */
+	int odometer;		/* milage */
+	int hmc;		/* hour meter count */
+	int aiv;		/* analog input voltage */
+	int batt;		/* backup battery percentage */
+	int devs;		/* device status */
 	char *add_name;
 
         UT_hash_handle hh;
