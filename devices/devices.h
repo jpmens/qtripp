@@ -45,6 +45,73 @@ struct _device {
 	int aiv;		/* analog input voltage */
 	int batt;		/* backup battery percentage */
 	int devs;		/* device status */
+	int sent;		/* sent time */
+	int count;		/* count of messages */
+
+	int din;		/* digital input */
+	int dout;		/* digital output */
+	int jst;		/* jamming status */
+	int mst;		/* motion status */
+	int ios;		/* io status */
+	int ubatt;		/* backup battery voltage */
+	int don;		/* duration ignition on */
+	int doff;		/* duration ignition off */
+	int nmds;		/* non motion detection status */
+
+	int ftyp;		/* fix type */
+	int rx;			/* receive strength */
+	int mcc1;		/* repeats */
+	int mnc1;		/* repeats */
+	int lac1;		/* repeats */
+	int cid1;		/* repeats */
+	int rx1;		/* repeats */
+	int mcc2;		/* repeats */
+	int mnc2;		/* repeats */
+	int lac2;		/* repeats */
+	int cid2;		/* repeats */
+	int rx2;		/* repeats */
+	int mcc3;		/* repeats */
+	int mnc3;		/* repeats */
+	int lac3;		/* repeats */
+	int cid3;		/* repeats */
+	int rx3;		/* repeats */
+	int mcc4;		/* repeats */
+	int mnc4;		/* repeats */
+	int lac4;		/* repeats */
+	int cid4;		/* repeats */
+	int rx4;		/* repeats */
+	int mcc5;		/* repeats */
+	int mnc5;		/* repeats */
+	int lac5;		/* repeats */
+	int cid5;		/* repeats */
+	int rx5;		/* repeats */
+	int mcc6;		/* repeats */
+	int mnc6;		/* repeats */
+	int lac6;		/* repeats */
+	int cid6;		/* repeats */
+	int rx6;		/* repeats */
+
+	int erim;
+	int can;
+	int uart;
+	int anum;
+	int adid;
+	int adty;
+	int adda;
+	int rst;
+	int eant;
+	int woid;
+	int woa;
+	int cwjv;
+	int gjst;
+
+	int alty;	/* alarm type (temperature) */
+	int temp;	/* temperature */
+	int vin;	/* Vehicle Identification Number */
+	int rpm;	/* engine rpm */
+	int fcon;	/* fuel consumption */
+	int flvl;	/* fuel level */
+
 	char *add_name;
 
         UT_hash_handle hh;
