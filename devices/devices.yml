@@ -675,26 +675,6 @@
   sent: 28
   count: 29
 
-- subtypes: [ GTSTT ]
-  versions: [ "420201" ]
-  imei: 2
-  name: 3
-  mst: 4
-  acc: 5
-  vel: 6
-  cog: 7
-  alt: 8
-  lon: 9
-  lat: 10
-  utc: 11
-  mcc: 12
-  mnc: 13
-  lac: 14
-  cid: 15
-  reserved: 16
-  sent: 17
-  count: 18
-
 - subtypes: [ GTIGN ]
   versions: [ "420201" ]
   imei: 2
@@ -804,14 +784,14 @@
   count: 21
 
 - subtypes: [ GTPNA, GTPFA, GTPDP ]
-  versions: [ "2C0600", "300702", "300800", "310603", "380603", "420201" ]
+  versions: [ "2C0600", "300800", "310603", "380603", "420201" ]
   imei: 2
   name: 3
   sent: 4
   count: 5
 
 - subtypes: [ GTMPN, GTMPF, GTEPN, GTEPF, GTBTC, GTCRA, GTBPN, GTBPF, GTJDR ]
-  versions: [ "300702", "300800", "310603", "380603", "420201" ]
+  versions: [ "310603", "380603", "420201" ]
   imei: 2
   name: 3
   acc: 4
@@ -1066,8 +1046,8 @@
   cid: 17
   odometer: 18
   batt: 19
-  sent: 21
-  count: 22
+  sent: 20
+  count: 21
 
 - subtypes: [ GTLGL ]
   versions: [ "2C0600" ]
@@ -1094,7 +1074,7 @@
 # 
 
 - subtypes: [ GTFRI , GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDIS, GTDOG, GTIGL, GTPFL] 
-  versions: [ "300702", "300800" ]
+  versions: [ "300800" ]
   imei: 2
   name: 3
   rid: 4
@@ -1122,7 +1102,7 @@
 #
 
 - subtypes: [ GTEPN, GTEPF ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   acc: 4
@@ -1136,12 +1116,12 @@
   mnc: 12
   lac: 13
   cid: 14
-  odomter: 15
+  odometer: 15
   sent: 16
   count: 17
 
 - subtypes: [ GTBPL ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   ubatt: 4
@@ -1161,7 +1141,7 @@
   count: 18
 
 - subtypes: [ GTBTC ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   acc: 4
@@ -1180,7 +1160,7 @@
   count: 17
 
 - subtypes: [ GTSTC ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   reserved: 4
@@ -1200,7 +1180,7 @@
   count: 18
 
 - subtypes: [ GTSTT ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   mst: 4
@@ -1220,7 +1200,7 @@
   count: 18
 
 - subtypes: [ GTIGN ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   doff: 4
@@ -1240,7 +1220,7 @@
   count: 18
 
 - subtypes: [ GTIGF ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   don: 4
@@ -1260,7 +1240,7 @@
   count: 18
 
 - subtypes: [ GTTEM ]
-  versions: [ "2C0600", "300702", "300800" ]
+  versions: [ "2C0600", "300800" ]
   imei: 2
   name: 3
   alty: 4

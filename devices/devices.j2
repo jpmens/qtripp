@@ -31,6 +31,8 @@ struct _device devices[] = {
 		{% set name = dev['name'] | default(-1) %}
 		{% set uext = dev['uext'] | default(-1) %}
 		{% set rit = dev['rit'] | default(-1) %}
+		{% set rid = dev['rid'] | default(-1) %}
+		{% set rty = dev['rty'] | default(-1) %}
 		{% set num = dev['number'] | default(0) -%}
 		{% set acc  = dev['acc'] | default(-1) -%}
 		{% set cog  = dev['cog'] | default(-1) -%}
@@ -114,6 +116,7 @@ struct _device devices[] = {
 		{% set add_name = dev['add_name'] | default("NULL") %}
     {
 	"{{key}}", {{imei}}, {{name}}, {{uext}}, {{rit}},
+	{{rid}}, {{rty}},
 	{{num}}, {{acc}}, {{cog}}, {{alt}}, {{vel}},
 	{{lon}}, {{lat}}, {{utc}}, {{mcc}}, {{mnc}},
 	{{lac}}, {{cid}}, {{odometer}}, {{hmc}}, {{aiv}},

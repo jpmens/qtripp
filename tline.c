@@ -340,8 +340,8 @@ void pseudo_lwt(struct udata *ud, char *imei)
 	json_delete(o);
 }
 
-#define GET_D(n)	((n <= nparts && *parts[n]) ? atof(parts[n]) : NAN)
-#define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
+#define GET_D(n)	((n > 0 && n <=nparts && *parts[n]) ? atof(parts[n]) : NAN)
+#define GET_S(n)	((n > 0 && n <= nparts && *parts[n]) ? parts[n] : NULL)
 
 /*
  * `line' contains a line of text from a tracker. Do what is necessary,
@@ -368,10 +368,12 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	++linecounter;
 
-	//fprintf(stderr, "DEBUG line #%ld (%lu) %s\n",
-	//	linecounter,
-	//	line != NULL ? strlen(line) : 0,
-	//	line != NULL ? line : "NULL");
+#if 1
+	fprintf(stderr, "DEBUG line #%ld (%lu) %s\n",
+		linecounter,
+		line != NULL ? strlen(line) : 0,
+		line != NULL ? line : "NULL");
+#endif
 
 	if (*line == '*') {
 		// xlog(ud, "Control: %s\n", line);
@@ -520,6 +522,14 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	JsonNode *jmerge = json_mkobject(), *jm;
 
+	/* "vin" is the optional vehicle identification number */
+	if (dp->vin > 0) {
+		char *vin = GET_S(dp->vin);
+		if (vin != NULL) {
+			json_append_member(jmerge, "vin", json_mkstring(vin));
+		}
+	}
+
 	/* "name" is the optional device name */
 	if (dp->name > 0) {
 		char *name = GET_S(dp->name);
@@ -529,11 +539,64 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 
 	/* "rit" is Record ID and Report Type combined */
-	double rit;
+	double rit = 0.0;
+        int rid = 0;
+	int rty = 0;
+
+	if (dp->rid > 0) {
+		rid = GET_D(dp->rid);
+		if (!isnan(rid)) {
+			json_append_member(jmerge, "rid", json_mknumber(rid));
+		}
+	}
+
+	if (dp->rty > 0) {
+		rty = GET_D(dp->rty);
+		if (!isnan(rty)) {
+			json_append_member(jmerge, "rty", json_mknumber(rty));
+		}
+	}
+
 	if (dp->rit > 0) {
 		rit = GET_D(dp->rit);
 		if (!isnan(rit)) {
 			json_append_member(jmerge, "rit", json_mknumber(rit));
+			/* determine "t" from subtype, report id and report type */
+			rid = floor(rit / 10.0);
+			json_append_member(jmerge, "rid", json_mknumber(rid));
+			rty = fmod(rit, 10.0);
+			json_append_member(jmerge, "rty", json_mknumber(rty));
+		}
+	}
+
+	int iospresent = 0;
+	if (!strcmp(subtype, "GTFRI") && !strcmp(protov, "300800")) {
+		if (rid & 0x01) {
+			iospresent = 1;
+		}
+	}
+
+	/* "ubatt" is external power voltage in V */
+	if (dp->ubatt > 0) {
+		double ubatt = GET_D(dp->ubatt);
+		if (!isnan(ubatt)) {
+			json_append_member(jmerge, "ubatt", json_mkdouble(ubatt, 1));
+		}
+	}
+
+	/* "don" is duration since ignition on in seconds*/
+	if (dp->don > 0) {
+		double don = GET_D(dp->don);
+		if (!isnan(don)) {
+			json_append_member(jmerge, "don", json_mknumber(don));
+		}
+	}
+
+	/* "doff" is duration since ignition of in seconds */
+	if (dp->doff > 0) {
+		double doff = GET_D(dp->doff);
+		if (!isnan(doff)) {
+			json_append_member(jmerge, "doff", json_mknumber(doff));
 		}
 	}
 
@@ -621,16 +684,72 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			}
 		}
 
-		/* "devs" is device status as */
+		/* "ios" is io status as 4 characters hex*/
+		if (iospresent && dp->ios > 0) {
+			char *iosstring = GET_S(dp->ios);
+			if (iosstring != NULL) {
+				unsigned long ios = strtoul(iosstring, NULL, 16);
+				json_append_member(jmerge, "din1",	json_mkbool(ios & 0x0001));
+				json_append_member(jmerge, "ign",	json_mkbool(ios & 0x0002));
+			}
+		}
+
+		/* "devs" is device status as 10 characters hex*/
 		if (dp->devs > 0) {
 			char *devsstring = GET_S(dp->devs);
 			if (devsstring != NULL) {
 				unsigned long devs = strtoul(devsstring, NULL, 16);
+				json_append_member(jmerge, "dout1",	json_mkbool(devs & 0x000001));
+				json_append_member(jmerge, "dout2",	json_mkbool(devs & 0x000002));
 				json_append_member(jmerge, "ign",	json_mkbool(devs & 0x000100));
+				json_append_member(jmerge, "din1",	json_mkbool(devs & 0x000200));
+				json_append_member(jmerge, "din2",	json_mkbool(devs & 0x000400));
 				json_append_member(jmerge, "motion",	json_mkbool(devs & 0x020000));
 				json_append_member(jmerge, "tow",	json_mkbool(devs & 0x040000));
 				json_append_member(jmerge, "fake",	json_mkbool(devs & 0x080000));
 				json_append_member(jmerge, "sens",	json_mkbool(devs & 0x400000));
+			}
+		}
+
+		/* "din" is digital input as 2 characters hex */
+		if (dp->din > 0) {
+			char *dinstring = GET_S(dp->din);
+			if (dinstring != NULL) {
+				unsigned long din = strtoul(dinstring, NULL, 16);
+				json_append_member(jmerge, "din1",	json_mkbool(din & 0x01));
+				json_append_member(jmerge, "din2",	json_mkbool(din & 0x02));
+			}
+		}
+
+		/* "dout" is digital output as 2 characters hex */
+		if (dp->dout > 0) {
+			char *doutstring = GET_S(dp->dout);
+			if (doutstring != NULL) {
+				unsigned long dout = strtoul(doutstring, NULL, 16);
+				json_append_member(jmerge, "dout1",	json_mkbool(dout & 0x01));
+				json_append_member(jmerge, "dout2",	json_mkbool(dout & 0x02));
+			}
+		}
+
+		/* "sent" sent time at device*/
+		if (dp->sent - (iospresent ? 0 : -1) > 0) {
+			char *sent = GET_S(((nreports - 1) * 12) + dp->sent - (iospresent ? 0 : -1) > 0);
+			if (sent != NULL) {
+				time_t epoch;
+
+				if (str_time_to_secs(sent, &epoch) != 1) {
+					xlog(ud, "Cannot convert sent time from [%s]\n", sent);
+				} else {
+					json_append_member(jmerge, "sent", json_mknumber(epoch));
+				}
+			}
+		}
+
+		/* "count" is counter for sent messages */
+		if (dp->count - (iospresent ? 0 : -1)  > 0) {
+			char *count = GET_S(((nreports - 1) * 12) + dp->count - (iospresent ? 0 : -1) > 0);
+			if (count != NULL) {
+				json_append_member(jmerge, "count", json_mkstring(count));
 			}
 		}
 
@@ -654,6 +773,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 		int pos = (rep * 12); /* 12 elements in green area */
 
+		//fprintf(stderr, "DEBUG nofix (%d)\n", pos + dp->utc);
+		// TODO mnc etc. might be interesting though
 		if ((s = GET_S(pos + dp->utc)) == NULL) {
 			/* no fix */
 			continue;
@@ -759,10 +880,6 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "cog", json_mknumber(atoi(s)));
 		}
 
-		/* determine "t" from subtype, report id and report type */
-		int rid = floor(rit / 10.0);
-		int rty = fmod(rit, 10.0);
-
 		if (!strcmp(subtype, "GTFRI")) {
 			switch (rid) {
 				default:
@@ -788,6 +905,10 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					}
 					break;
 			}
+		} else if (!strcmp(subtype, "GTIGN")) {
+			json_append_member(obj, "t", json_mkstring("1"));
+		} else if (!strcmp(subtype, "GTIGF")) {
+			json_append_member(obj, "t", json_mkstring("0"));
 		} else {
 			json_append_member(obj, "t", json_mkstring(subtype));
 		}
