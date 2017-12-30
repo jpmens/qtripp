@@ -340,8 +340,8 @@ void pseudo_lwt(struct udata *ud, char *imei)
 	json_delete(o);
 }
 
-#define GET_D(n)	((n > 0 && n <=nparts && *parts[n]) ? atof(parts[n]) : NAN)
-#define GET_S(n)	((n > 0 && n <= nparts && *parts[n]) ? parts[n] : NULL)
+#define GET_D(n)	((n > 0 && n < nparts && *parts[n]) ? atof(parts[n]) : NAN)
+#define GET_S(n)	((n > 0 && n < nparts && *parts[n]) ? parts[n] : NULL)
 
 /*
  * `line' contains a line of text from a tracker. Do what is necessary,
@@ -573,10 +573,35 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 	}
 
-	int iospresent = 0;
+	/* "mst" is the motion state*/
+	int mst = 0;
+
+	if (dp->mst > 0) {
+		mst = floor(GET_D(dp->mst));
+		json_append_member(jmerge, "mst", json_mknumber(mst));
+	}
+
+	/* io status (ios) is present if indicated for one protocol version */
+	bool iospresent = true;
 	if (!strcmp(subtype, "GTFRI") && !strcmp(protov, "300800")) {
-		if (rid & 0x01) {
-			iospresent = 1;
+		if ((rid & 0x01) == 0) {
+			iospresent = false;
+		}
+	}
+
+        /* some messages have an erim state. if so, two bits indicate the presence of other optional parts */
+	bool ac100present = true;
+	int ac100number = 0;
+	bool canpresent = true;
+	if (dp->erim > 0) {
+		char *erimstring = GET_S(dp->erim);
+		if (erimstring != NULL) {
+			unsigned long erim = strtoul(erimstring, NULL, 16);
+			//fprintf(stderr, "erim string %s long %08lx\n", erimstring, erim);
+			ac100present = ((erim & 0x02) != 0);
+			//fprintf(stderr, "ac100present bool %d\n", ac100present);
+			canpresent = ((erim & 0x04) != 0);
+			//fprintf(stderr, "canpresent bool %d\n", canpresent);
 		}
 	}
 
@@ -613,39 +638,64 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 	}
 
-	if (!strcmp(subtype, "GTERI")) {
-		/*
-		 * According to GV65, page 35, et.al (search for "Eri mask")
-		 * if bit 1 is set in the mask, it means AC100 data is
-		 * available (which I interpret to be 1-Wire data).
-		 *
-		 * So, we check for that bit and then grab the temperature
-		 * from our 1-Wire DS18B20.
-		 */
-
-		char *erimask = GET_S(4);
-		unsigned long eribits = strtoul(erimask ? erimask : "0", NULL, 16);
-
-		// FIXME: this is not accurate; bits are set if temp sensor not connected
-		// what seems to be ok is check if field "UART Device Type" is 0 which means
-		// "no device connected" (if DS18B20 is connected the field is "1")
-		//
-		if (eribits & 0x0002) {
-#define D_UART (6)
-			int offset = ((nreports - 1) * 12) + dp->odometer + D_UART;
-			char *val = GET_S(offset);
-			int uart_type  = atoi(val && *val ? val : "0");
-			xlog(ud, "UART Type: %d: %s temperature\n",
-					uart_type, (uart_type) ? "Use" : "Skip");
-
-			if (uart_type != 0) {
-				char *t = GET_S(offset + 3);
-
-				if (t && *t) {
-					json_append_member(jmerge, "temp_c", json_mknumber(temp(t)));
+	/* "uart" indicates the possible optional components for analog sensor data */
+	double uart = GET_D(((nreports - 1) * 12) + dp->uart);
+	//fprintf(stderr, "uart double %g\n", uart);
+	if (!isnan(uart) && uart == 2) {
+		/* "ac100present" was set from the erimask and indicates if there are any ac100 data following */
+		if (ac100present) {
+			/* "anum" up to 19 analog data readings may be present */
+			double anum = GET_D(((nreports - 1) * 12) + dp->anum);
+			//fprintf(stderr, "anum double %g\n", anum);
+			if (!isnan(anum) && anum > 0) {
+				json_append_member(jmerge, "anum", json_mknumber(anum));
+				ac100number = anum;
+				for (int a = 0; a < anum; a++) {
+					/* "adid", "adty", "adda" for each item we have id, type and data*/
+					//fprintf(stderr, "adid offset %d\n", ((nreports - 1) * 12) + a * 3 + dp->adid);
+					char *adid = GET_S(((nreports - 1) * 12) + a * 3 + dp->adid);
+					//fprintf(stderr, "adty offset %d\n", ((nreports - 1) * 12) + a * 3 + dp->adty);
+					char *adty = GET_S(((nreports - 1) * 12) + a * 3 + dp->adty);
+					//fprintf(stderr, "adda offset %d\n", ((nreports - 1) * 12) + a * 3 + dp->adda);
+					char *adda = GET_S(((nreports - 1) * 12) + a * 3 + dp->adda);
+					//fprintf(stderr, "adid %s adty %s adda %s\n", adid ? adid : "NULL", adty ? adty : "NULL", adda ? adda : "NULL");
+					if (adid != NULL && adty != NULL && adda != NULL) {
+						static char identifier[16];
+						/* "adid-xx" we append the item number to the name */
+						sprintf(identifier, "adid-%02d", a);
+						//fprintf(stderr, "identifier %s\n", identifier);
+						json_append_member(jmerge, identifier, json_mkstring(adid));
+						sprintf(identifier, "adty-%02d", a);
+						json_append_member(jmerge, identifier, json_mkstring(adty));
+						sprintf(identifier, "adda-%02d", a);
+						json_append_member(jmerge, identifier, json_mkstring(adda));
+						/* if the data type is 1, this means temperature in celsius as
+						 * 2-complement shifted 4 (divided by 16)
+						 */
+						if (!strcmp(adty, "1")) {
+							long temp = strtol(adda, NULL, 16);	
+							if (temp > 32535) {
+								temp -= 65536;
+							}
+							double dtemp = temp;
+							dtemp *= 0.0625;
+							sprintf(identifier, "temp_c-%02d", a);
+							json_append_member(jmerge, identifier, json_mkdouble(dtemp, 1));
+						}
+					}
 				}
 			}
 		}
+	}
+
+	/* "can" data is an optional component indicated by the erim mask */
+	if (canpresent) {
+                if (dp->can > 0) {
+                        char *can = GET_S(((nreports - 1) * 12) + (ac100number - 1) * 3 + dp->can);
+                        if (can != NULL) {
+                                json_append_member(jmerge, "can", json_mkstring(can));
+                        }
+                }
 	}
 
 	/*
@@ -769,8 +819,22 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		/* "sent" sent time at device*/
-		if (dp->sent - (iospresent ? 0 : -1) > 0) {
-			char *sent = GET_S(((nreports - 1) * 12) + dp->sent - (iospresent ? 0 : -1) > 0);
+		if (dp->sent > 0) {
+			//fprintf(stderr, "sent pos %d nreports %d iospresent %d ac100present %d ac100number %d canpresent %d\n",
+					//dp->sent
+                                        //+ ((nreports - 1) * 12)
+                                        //+ (iospresent ? 0 : -1)
+                                        //+ (ac100present ? 0 : -1)
+                                        //+ ((ac100number - 1) * 3)
+					//+ (canpresent ? 0 : -1),
+					//nreports, iospresent, ac100present, ac100number, canpresent);
+			char *sent = GET_S(dp->sent
+					+ ((nreports - 1) * 12) 
+					+ (iospresent ? 0 : -1)
+					+ (ac100present ? 0 : -1)
+					+ ((ac100number - 1) * 3)
+					+ (canpresent ? 0 : -1)
+					);
 			if (sent != NULL) {
 				time_t epoch;
 
@@ -783,8 +847,14 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		/* "count" is counter for sent messages */
-		if (dp->count - (iospresent ? 0 : -1)  > 0) {
-			char *count = GET_S(((nreports - 1) * 12) + dp->count - (iospresent ? 0 : -1) > 0);
+		if (dp->count > 0) {
+			char *count = GET_S(dp->count 
+					+ ((nreports - 1) * 12) 
+					+ (iospresent ? 0 : -1)
+					+ (ac100present ? 0 : -1)
+					+ ((ac100number - 1) * 3)
+					+ (canpresent ? 0 : -1)
+					);
 			if (count != NULL) {
 				json_append_member(jmerge, "count", json_mkstring(count));
 			}
@@ -917,7 +987,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "cog", json_mknumber(atoi(s)));
 		}
 
-		if (!strcmp(subtype, "GTFRI")) {
+		if (!strcmp(subtype, "GTFRI") || !strcmp(subtype, "GTERI")) {
 			switch (rid) {
 				default:
 					switch (rty) {
@@ -942,10 +1012,53 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					}
 					break;
 			}
-		} else if (!strcmp(subtype, "GTIGN")) {
+		} else if (!strcmp(subtype, "GTSTT") || !strcmp(subtype, "GTGSS")) {
+			switch (mst) {
+				case 16:
+				case 12:
+				case 41:
+				case 42:
+					json_append_member(obj, "t", json_mkstring("!"));
+					break;
+				case 11:
+					json_append_member(obj, "t", json_mkstring("L"));
+					break;
+				case 21:
+					json_append_member(obj, "t", json_mkstring("a"));
+					break;
+				case 22:
+					json_append_member(obj, "t", json_mkstring("v"));
+					break;
+				default:
+					json_append_member(obj, "t", json_mkstring("GTSTT"));
+					break;
+			}
+		} else if (!strcmp(subtype, "GTDOG")) {
+			json_append_member(obj, "t", json_mkstring("f"));
+		} else if (!strcmp(subtype, "GTPNL")) {
 			json_append_member(obj, "t", json_mkstring("1"));
+		} else if (!strcmp(subtype, "GTBTC")) {
+			json_append_member(obj, "t", json_mkstring("3"));
+		} else if (!strcmp(subtype, "GTSTC")) {
+			json_append_member(obj, "t", json_mkstring("2"));
+		} else if (!strcmp(subtype, "GTBPL")) {
+			json_append_member(obj, "t", json_mkstring("9"));
+		} else if (!strcmp(subtype, "GTRTL")) {
+			json_append_member(obj, "t", json_mkstring("u"));
+		} else if (!strcmp(subtype, "GTIGN")) {
+			json_append_member(obj, "t", json_mkstring("i"));
 		} else if (!strcmp(subtype, "GTIGF")) {
-			json_append_member(obj, "t", json_mkstring("0"));
+			json_append_member(obj, "t", json_mkstring("I"));
+		} else if (!strcmp(subtype, "GTEPN")) {
+			json_append_member(obj, "t", json_mkstring("E"));
+		} else if (!strcmp(subtype, "GTEPF")) {
+			json_append_member(obj, "t", json_mkstring("e"));
+		} else if (!strcmp(subtype, "GTMPN")) {
+			json_append_member(obj, "t", json_mkstring("E"));
+		} else if (!strcmp(subtype, "GTMPF")) {
+			json_append_member(obj, "t", json_mkstring("e"));
+		} else if (!strcmp(subtype, "GTIGL")) {
+			json_append_member(obj, "t", json_mkstring(rty == 1 ? "I" : "i"));
 		} else if (!strcmp(subtype, "GTNMD")) {
 			/* "nmds" is the non movement detection status*/
 			if (dp->nmds > 0) {
@@ -958,6 +1071,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "t", json_mkstring(subtype));
 		}
 
+		//fprintf(stderr, "lastlat\n");
 		if (!isnan(lastlat)) {
 			double meters = haversine_dist(lastlat, lastlon, lat, lon);
 
