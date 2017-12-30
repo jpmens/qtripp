@@ -52,47 +52,12 @@ struct _device {
 
 	int din;		/* digital input */
 	int dout;		/* digital output */
-	int jst;		/* jamming status */
 	int mst;		/* motion status */
 	int ios;		/* io status */
 	int ubatt;		/* backup battery voltage */
 	int don;		/* duration ignition on */
 	int doff;		/* duration ignition off */
 	int nmds;		/* non motion detection status */
-
-	int ftyp;		/* fix type */
-	int rx;			/* receive strength */
-	int mcc1;		
-	int mnc1;	
-	int lac1;
-	int cid1;		
-	int rx1;		
-	int mcc2;		
-	int mnc2;		
-	int lac2;		
-	int cid2;		
-	int rx2;		
-	int mcc3;		
-	int mnc3;		
-	int lac3;		
-	int cid3;		
-	int rx3;		
-	int mcc4;		
-	int mnc4;		
-	int lac4;		
-	int cid4;		
-	int rx4;		
-	int mcc5;		
-	int mnc5;		
-	int lac5;		
-	int cid5;		
-	int rx5;		
-	int mcc6;		
-	int mnc6;		
-	int lac6;		
-	int cid6;		
-	int rx6;		
-
 	int erim;
 	int can;
 	int uart;
@@ -100,15 +65,7 @@ struct _device {
 	int adid;
 	int adty;
 	int adda;
-	int rst;
-	int eant;
-	int woid;
-	int woa;
-	int cwjv;
-	int gjst;
 
-	int alty;	/* alarm type (temperature) 1 below, 2 within, 3 above limits */
-	int temp;	/* temperature degrees Celsius */
 	int vin;	/* Vehicle Identification Number */
 	int rpm;	/* engine rpm */
 	int fcon;	/* fuel consumption L / 100 km or Inf or NaN */

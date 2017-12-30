@@ -307,7 +307,7 @@ void precision(JsonNode *obj, char *elem, int prec)
 	JsonNode *j;
 	double d;
 
-	if ((j = json_find_member(obj, "lat")) != NULL) {
+	if ((j = json_find_member(obj, elem)) != NULL) {
 		assert(j->tag == JSON_NUMBER || j->tag == JSON_DOUBLE);
 		d = j->number_;
 		json_remove_from_parent(j);
@@ -477,10 +477,14 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					precision(obj, "meters", 1);
 					precision(obj, "vel", 1);
 					precision(obj, "alt", 1);
+					precision(obj, "fcon", 1);
+					precision(obj, "ubatt", 1);
 
 					if ((j = json_find_member(obj, "t")) != NULL) {
-						json_append_member(obj, "t", json_mkstring("p"));
+						json_remove_from_parent(j);
 					}
+					json_append_member(obj, "t", json_mkstring("p"));
+
 					if ((j = json_find_member(obj, "tst")) != NULL) {
 						j->number_ = time(0);
 					}
@@ -676,6 +680,39 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			}
 		}
 
+		/* "rpm" is backup battery percentage */
+		if (dp->rpm > 0) {
+			double rpm = GET_D(((nreports - 1) * 12) + dp->rpm);
+			if (!isnan(rpm)) {
+				json_append_member(jmerge, "rpm", json_mknumber(rpm));
+			}
+		}
+
+		/* "fcon" is backup battery percentage */
+		if (dp->fcon > 0) {
+			double fcon = GET_D(((nreports - 1) * 12) + dp->fcon);
+			//fprintf(stderr, "fcon double %g\n", fcon);
+			if (!isnan(fcon) && !isinf(fcon)) {
+				json_append_member(jmerge, "fcon", json_mkdouble(fcon, 1));
+			}
+		}
+
+		/* "flvl" is backup battery percentage */
+		if (dp->flvl > 0) {
+			double flvl = GET_D(((nreports - 1) * 12) + dp->flvl);
+			if (!isnan(flvl)) {
+				json_append_member(jmerge, "flvl", json_mknumber(flvl));
+			}
+		}
+
+		/* "batt" is backup battery percentage */
+		if (dp->batt > 0) {
+			double d = GET_D(((nreports - 1) * 12) + dp->batt);
+			if (!isnan(d)) {
+				json_append_member(jmerge, "batt", json_mknumber(d));
+			}
+		}
+
 		/* "batt" is backup battery percentage */
 		if (dp->batt > 0) {
 			double d = GET_D(((nreports - 1) * 12) + dp->batt);
@@ -686,7 +723,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 		/* "ios" is io status as 4 characters hex*/
 		if (iospresent && dp->ios > 0) {
-			char *iosstring = GET_S(dp->ios);
+		char *iosstring = GET_S(dp->ios);
 			if (iosstring != NULL) {
 				unsigned long ios = strtoul(iosstring, NULL, 16);
 				json_append_member(jmerge, "din1",	json_mkbool(ios & 0x0001));
@@ -909,6 +946,14 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "t", json_mkstring("1"));
 		} else if (!strcmp(subtype, "GTIGF")) {
 			json_append_member(obj, "t", json_mkstring("0"));
+		} else if (!strcmp(subtype, "GTNMD")) {
+			/* "nmds" is the non movement detection status*/
+			if (dp->nmds > 0) {
+				double nmds = GET_D(dp->nmds);
+				json_append_member(jmerge, "nmds", json_mkbool(nmds == 1.0));
+			} else {
+				json_append_member(jmerge, "nmds", json_mkbool(false));
+			}
 		} else {
 			json_append_member(obj, "t", json_mkstring(subtype));
 		}

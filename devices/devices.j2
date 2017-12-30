@@ -54,45 +54,12 @@ struct _device devices[] = {
 		{% set count = dev['count'] | default(-1) %}
 		{% set din = dev['din'] | default(-1) %}
 		{% set dout = dev['dout'] | default(-1) %}
-		{% set jst = dev['jst'] | default(-1) %}
 		{% set mst = dev['mst'] | default(-1) %}
 		{% set ios = dev['ios'] | default(-1) %}
 		{% set ubatt = dev['ubatt'] | default(-1) %}
 		{% set don = dev['don'] | default(-1) %}
 		{% set doff = dev['doff'] | default(-1) %}
 		{% set nmds = dev['nmds'] | default(-1) %}
-		{% set ftyp = dev['ftyp'] | default(-1) %}
-		{% set rx = dev['rx'] | default(-1) %}
-		{% set mcc1 = dev['mcc1'] | default(-1) %}
-		{% set mnc1 = dev['mnc1'] | default(-1) %}
-		{% set lac1 = dev['lac1'] | default(-1) %}
-		{% set cid1 = dev['cid1'] | default(-1) %}
-		{% set rx1  = dev['rx1'] | default(-1) %}
-		{% set mcc2 = dev['mcc2'] | default(-1) %}
-		{% set mnc2 = dev['mnc2'] | default(-1) %}
-		{% set lac2 = dev['lac2'] | default(-1) %}
-		{% set cid2 = dev['cid2'] | default(-1) %}
-		{% set rx2  = dev['rx2'] | default(-1) %}
-		{% set mcc3 = dev['mcc3'] | default(-1) %}
-		{% set mnc3 = dev['mnc3'] | default(-1) %}
-		{% set lac3 = dev['lac3'] | default(-1) %}
-		{% set cid3 = dev['cid3'] | default(-1) %}
-		{% set rx3  = dev['rx3'] | default(-1) %}
-		{% set mcc4 = dev['mcc4'] | default(-1) %}
-		{% set mnc4 = dev['mnc4'] | default(-1) %}
-		{% set lac4 = dev['lac4'] | default(-1) %}
-		{% set cid4 = dev['cid4'] | default(-1) %}
-		{% set rx4  = dev['rx4'] | default(-1) %}
-		{% set mcc5 = dev['mcc5'] | default(-1) %}
-		{% set mnc5 = dev['mnc5'] | default(-1) %}
-		{% set lac5 = dev['lac5'] | default(-1) %}
-		{% set cid5 = dev['cid5'] | default(-1) %}
-		{% set rx5  = dev['rx5'] | default(-1) %}
-		{% set mcc6 = dev['mcc6'] | default(-1) %}
-		{% set mnc6 = dev['mnc6'] | default(-1) %}
-		{% set lac6 = dev['lac6'] | default(-1) %}
-		{% set cid6 = dev['cid6'] | default(-1) %}
-		{% set rx6  = dev['rx6'] | default(-1) %}
 		{% set erim  = dev['erim'] | default(-1) %}
 		{% set can  = dev['can'] | default(-1) %}
 		{% set uart  = dev['uart'] | default(-1) %}
@@ -100,14 +67,6 @@ struct _device devices[] = {
 		{% set adid  = dev['adid'] | default(-1) %}
 		{% set adty  = dev['adty'] | default(-1) %}
 		{% set adda  = dev['adda'] | default(-1) %}
-		{% set rst  = dev['rst'] | default(-1) %}
-		{% set eant  = dev['eant'] | default(-1) %}
-		{% set woid  = dev['woid'] | default(-1) %}
-		{% set woa  = dev['woa'] | default(-1) %}
-		{% set cwjv  = dev['cwjv'] | default(-1) %}
-		{% set gjst  = dev['gjst'] | default(-1) %}
-		{% set alty  = dev['alty'] | default(-1) %}
-		{% set temp  = dev['temp'] | default(-1) %}
 		{% set vin  = dev['vin'] | default(-1) %}
 		{% set rpm  = dev['rpm'] | default(-1) %}
 		{% set fcon  = dev['fcon'] | default(-1) %}
@@ -121,17 +80,10 @@ struct _device devices[] = {
 	{{lon}}, {{lat}}, {{utc}}, {{mcc}}, {{mnc}},
 	{{lac}}, {{cid}}, {{odometer}}, {{hmc}}, {{aiv}},
 	{{batt}}, {{devs}}, {{sent}}, {{count}}, {{din}},
-	{{dout}}, {{jst}}, {{mst}}, {{ios}}, {{ubatt}},
-	{{don}}, {{doff}}, {{nmds}}, {{ftyp}}, {{rx}},
-	{{mcc1}}, {{mnc1}}, {{lac1}}, {{cid1}}, {{rx1}},
-	{{mcc2}}, {{mnc2}}, {{lac2}}, {{cid2}}, {{rx2}},
-	{{mcc3}}, {{mnc3}}, {{lac3}}, {{cid3}}, {{rx3}},
-	{{mcc4}}, {{mnc4}}, {{lac4}}, {{cid4}}, {{rx4}},
-	{{mcc5}}, {{mnc5}}, {{lac5}}, {{cid5}}, {{rx5}},
-	{{mcc6}}, {{mnc6}}, {{lac6}}, {{cid6}}, {{rx6}},
+	{{dout}}, {{mst}}, {{ios}}, {{ubatt}},
+	{{don}}, {{doff}}, {{nmds}},
 	{{erim}}, {{can}}, {{uart}}, {{anum}}, {{adid}},
-	{{adty}}, {{adda}}, {{rst}}, {{eant}}, {{woid}},
-	{{woa}}, {{cwjv}}, {{gjst}}, {{alty}}, {{temp}},
+	{{adty}}, {{adda}},
 	{{vin}}, {{rpm}}, {{fcon}}, {{flvl}}, {{add_name}}
 },
 {%      endfor %}
