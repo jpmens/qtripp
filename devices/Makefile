@@ -14,7 +14,7 @@ OBJS=$(LIBDEV)(reports.o) \
 all: $(OBJS)
 
 %.i: %.j2 $(D2C) $(DEPS)
-	python2 $(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
+	python $(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
 
 reports.o: reports.c reports.h reports.i
 models.o: models.c models.h models.i
