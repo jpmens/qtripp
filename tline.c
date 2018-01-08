@@ -647,9 +647,11 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			double anum = GET_D(((nreports - 1) * 12) + dp->anum);
 			//fprintf(stderr, "anum double %g\n", anum);
 			if (!isnan(anum) && anum > 0) {
+				int a;
+
 				json_append_member(jmerge, "anum", json_mknumber(anum));
 				ac100number = anum;
-				for (int a = 0; a < anum; a++) {
+				for (a = 0; a < anum; a++) {
 					/* "adid", "adty", "adda" for each item we have id, type and data*/
 					//fprintf(stderr, "adid offset %d\n", ((nreports - 1) * 12) + a * 3 + dp->adid);
 					char *adid = GET_S(((nreports - 1) * 12) + a * 3 + dp->adid);
