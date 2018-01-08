@@ -731,7 +731,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			}
 		}
 
-		/* "rpm" is backup battery percentage */
+		/* "rpm" is engine round per minute */
 		if (dp->rpm > 0) {
 			double rpm = GET_D(((nreports - 1) * 12) + dp->rpm);
 			if (!isnan(rpm)) {
@@ -739,7 +739,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			}
 		}
 
-		/* "fcon" is backup battery percentage */
+		/* "fcon" is fuel consumption in l/100km */
 		if (dp->fcon > 0) {
 			double fcon = GET_D(((nreports - 1) * 12) + dp->fcon);
 			//fprintf(stderr, "fcon double %g\n", fcon);
@@ -748,7 +748,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			}
 		}
 
-		/* "flvl" is backup battery percentage */
+		/* "flvl" is fuel level percentage */
 		if (dp->flvl > 0) {
 			double flvl = GET_D(((nreports - 1) * 12) + dp->flvl);
 			if (!isnan(flvl)) {
