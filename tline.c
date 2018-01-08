@@ -604,7 +604,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 	}
 
-	/* "ubatt" is external power voltage in V */
+	/* "ubatt" is battery voltage in V */
 	if (dp->ubatt > 0) {
 		double ubatt = GET_D(dp->ubatt);
 		if (!isnan(ubatt)) {
