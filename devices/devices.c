@@ -52,23 +52,35 @@ void free_devices()
 }
 
 /*
- * Look up device subtype (e.g. GTFRI) with major/minor. If
- * that particular JJMM doesn't exist, return the data for 0000
- * if existent.
+ * Look up device subtype (e.g. GTFRI) with model/major/minor.
+ * If that particular MOMAMI doesn't exist, return the data for MO0000 if existent.
+ * If that doesn't exist, return the data for 00MAMI if existent.
+ * If that doesn't exist, return the data for 00000 if existent.
  */
 
-struct _device *lookup_devices(char *key, char *jjmm)
+struct _device *lookup_devices(char *key, char *momami)
 {
 	struct _device *s;
 	char id[64];
 
-	snprintf(id, sizeof(id), "%s-%s", key, jjmm);
+	snprintf(id, sizeof(id), "%s-%s", key, momami);
 	HASH_FIND_STR(myhash, id, s);
 	if (s)
 		return (s);
 
-	snprintf(id, sizeof(id), "%s-0000", key);
+	snprintf(id, sizeof(id), "%s-%.2s0000", key, momami);
 	HASH_FIND_STR(myhash, id, s);
+	if (s)
+		return (s);
+
+	snprintf(id, sizeof(id), "%s-00%s", key, momami + 2);
+	HASH_FIND_STR(myhash, id, s);
+	if (s)
+		return (s);
+
+	snprintf(id, sizeof(id), "%s-000000", key);
+	HASH_FIND_STR(myhash, id, s);
+
 	return (s);
 }
 
@@ -79,11 +91,11 @@ int main()
 
 	load_devices();
 
-	rp = lookup_devices("GTFRI", "0201");
+	rp = lookup_devices("GTFRI", "2C0600");
 	if (rp) {
 		printf("%s -> %d\n", rp->id, rp->num);
 	}
-	rp = lookup_devices("GTFRI", "8891");
+	rp = lookup_devices("GTFRI", "308891");
 	if (rp) {
 		printf("%s -> %d\n", rp->id, rp->num);
 	}

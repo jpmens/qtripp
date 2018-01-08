@@ -23,13 +23,40 @@
 # ignores
 #
 - ignores:
-     GTGPS: not-imp
-     GTIOS: not-imp
-     GTPDP: not implemented because report carries no GPS data
-     GTPFA: not implemented
-     GTPNA: not implemented because no GPS information in report
-     GTSTC: not-imp
-     GTVER: not-imp
+    GTAIF: Configuration Information
+    GTALC: Configuration Information
+    GTALM: Configuration Information
+    GTALS: Configuration Information
+    GTALL: Configuration Information
+    GTANT: external GPS antenna status reported
+    GTBAT: Power Supply Information
+    GTCFU: CAN FOTA Upgrade
+    GTCID: ICCID of the SIM care
+    GTCSQ: GSM Signal Level
+    GTCVN: CAN Version
+    GTDAT: CAN Config Data
+    GTDOS: Status Of Wave Shape 1 Output Changes
+    GTGCR: Location as Center of Geo-Fence
+    GTGEO: Entering/Exiting Geo fence
+    GTGES: Entering/Exiting Geo fence
+    GTGPJ: GPS jamming status
+    GTGSM: Service And Neighbor Cell Information
+    GTGSV: Satellite Information
+    GTGTS: Terminal State Information
+    GTGPS: GPS Information
+    GTIDA: ID authorisation check
+    GTINF: Device Information
+    GTIOS: IO Status Information
+    GTJDR: jamming indication
+    GTJDS: jamming detection status
+    GTLBC: Location by Call
+    GTMOA: Mobileye System Alert Report
+    GTRMD: enter or leave GSM roam state
+    GTSWG: Switched on or off Geo-Fence 0 via function key
+    GTTEM: Temperature Alarm
+    GTTMZ: Timezone Report
+    GTUPC: OTA Update
+    GTVER: Version
 
 #
 # models
@@ -44,7 +71,7 @@
     38: GV65+
     42: GMT200N
 
-# devices
+# messages
 #
 - reports:
     GTHBD: heartbeat
@@ -52,58 +79,70 @@
     GTERI: scheduled report
     GTQSS: quick-start settings
     GTACD: configure 1-Wire parameters
-    GTANT: external GPS antenna status reported
     GTOPN: connecting with vehicle through OBDII interface
     GTOPF: disconnecting with vehicle through OBDII interface
-    GTBPN: battery backup connected
     GTEPN: connected external power supply
     GTEPF: disconnected external power supply
     GTTOW: motion sensor detects tow
     GTCFG: global parameter configuration
-    GTGEO: entering/exiting Geo fence
     GTSPD: speed alarm detected
-    GTRTL: GPS detected
     GTDPG: protocol watchdog reboot message
     GTIGL: location message for ignition
     GTHBM: harsh behavior detected
     GTFRI: fixed report information
     GTEPS: external power monitoring voltage alarm
     GTALL: all configuration messages
-    GTALM: individual configuration message
-    GTGSV: satellite information
-    GTPNA: power-on report
-    GTPFA: power-off report
-    GTMPN: connected main power supply
-    GTMPF: disconnected main power supply
-    GTBTC: backup battery starts charging
-    GTSTC: backup battery stops charging
-    GTBPF: backup battery removed
-    GTBPL: backup battery low
-    GTSTT: device motion state changed
-    GTPDP: GPRS connection establishment
-    GTIGF: ignition off
+
+    GTPFA: Power Off
+    GTPNA: Power On
+    GTMPN: Connected Main Power Supply
+    GTMPF: Disconnected Main Power Supply
+
+    GTBPN: Backup Battery Connected
+    GTBPF: Backup Battery Removed
+    GTBTC: Backup Battery Starts Charging
+    GTSTC: Backup Battery Stops Charging
+    GTBPL: Backup Battery Low
+
     GTIGN: ignition on
+    GTIGF: ignition off
+
     GTIDN: entering idle status
     GTIDF: leave idle status
-    GTGSM: service and neighbor cell information
+    GTSTR: Vehicle Enters Into Start Status
+    GTSTP: Vehicle Enters Into Stop Status
+    GTLSP: Vehicle Enters Into Long Stop Status
+    GTLGL: Fall detected
+
+    GTSTT: Device Motion State Changed
+    GTNMD: Device Movement Status Changes
+
+    GTPDP: GPRS Connection Establishment
+
     GTGSS: GPS signal status
     GTCRA: crash incident report
-    GTSSP: vehicle enters into stop status
-    GTLSP: vehicle enters into long stop status
-    GTJDR: jamming indication
-    GTJDS: jamming detection status
-    GTRMD: enter or leave GSM roam state
+
+    GTFLA: Unusual Fuel Consumption Alarm
+    GTCAN: CANBUS Device Information 
+
     GTDIS: status change of digital input detected
     GTIOB: I/O combination set/detected
     GTSOS: digital input port triggered SOS
-    GTGCR: Location as Center of Geo-Fence
-    GTSWG: Switched on or off Geo-Fence 0 via function key
+    GTPNL: first location after power on
+    GTDOG: watchdog reboot
+    GTRTL: GPS detected
+
 #
+# GV500
+# Most fields are shared, but all messages include a VIN after IMEI
 #
-# GV500. p84
-- subtypes: [ GTTOW, GTGEO, GTSPD, GTRTL, GTDOG, GTIGL, GTHBM ]
-  versions: [ "0701", "0801" ]
+- subtypes: [ GTTOW, GTSPD, GTRTL, GTDOG, GTIGL, GTHBM ]
+  versions: [ "360701", "360801" ]
   imei: 2
+  vin: 3
+  name: 4
+  reserved: 5
+  rit: 6
   number: 7
   acc: 8
   vel: 9
@@ -112,11 +151,22 @@
   lon: 12
   lat: 13
   utc: 14
-  odometer: 20
-  add: 6
-- subtypes: [ GTFRI, GTEPS ]
-  versions: [ "0701", "0801" ]
+  mcc: 15
+  mnc: 16
+  lac: 17
+  cid: 18
+  reserved: 19
+  odmeter: 20
+  sent: 21
+  count: 22
+
+- subtypes: [ GTFRI ]
+  versions: [ "360701", "360801" ]
   imei: 2
+  vin: 3
+  name: 4
+  uext: 5
+  rit: 6
   number: 7
   acc: 8
   vel: 9
@@ -125,12 +175,59 @@
   lon: 12
   lat: 13
   utc: 14
+  mcc: 15
+  mnc: 16
+  lac: 17
+  cid: 18
   odometer: 20
+  hmc: 21
+  reserved: 22
+  reserved: 23
   batt: 24
-  add: 6
-- subtypes: [ GTSTT, GTIGN, GTIGF ]
-  versions: [ "0701", "0801" ]
+  devs: 25
+  rpm: 26
+  fcon: 27
+  flvl: 28
+  sent: 29
+  count: 30
+
+- subtypes: [ GTEPS ]
+  versions: [ "360701", "360801" ]
   imei: 2
+  vin: 3
+  name: 4
+  uext: 5
+  rit: 6
+  number: 7
+  acc: 8
+  vel: 9
+  cog: 10
+  alt: 11
+  lon: 12
+  lat: 13
+  utc: 14
+  mcc: 15
+  mnc: 16
+  lac: 17
+  cid: 18
+  odometer: 20
+  sent: 21
+  count: 22
+
+- subtypes: [ GTPNA, GTPFA, GTPDP ]
+  versions: [ "360701", "360801" ]
+  imei: 2
+  vin: 3
+  name: 4
+  sent: 5
+  count: 6
+
+- subtypes: [ GTBPL ]
+  versions: [ "360701", "360801" ]
+  imei: 2
+  vin: 3
+  name: 4
+  ubatt: 5
   acc: 6
   vel: 7
   cog: 8
@@ -138,10 +235,86 @@
   lon: 10
   lat: 11
   utc: 12
-  add: 5
-- subtypes: [ GTOPN, GTOPF, GTMPN, GTMPF, GTBTC, GTCRA ]
-  versions: [ "0701", "0801" ]
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  sent: 18
+  count: 19
+
+- subtypes: [ GTSTT ]
+  versions: [ "360701", "360801" ]
   imei: 2
+  vin: 3
+  name: 4
+  mst: 5
+  acc: 6
+  vel: 7
+  cog: 8
+  alt: 9
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  sent: 18
+  count: 19
+
+- subtypes: [ GTIGN ]
+  versions: [ "360701", "360801" ]
+  imei: 2
+  vin: 3
+  name: 4
+  doff: 5
+  acc: 6
+  vel: 7
+  cog: 8
+  alt: 9
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  hmc: 18
+  odometer: 19
+  sent: 20
+  count: 21
+
+- subtypes: [ GTIGF ]
+  versions: [ "360701", "360801" ]
+  imei: 2
+  vin: 3
+  name: 4
+  don: 5
+  acc: 6
+  vel: 7
+  cog: 8
+  alt: 9
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  hmc: 18
+  odometer: 19
+  sent: 20
+  count: 21
+
+- subtypes: [ GTMPN, GTMPF, GTBTC, GTCRA ]
+  versions: [ "360701", "360801" ]
+  imei: 2
+  vin: 3
+  name: 4
   acc: 5
   vel: 6
   cog: 7
@@ -149,10 +322,42 @@
   lon: 9
   lat: 10
   utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  sent: 17
+  count: 18
 
-- subtypes: [ GTIDN, GTSTR, GTSTP, GTSLP, GTIDF ]
-  versions: [ "0701", "0801" ]
+- subtypes: [ GTSTC ]
+  versions: [ "360701", "360801" ]
   imei: 2
+  vin: 3
+  name: 4
+  reserved: 5
+  acc: 6
+  vel: 7
+  cog: 8
+  alt: 9
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  sent: 18
+  count: 19
+
+- subtypes: [ GTIDN, GTSTR, GTSTP, GTSLP ]
+  versions: [ "360701", "360801" ]
+  imei: 2
+  vin: 3
+  name: 4
+  reserved: 5
+  reserved: 6
   acc: 7
   vel: 8
   cog: 9
@@ -160,9 +365,48 @@
   lon: 11
   lat: 12
   utc: 13
-- subtypes: [ GTGSS ]
-  versions: [ "0701", "0801" ]
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 18
+  hmc: 19
+  odometer: 20
+  sent: 21
+  count: 22
+
+- subtypes: [ GTIDF ]
+  versions: [ "360701", "360801" ]
   imei: 2
+  vin: 3
+  name: 4
+  mst: 5
+  didle: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 18
+  odometer: 29
+  sent: 20
+  count: 21
+
+- subtypes: [ GTGSS ]
+  versions: [ "360701", "360801" ]
+  imei: 2
+  vin: 3
+  name: 4
+  gpss: 5
+  satn: 6
+  mst: 7
+  reserved: 8
   acc: 9
   vel: 10
   cog: 11
@@ -170,20 +414,23 @@
   lon: 13
   lat: 14
   utc: 15
+  mcc: 16
+  mnc: 17
+  lac: 18
+  cid: 19
+  reserved: 20
+  sent: 21
+  count: 22
 
-# GV500. p97
-#- subtypes: [ GTALM ]
-#  versions: [ "0601" ]
-#  totalpackets: 5
-#  currentpacket: 6
-#  configuration: 7
 #
+# gv65, gv65+
 #
-#
-# GV65, p105
-- subtypes: [ GTTOW, GTDIS, GTIOB, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL, GTHBM, GTFRI, GTAIS, GTGEO, GTEPS ]
-  versions: [ "0000", "0201", "0603", "0101" ]
+- subtypes: [ GTFRI]
+  versions: [ "310603", "380603" ]
   imei: 2
+  name: 3
+  uext: 4
+  rit: 5
   number: 6
   acc: 7
   vel: 8
@@ -192,28 +439,29 @@
   lon: 11
   lat: 12
   utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
   odometer: 19
+  hmc: 20
+  aiv: 21
+  reserved: 22
   batt: 23
-  add: 5
+  devs: 24
+  reserved: 25
+  reserved: 26
+  reserved: 27
+  sent: 28
+  count: 29
 
-- subtypes: [ GTFRI ]  # added for GL300W, GL300 as per ckrey on 2017-09-13
-  versions: [ "0600", "0702", "0800" ]
+- subtypes: [ GTERI ] 
+  versions: [ "310603", "380603" ]
   imei: 2
-  number: 6
-  acc: 7
-  vel: 8
-  cog: 9
-  alt: 10
-  lon: 11
-  lat: 12
-  utc: 13
-  odometer: 18
-  batt: 19
-  add: 5
-
-- subtypes: [ GTIDA, GTERI ]  #p111 serial port connected with peripheral
-  versions: [ "0000", "0603" ]
-  imei: 2
+  name: 3
+  erim: 4
+  uext: 5
+  rit: 6
   number: 7
   acc: 8
   vel: 9
@@ -222,11 +470,267 @@
   lon: 12
   lat: 13
   utc: 14
+  mcc: 15
+  mnc: 16
+  lac: 17
+  cid: 18
+  reserved: 19
   odometer: 20
+  hmc: 21
+  aiv: 22
   batt: 23
-- subtypes: [ GTBTC, GTMPN, GTCRA, GTMPF, GTBPF, GTJDR, GTEPN, GTEPF ]
-  versions: [ "0000", "0600", "0603", "0702", "0800" ]
+  devs: 24
+  uart: 25
+  anum: 26
+  adid: 27
+  adty: 28
+  adda: 29
+  can: 30
+  sent: 31
+  count: 32
+
+- subtypes: [ GTIGN ]
+  versions: [ "310603", "380603" ]
   imei: 2
+  name: 3
+  doff: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  hmc: 17
+  odometer: 18
+  sent: 19
+  count: 20
+
+- subtypes: [ GTIGF ]
+  versions: [ "310603", "380603" ]
+  imei: 2
+  name: 3
+  don: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  hmc: 17
+  odometer: 18
+  sent: 19
+  count: 20
+
+- subtypes: [ GTGSS ]
+  versions: [ "310603", "380603" ]
+  imei: 2
+  name: 3
+  gpss: 4
+  satn: 5
+  mst: 6
+  reserved: 7
+  acc: 8
+  vel: 9
+  cog: 10
+  alt: 11
+  lon: 12
+  lat: 13
+  utc: 14
+  mcc: 15
+  mnc: 16
+  lac: 17
+  cid: 18
+  reserved: 19
+  sent: 20
+  count: 21
+
+- subtypes: [ GTFLA ]
+  versions: [ "310603", "380603" ]
+  imei: 2
+  name: 3
+  reserved: 4
+  offl: 5
+  onfl: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 18
+  sent: 19
+  count: 20
+
+#
+# gmt200
+#
+- subtypes: [ GTFRI]
+  versions: [ "420201" ]
+  imei: 2
+  name: 3
+  uext: 4
+  rit: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 17
+  odometer: 19
+  hmc: 20
+  reserved: 21
+  reserved: 22
+  batt: 23
+  din: 24
+  dout: 25
+  reserved: 26
+  reserved: 27
+  sent: 28
+  count: 29
+
+- subtypes: [ GTIGN ]
+  versions: [ "420201" ]
+  imei: 2
+  name: 3
+  doff: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  sent: 17
+  count: 18
+
+- subtypes: [ GTIGF ]
+  versions: [ "420201" ]
+  imei: 2
+  name: 3
+  don: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  sent: 17
+  count: 18
+
+- subtypes: [ GTNMD ]
+  versions: [ "420201" ]
+  imei: 2
+  name: 3
+  nmds: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  sent: 17
+  count: 18
+
+# shared
+
+- subtypes: [ GTTOW, GTDIS, GTIOB, GTGEO, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL, GTHBM ]
+  versions: [ "420201", "310603", "380603", "300102" ]
+  imei: 2
+  name: 3
+  reserved: 4
+  rit: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 18
+  odometer: 19
+  sent: 20
+  count: 21
+
+- subtypes: [ GTAIS, GTEPS ]
+  versions: [ "310603", "380603", "300102", "420201" ]
+  imei: 2
+  name: 3
+  uext: 4
+  rit: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 18
+  odometer: 19
+  sent: 20
+  count: 21
+
+- subtypes: [ GTPNA, GTPFA, GTPDP ]
+  versions: [ "2C0600", "300800", "310603", "380603", "420201" ]
+  imei: 2
+  name: 3
+  sent: 4
+  count: 5
+
+- subtypes: [ GTMPN, GTMPF, GTEPN, GTEPF, GTBTC, GTCRA, GTBPN, GTBPF ]
+  versions: [ "310603", "380603", "420201" ]
+  imei: 2
+  name: 3
   acc: 4
   vel: 5
   cog: 6
@@ -234,9 +738,19 @@
   lon: 8
   lat: 9
   utc: 10
-- subtypes: [ GTANT, GTBPL, GTSTT, GTIGN, GTIGF ]
-  versions: [ "0000", "0603" ]
+  mcc: 11
+  mnc: 12
+  lac: 13
+  cid: 14
+  reserved: 15
+  sent: 16
+  count: 17
+
+- subtypes: [ GTSTC ]
+  versions: [ "310603", "380603", "420201" ]
   imei: 2
+  name: 3
+  reserved: 4
   acc: 5
   vel: 6
   cog: 7
@@ -244,35 +758,130 @@
   lon: 9
   lat: 10
   utc: 11
-  add: 4
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  sent: 17
+  count: 18
 
-- subtypes: [ GTGCR ]
-  versions: [ "0600" ]
+- subtypes: [ GTSTT ]
+  versions: [ "310603", "380603", "420201" ]
   imei: 2
-  acc: 7
-  vel: 8
-  cog: 9
-  alt: 10
-  lon: 11
-  lat: 12
-  utc: 13
+  name: 3
+  mst: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  sent: 17
+  count: 18
 
-- subtypes: [ GTGCR ]
-  versions: [ "0702", "0800" ]
+- subtypes: [ GTBPL ]
+  versions: [ "310603", "380603", "420201" ]
   imei: 2
-  acc: 7
-  vel: 8
-  cog: 9
-  alt: 10
-  lon: 11
-  lat: 12
-  utc: 13
+  name: 3
+  ubatt: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  reserved: 16
+  sent: 17
+  count: 18
 
-# note here we use parameter `add` to indicate we want that field in the JSON
+- subtypes: [ GTIDN, GTSTP, GTSTR, GTLSP]
+  versions: [ "310603", "380603", "420201" ]
+  imei: 2
+  name: 3
+  reserved: 4
+  reserved: 5
+  acc: 6
+  vel: 7
+  cog: 8
+  alt: 9
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  odometer: 18
+  sent: 19
+  count: 20
+
+- subtypes: [ GTIDF ]
+  versions: [ "310603", "380603", "420201" ]
+  imei: 2
+  name: 3
+  mst: 4
+  didle: 5
+  acc: 6
+  vel: 7
+  cog: 8
+  alt: 9
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  odometer: 18
+  sent: 19
+  count: 20
+
 #
-- subtypes: [ GTSWG ]
-  versions: [ "0600", "0702", "0800" ]
+# gl300w
+#
+
+- subtypes: [ GTFRI , GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDIS, GTDOG, GTIGL, GTMSA] 
+  versions: [ "2C0600" ]
   imei: 2
+  name: 3
+  rid: 4
+  rty: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  odometer: 18
+  batt: 19
+  sent: 20
+  count: 21
+
+- subtypes: [ GTLGL ]
+  versions: [ "2C0600" ]
+  imei: 2
+  name: 3
+  rty: 4
   acc: 5
   vel: 6
   cog: 7
@@ -280,4 +889,181 @@
   lon: 9
   lat: 10
   utc: 11
-  add: 4
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  odometer: 16
+  sent: 17
+  count: 18
+
+#
+# gl300(N)
+# 
+
+- subtypes: [ GTFRI , GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDIS, GTDOG, GTIGL, GTPFL] 
+  versions: [ "300800" ]
+  imei: 2
+  name: 3
+  rid: 4
+  rty: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  odometer: 18
+  batt: 19
+  ios: 20
+  sent: 21
+  count: 22
+
+#
+# shared gl300
+#
+
+- subtypes: [ GTEPN, GTEPF ]
+  versions: [ "2C0600", "300800" ]
+  imei: 2
+  name: 3
+  acc: 4
+  vel: 5
+  cog: 6
+  alt: 7
+  lon: 8
+  lat: 9
+  utc: 10
+  mcc: 11
+  mnc: 12
+  lac: 13
+  cid: 14
+  odometer: 15
+  sent: 16
+  count: 17
+
+- subtypes: [ GTBPL ]
+  versions: [ "2C0600", "300800" ]
+  imei: 2
+  name: 3
+  ubatt: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  odometer: 16
+  sent: 17
+  count: 18
+
+- subtypes: [ GTBTC ]
+  versions: [ "2C0600", "300800" ]
+  imei: 2
+  name: 3
+  acc: 4
+  vel: 5
+  cog: 6
+  alt: 7
+  lon: 8
+  lat: 9
+  utc: 10
+  mcc: 11
+  mnc: 12
+  lac: 13
+  cid: 14
+  odometer: 15
+  sent: 16
+  count: 17
+
+- subtypes: [ GTSTC ]
+  versions: [ "2C0600", "300800" ]
+  imei: 2
+  name: 3
+  reserved: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  odometer: 16
+  sent: 17
+  count: 18
+
+- subtypes: [ GTSTT ]
+  versions: [ "2C0600", "300800" ]
+  imei: 2
+  name: 3
+  mst: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  odometer: 16
+  sent: 17
+  count: 18
+
+- subtypes: [ GTIGN ]
+  versions: [ "2C0600", "300800" ]
+  imei: 2
+  name: 3
+  doff: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  odometer: 16
+  sent: 17
+  count: 18
+
+- subtypes: [ GTIGF ]
+  versions: [ "2C0600", "300800" ]
+  imei: 2
+  name: 3
+  don: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  odometer: 16
+  sent: 17
+  count: 18
+

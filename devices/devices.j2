@@ -27,8 +27,13 @@ struct _device devices[] = {
 {%   for vv in dev['versions'] -%}
 {%      for st in dev['subtypes'] -%}
 		{% set key = st + '-' + vv -%}
-		{% set num = dev['number'] | default(0) -%}
 		{% set imei = dev['imei'] -%}
+		{% set name = dev['name'] | default(-1) %}
+		{% set uext = dev['uext'] | default(-1) %}
+		{% set rit = dev['rit'] | default(-1) %}
+		{% set rid = dev['rid'] | default(-1) %}
+		{% set rty = dev['rty'] | default(-1) %}
+		{% set num = dev['number'] | default(0) -%}
 		{% set acc  = dev['acc'] | default(-1) -%}
 		{% set cog  = dev['cog'] | default(-1) -%}
 		{% set alt  = dev['alt'] | default(-1) -%}
@@ -36,11 +41,51 @@ struct _device devices[] = {
 		{% set lon =  dev['lon'] | default(-1) -%}
 		{% set lat =  dev['lat'] | default(-1) -%}
 		{% set vel =  dev['vel'] | default(-1) -%}
+		{% set mcc = dev['mcc'] | default(-1) %}
+		{% set mnc = dev['mnc'] | default(-1) %}
+		{% set lac = dev['lac'] | default(-1) %}
+		{% set cid = dev['cid'] | default(-1) %}
 		{% set odometer = dev['odometer'] | default(-1) %}
+		{% set hmc = dev['hmc'] | default(-1) %}
+		{% set aiv = dev['aiv'] | default(-1) %}
 		{% set batt = dev['batt'] | default(-1) %}
-		{% set add = dev['add'] | default(-1) %}
+		{% set devs = dev['devs'] | default(-1) %}
+		{% set sent = dev['sent'] | default(-1) %}
+		{% set count = dev['count'] | default(-1) %}
+		{% set din = dev['din'] | default(-1) %}
+		{% set dout = dev['dout'] | default(-1) %}
+		{% set mst = dev['mst'] | default(-1) %}
+		{% set ios = dev['ios'] | default(-1) %}
+		{% set ubatt = dev['ubatt'] | default(-1) %}
+		{% set don = dev['don'] | default(-1) %}
+		{% set doff = dev['doff'] | default(-1) %}
+		{% set nmds = dev['nmds'] | default(-1) %}
+		{% set erim  = dev['erim'] | default(-1) %}
+		{% set can  = dev['can'] | default(-1) %}
+		{% set uart  = dev['uart'] | default(-1) %}
+		{% set anum  = dev['anum'] | default(-1) %}
+		{% set adid  = dev['adid'] | default(-1) %}
+		{% set adty  = dev['adty'] | default(-1) %}
+		{% set adda  = dev['adda'] | default(-1) %}
+		{% set vin  = dev['vin'] | default(-1) %}
+		{% set rpm  = dev['rpm'] | default(-1) %}
+		{% set fcon  = dev['fcon'] | default(-1) %}
+		{% set flvl  = dev['flvl'] | default(-1) %}
+
 		{% set add_name = dev['add_name'] | default("NULL") %}
-    { "{{key}}", {{num}}, {{imei}}, {{acc}}, {{cog}}, {{alt}}, {{vel}}, {{lon}}, {{lat}}, {{utc}}, {{odometer}}, {{batt}}, {{add}}, {{add_name}} },
+    {
+	"{{key}}", {{imei}}, {{name}}, {{uext}}, {{rit}},
+	{{rid}}, {{rty}},
+	{{num}}, {{acc}}, {{cog}}, {{alt}}, {{vel}},
+	{{lon}}, {{lat}}, {{utc}}, {{mcc}}, {{mnc}},
+	{{lac}}, {{cid}}, {{odometer}}, {{hmc}}, {{aiv}},
+	{{batt}}, {{devs}}, {{sent}}, {{count}}, {{din}},
+	{{dout}}, {{mst}}, {{ios}}, {{ubatt}},
+	{{don}}, {{doff}}, {{nmds}},
+	{{erim}}, {{can}}, {{uart}}, {{anum}}, {{adid}},
+	{{adty}}, {{adda}},
+	{{vin}}, {{rpm}}, {{fcon}}, {{flvl}}, {{add_name}}
+},
 {%      endfor %}
 {%   endfor %}
 //

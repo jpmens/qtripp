@@ -22,20 +22,55 @@
 #include "uthash.h"
 
 struct _device {
-	char *id;		/* "GTFRI-jjmm" */
+	char *id;		/* e.g. "GTFRI-MOMAMI" for MOdel, MAjor, MInor */
 
-	int num;
-	int imei;
-	int acc;
-	int cog;
-	int alt;
-	int vel;
-	int lon;
-	int lat;
-	int utc;
-	int odometer;
-	int batt;
-	int add;
+	int imei;		/* imei string */
+	int name;		/* device name string */
+	int uext;		/* external power voltage number in mV */
+	int rit;		/* report id / report type combined */
+	int rid;		/* report id */
+	int rty;		/* report type */
+	int num;		/* number of position entries */
+	int acc;			/* repeats */
+	int cog;			/* repeats */
+	int alt;			/* repeats */
+	int vel;			/* repeats */
+	int lon;			/* repeats */
+	int lat;			/* repeats */
+	int utc;			/* repeats */
+	int mcc;			/* repeats */
+	int mnc;			/* repeats */
+	int lac;			/* repeats */
+	int cid;			/* repeats */
+	int odometer;		/* milage */
+	int hmc;		/* hour meter count */
+	int aiv;		/* analog input voltage */
+	int batt;		/* backup battery percentage */
+	int devs;		/* device status */
+	int sent;		/* sent time */
+	int count;		/* count of messages */
+
+	int din;		/* digital input */
+	int dout;		/* digital output */
+	int mst;		/* motion status */
+	int ios;		/* io status */
+	int ubatt;		/* backup battery voltage */
+	int don;		/* duration ignition on */
+	int doff;		/* duration ignition off */
+	int nmds;		/* non motion detection status */
+	int erim;
+	int can;
+	int uart;
+	int anum;
+	int adid;
+	int adty;
+	int adda;
+
+	int vin;	/* Vehicle Identification Number */
+	int rpm;	/* engine rpm */
+	int fcon;	/* fuel consumption L / 100 km or Inf or NaN */
+	int flvl;	/* fuel level in percent 0-100 */
+
 	char *add_name;
 
         UT_hash_handle hh;
@@ -43,4 +78,4 @@ struct _device {
 
 void load_devices();
 void free_devices();
-struct _device *lookup_devices(char *key, char *jjmm);
+struct _device *lookup_devices(char *key, char *monami);

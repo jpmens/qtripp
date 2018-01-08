@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <mosquitto.h>
+#include <assert.h>
 #include "util.h"
 #include "uthash.h"
 #include "conf.h"
@@ -82,6 +83,7 @@ static void imei_incr(char *imei, int reports)
 		strncpy(is->key, imei, 16);
 		is->last_seen	= time(0);
 		is->reports	= reports;
+		is->last_json	= NULL;
 		HASH_ADD_STR(imei_stats, key, is);
 		// printf("---------------------- add %d\n", reports);
 	} else {
@@ -100,7 +102,16 @@ static char *imei_last_json(char *imei, char *last_json)
 	struct my_imeistat *is;
 	char *lj = NULL;
 
+	//fprintf(stderr, "DEBUG imei_last_json(%s, %s)\n",
+	//	imei != NULL ? imei : "NULL",
+	//	last_json != NULL ? last_json : "NULL");
+
 	HASH_FIND_STR(imei_stats, imei, is);
+	//fprintf(stderr, "DEBUG imei_last_json HASH_FIND_STR is:%p\n",
+	//	is);
+	//fprintf(stderr, "DEBUG imei_last_json HASH_FIND_STR is->last_json:%s\n",
+	//	(is != NULL && is->last_json != NULL) ? is->last_json : "NULL");
+
 	if (!is) {
 		is = (struct my_imeistat *)malloc(sizeof(struct my_imeistat));
 		strncpy(is->key, imei, 16);
@@ -112,7 +123,10 @@ static char *imei_last_json(char *imei, char *last_json)
 		if (last_json == NULL) {
 			lj = is->last_json;
 		} else {
-			free(is->last_json);
+			if (is->last_json != NULL) {
+				//fprintf(stderr, "DEBUG free(is->last_json) %d\n", __LINE__);
+				free(is->last_json);
+			}
 			lj = is->last_json	= strdup(last_json);
 		}
 	}
@@ -185,6 +199,7 @@ void dump_stats(struct udata *ud)
 
 		if ((js = json_stringify(obj, "  ")) != NULL) {
 			fprintf(fp, "%s\n", js);
+			//fprintf(stderr, "DEBUG free(js) %d\n", __LINE__);
 			free(js);
 		}
 		json_delete(obj);
@@ -210,6 +225,7 @@ void dump_stats(struct udata *ud)
 
 		if ((js = json_stringify(obj, "  ")) != NULL) {
 			fprintf(fp, "%s\n", js);
+			//fprintf(stderr, "DEBUG free(js) %d\n", __LINE__);
 			free(js);
 		}
 		json_delete(obj);
@@ -276,7 +292,26 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 //		if (ud->cocorun) mg_printf(ud->coco, "%s", js);	// FIXME remove
 //		fprintf(stderr, "@@@@@@@@@ %d\n", ud->coco->sock);
 
+		//fprintf(stderr, "DEBUG free(js) %d\n", __LINE__);
 		free(js);
+	}
+}
+
+/*
+ * Find `elem' in the JSON `obj'. In particular find NUMBERs and convert
+ * to our special JSON DOUBLE type with the specified precision.
+ */
+
+void precision(JsonNode *obj, char *elem, int prec)
+{
+	JsonNode *j;
+	double d;
+
+	if ((j = json_find_member(obj, elem)) != NULL) {
+		assert(j->tag == JSON_NUMBER || j->tag == JSON_DOUBLE);
+		d = j->number_;
+		json_remove_from_parent(j);
+		json_append_member(obj, elem, json_mkdouble(d, prec));
 	}
 }
 
@@ -305,8 +340,8 @@ void pseudo_lwt(struct udata *ud, char *imei)
 	json_delete(o);
 }
 
-#define GET_D(n)	((n <= nparts && *parts[n]) ? atof(parts[n]) : NAN)
-#define GET_S(n)	((n <= nparts && *parts[n]) ? parts[n] : NULL)
+#define GET_D(n)	((n > 0 && n < nparts && *parts[n]) ? atof(parts[n]) : NAN)
+#define GET_S(n)	((n > 0 && n < nparts && *parts[n]) ? parts[n] : NULL)
 
 /*
  * `line' contains a line of text from a tracker. Do what is necessary,
@@ -326,11 +361,19 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	char **parts, *tparts[4], *imei_dup = NULL;
 	int n, nparts;
 	char abr[24], subtype[24];	/* abr= ACK, BUFF, RESP, i.e. the bit before : */
+        char id[64];
 	struct _device *dp;
 	struct _ignore *ip;
 	bool subtype_ignored = false;
 
 	++linecounter;
+
+#if 1
+	fprintf(stderr, "DEBUG line #%ld (%lu) %s\n",
+		linecounter,
+		line != NULL ? strlen(line) : 0,
+		line != NULL ? line : "NULL");
+#endif
 
 	if (*line == '*') {
 		// xlog(ud, "Control: %s\n", line);
@@ -356,14 +399,15 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 	strcpy(abr, tparts[0]);
 	strcpy(subtype, tparts[1]);
-	splitterfree(tparts);
+	//fprintf(stderr, "DEBUG splitterfree(tparts) %d\n", __LINE__);
+	//splitterfree(tparts);
 
 
 	char *imei = GET_S(2);
-	char *protov = GET_S(1);	/* VVJJMM
-					 * VV = model
-					 * JJ = major
-					 * MM = minor
+	char *protov = GET_S(1);	/* MOMAMI
+					 * MO = model
+					 * MA = major
+					 * MI = minor
 					 */
 	/*
 	 * If we have neither IMEI nor protov forget the rest; impossible to
@@ -417,20 +461,35 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			 * modify it to replace "t:" with a "p:ing" and update the tst to
 			 * now(). Publish to MQTT in order to pass the heartbeat along to MQTT
 			 * with the last-known good values.
+			 * Also ensure lat/lon are JSON_DOUBLES so we keep precision.
 			 */
 
 			if ((js = imei_last_json(imei, NULL)) != NULL) {
 				JsonNode *obj, *j;
 
+				/* TODO don't decode and readjust, but store JSON object rather than JSON string */
+
 				if ((obj = json_decode(js)) != NULL) {
+
+					precision(obj, "lat", 6);
+					precision(obj, "lon", 6);
+					precision(obj, "odometer", 1);
+					precision(obj, "meters", 1);
+					precision(obj, "vel", 1);
+					precision(obj, "alt", 1);
+					precision(obj, "fcon", 1);
+					precision(obj, "ubatt", 1);
+
 					if ((j = json_find_member(obj, "t")) != NULL) {
 						json_remove_from_parent(j);
-						json_append_member(obj, "t", json_mkstring("p"));
 					}
+					json_append_member(obj, "t", json_mkstring("p"));
+
 					if ((j = json_find_member(obj, "tst")) != NULL) {
 						j->number_ = time(0);
-						transmit_json(ud, imei, obj);
 					}
+
+					transmit_json(ud, imei, obj);
 					json_delete(obj);
 				}
 			}
@@ -439,9 +498,18 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 
 
-	if ((dp = lookup_devices(subtype, protov + 2)) == NULL) {
-		xlog(ud, "MISSING: device definition for %s-%s\n", subtype, protov+2);
+	/* 
+	 * lookup device definition
+	 */
+	//fprintf(stderr, "lookup_devices %s %s\n", subtype, protov ? protov : "NULL");
+	if ((dp = lookup_devices(subtype, protov)) == NULL) {
+		xlog(ud, "MISSING: device definition for %s-%s\n", subtype, protov);
 		goto finish;
+	}
+
+        snprintf(id, sizeof(id), "%s-%s", subtype, protov);
+	if (strcmp(dp->id, id)) {
+		xlog(ud, "DEFAULT: device definition for %s used %s\n", id, dp->id);
 	}
 
 	char *dpn = GET_S(dp->num);
@@ -458,47 +526,176 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	JsonNode *jmerge = json_mkobject(), *jm;
 
-	/* "add" is additional data, e.g. GTSWG */
-	if (dp->add > 0) {
-		double d = GET_D(dp->add);
-		if (!isnan(d)) {
-			json_append_member(jmerge, "add", json_mknumber(d));
+	/* "vin" is the optional vehicle identification number */
+	if (dp->vin > 0) {
+		char *vin = GET_S(dp->vin);
+		if (vin != NULL) {
+			json_append_member(jmerge, "vin", json_mkstring(vin));
 		}
 	}
 
-	if (!strcmp(subtype, "GTERI")) {
-		/*
-		 * According to GV65, page 35, et.al (search for "Eri mask")
-		 * if bit 1 is set in the mask, it means AC100 data is
-		 * available (which I interpret to be 1-Wire data).
-		 *
-		 * So, we check for that bit and then grab the temperature
-		 * from our 1-Wire DS18B20.
-		 */
+	/* "name" is the optional device name */
+	if (dp->name > 0) {
+		char *name = GET_S(dp->name);
+		if (name != NULL) {
+			json_append_member(jmerge, "name", json_mkstring(name));
+		}
+	}
 
-		char *erimask = GET_S(4);
-		unsigned long eribits = strtoul(erimask ? erimask : "0", NULL, 16);
+	/* "rit" is Record ID and Report Type combined */
+	double rit = 0.0;
+        int rid = 0;
+	int rty = 0;
 
-		// FIXME: this is not accurate; bits are set if temp sensor not connected
-		// what seems to be ok is check if field "UART Device Type" is 0 which means
-		// "no device connected" (if DS18B20 is connected the field is "1")
-		//
-		if (eribits & 0x0002) {
-#define D_UART (6)
-			int offset = ((nreports - 1) * 12) + dp->odometer + D_UART;
-			char *val = GET_S(offset);
-			int uart_type  = atoi(val && *val ? val : "0");
-			xlog(ud, "UART Type: %d: %s temperature\n",
-					uart_type, (uart_type) ? "Use" : "Skip");
+	if (dp->rid > 0) {
+		rid = GET_D(dp->rid);
+		if (!isnan(rid)) {
+			json_append_member(jmerge, "rid", json_mknumber(rid));
+		}
+	}
 
-			if (uart_type != 0) {
-				char *t = GET_S(offset + 3);
+	if (dp->rty > 0) {
+		rty = GET_D(dp->rty);
+		if (!isnan(rty)) {
+			json_append_member(jmerge, "rty", json_mknumber(rty));
+		}
+	}
 
-				if (t && *t) {
-					json_append_member(jmerge, "temp_c", json_mknumber(temp(t)));
+	if (dp->rit > 0) {
+		rit = GET_D(dp->rit);
+		if (!isnan(rit)) {
+			json_append_member(jmerge, "rit", json_mknumber(rit));
+			/* determine "t" from subtype, report id and report type */
+			rid = floor(rit / 10.0);
+			json_append_member(jmerge, "rid", json_mknumber(rid));
+			rty = fmod(rit, 10.0);
+			json_append_member(jmerge, "rty", json_mknumber(rty));
+		}
+	}
+
+	/* "mst" is the motion state*/
+	int mst = 0;
+
+	if (dp->mst > 0) {
+		mst = floor(GET_D(dp->mst));
+		json_append_member(jmerge, "mst", json_mknumber(mst));
+	}
+
+	/* io status (ios) is present if indicated for one protocol version */
+	bool iospresent = true;
+	if (!strcmp(subtype, "GTFRI") && !strcmp(protov, "300800")) {
+		if ((rid & 0x01) == 0) {
+			iospresent = false;
+		}
+	}
+
+        /* some messages have an erim state. if so, two bits indicate the presence of other optional parts */
+	bool ac100present = true;
+	int ac100number = 0;
+	bool canpresent = true;
+	if (dp->erim > 0) {
+		char *erimstring = GET_S(dp->erim);
+		if (erimstring != NULL) {
+			unsigned long erim = strtoul(erimstring, NULL, 16);
+			//fprintf(stderr, "erim string %s long %08lx\n", erimstring, erim);
+			ac100present = ((erim & 0x02) != 0);
+			//fprintf(stderr, "ac100present bool %d\n", ac100present);
+			canpresent = ((erim & 0x04) != 0);
+			//fprintf(stderr, "canpresent bool %d\n", canpresent);
+		}
+	}
+
+	/* "ubatt" is external power voltage in V */
+	if (dp->ubatt > 0) {
+		double ubatt = GET_D(dp->ubatt);
+		if (!isnan(ubatt)) {
+			json_append_member(jmerge, "ubatt", json_mkdouble(ubatt, 1));
+		}
+	}
+
+	/* "don" is duration since ignition on in seconds*/
+	if (dp->don > 0) {
+		double don = GET_D(dp->don);
+		if (!isnan(don)) {
+			json_append_member(jmerge, "don", json_mknumber(don));
+		}
+	}
+
+	/* "doff" is duration since ignition of in seconds */
+	if (dp->doff > 0) {
+		double doff = GET_D(dp->doff);
+		if (!isnan(doff)) {
+			json_append_member(jmerge, "doff", json_mknumber(doff));
+		}
+	}
+
+	/* "uext" is external power voltage in mV */
+	if (dp->uext > 0) {
+		double uext = GET_D(dp->uext);
+		if (!isnan(uext)) {
+			uext = uext / 1000.0;
+			json_append_member(jmerge, "uext", json_mknumber(uext));
+		}
+	}
+
+	/* "uart" indicates the possible optional components for analog sensor data */
+	double uart = GET_D(((nreports - 1) * 12) + dp->uart);
+	//fprintf(stderr, "uart double %g\n", uart);
+	if (!isnan(uart) && uart == 2) {
+		/* "ac100present" was set from the erimask and indicates if there are any ac100 data following */
+		if (ac100present) {
+			/* "anum" up to 19 analog data readings may be present */
+			double anum = GET_D(((nreports - 1) * 12) + dp->anum);
+			//fprintf(stderr, "anum double %g\n", anum);
+			if (!isnan(anum) && anum > 0) {
+				json_append_member(jmerge, "anum", json_mknumber(anum));
+				ac100number = anum;
+				for (int a = 0; a < anum; a++) {
+					/* "adid", "adty", "adda" for each item we have id, type and data*/
+					//fprintf(stderr, "adid offset %d\n", ((nreports - 1) * 12) + a * 3 + dp->adid);
+					char *adid = GET_S(((nreports - 1) * 12) + a * 3 + dp->adid);
+					//fprintf(stderr, "adty offset %d\n", ((nreports - 1) * 12) + a * 3 + dp->adty);
+					char *adty = GET_S(((nreports - 1) * 12) + a * 3 + dp->adty);
+					//fprintf(stderr, "adda offset %d\n", ((nreports - 1) * 12) + a * 3 + dp->adda);
+					char *adda = GET_S(((nreports - 1) * 12) + a * 3 + dp->adda);
+					//fprintf(stderr, "adid %s adty %s adda %s\n", adid ? adid : "NULL", adty ? adty : "NULL", adda ? adda : "NULL");
+					if (adid != NULL && adty != NULL && adda != NULL) {
+						static char identifier[16];
+						/* "adid-xx" we append the item number to the name */
+						sprintf(identifier, "adid-%02d", a);
+						//fprintf(stderr, "identifier %s\n", identifier);
+						json_append_member(jmerge, identifier, json_mkstring(adid));
+						sprintf(identifier, "adty-%02d", a);
+						json_append_member(jmerge, identifier, json_mkstring(adty));
+						sprintf(identifier, "adda-%02d", a);
+						json_append_member(jmerge, identifier, json_mkstring(adda));
+						/* if the data type is 1, this means temperature in celsius as
+						 * 2-complement shifted 4 (divided by 16)
+						 */
+						if (!strcmp(adty, "1")) {
+							long temp = strtol(adda, NULL, 16);	
+							if (temp > 32535) {
+								temp -= 65536;
+							}
+							double dtemp = temp;
+							dtemp *= 0.0625;
+							sprintf(identifier, "temp_c-%02d", a);
+							json_append_member(jmerge, identifier, json_mkdouble(dtemp, 1));
+						}
+					}
 				}
 			}
 		}
+	}
+
+	/* "can" data is an optional component indicated by the erim mask */
+	if (canpresent) {
+                if (dp->can > 0) {
+                        char *can = GET_S(((nreports - 1) * 12) + (ac100number - 1) * 3 + dp->can);
+                        if (can != NULL) {
+                                json_append_member(jmerge, "can", json_mkstring(can));
+                        }
+                }
 	}
 
 	/*
@@ -514,12 +711,155 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				json_append_member(jmerge, "odometer", json_mkdouble(odo, 1));
 			}
 		}
+
+		/* "hmc" is hour meter count as HHHHH:MM:SS  */
+		if (dp->hmc > 0) {
+			char *hmcstring = GET_S(dp->hmc);
+			if (hmcstring != NULL && strlen(hmcstring) == 11) {
+				double hmc = atof(hmcstring) * 3600.0 + atof(hmcstring + 6) * 60.0 + atof(hmcstring + 9);
+				json_append_member(jmerge, "hmc", json_mknumber(hmc));
+			}
+		}
+
+		/* "aiv" is analog input voltage in mV */
+		if (dp->aiv > 0) {
+			double aiv = GET_D(dp->aiv);
+			if (!isnan(aiv)) {
+				aiv = aiv / 1000.0;
+				json_append_member(jmerge, "aiv", json_mknumber(aiv));
+			}
+		}
+
+		/* "rpm" is backup battery percentage */
+		if (dp->rpm > 0) {
+			double rpm = GET_D(((nreports - 1) * 12) + dp->rpm);
+			if (!isnan(rpm)) {
+				json_append_member(jmerge, "rpm", json_mknumber(rpm));
+			}
+		}
+
+		/* "fcon" is backup battery percentage */
+		if (dp->fcon > 0) {
+			double fcon = GET_D(((nreports - 1) * 12) + dp->fcon);
+			//fprintf(stderr, "fcon double %g\n", fcon);
+			if (!isnan(fcon) && !isinf(fcon)) {
+				json_append_member(jmerge, "fcon", json_mkdouble(fcon, 1));
+			}
+		}
+
+		/* "flvl" is backup battery percentage */
+		if (dp->flvl > 0) {
+			double flvl = GET_D(((nreports - 1) * 12) + dp->flvl);
+			if (!isnan(flvl)) {
+				json_append_member(jmerge, "flvl", json_mknumber(flvl));
+			}
+		}
+
+		/* "batt" is backup battery percentage */
 		if (dp->batt > 0) {
 			double d = GET_D(((nreports - 1) * 12) + dp->batt);
 			if (!isnan(d)) {
 				json_append_member(jmerge, "batt", json_mknumber(d));
 			}
 		}
+
+		/* "batt" is backup battery percentage */
+		if (dp->batt > 0) {
+			double d = GET_D(((nreports - 1) * 12) + dp->batt);
+			if (!isnan(d)) {
+				json_append_member(jmerge, "batt", json_mknumber(d));
+			}
+		}
+
+		/* "ios" is io status as 4 characters hex*/
+		if (iospresent && dp->ios > 0) {
+		char *iosstring = GET_S(dp->ios);
+			if (iosstring != NULL) {
+				unsigned long ios = strtoul(iosstring, NULL, 16);
+				json_append_member(jmerge, "din1",	json_mkbool(ios & 0x0001));
+				json_append_member(jmerge, "ign",	json_mkbool(ios & 0x0002));
+			}
+		}
+
+		/* "devs" is device status as 10 characters hex*/
+		if (dp->devs > 0) {
+			char *devsstring = GET_S(dp->devs);
+			if (devsstring != NULL) {
+				unsigned long devs = strtoul(devsstring, NULL, 16);
+				json_append_member(jmerge, "dout1",	json_mkbool(devs & 0x000001));
+				json_append_member(jmerge, "dout2",	json_mkbool(devs & 0x000002));
+				json_append_member(jmerge, "ign",	json_mkbool(devs & 0x000100));
+				json_append_member(jmerge, "din1",	json_mkbool(devs & 0x000200));
+				json_append_member(jmerge, "din2",	json_mkbool(devs & 0x000400));
+				json_append_member(jmerge, "motion",	json_mkbool(devs & 0x020000));
+				json_append_member(jmerge, "tow",	json_mkbool(devs & 0x040000));
+				json_append_member(jmerge, "fake",	json_mkbool(devs & 0x080000));
+				json_append_member(jmerge, "sens",	json_mkbool(devs & 0x400000));
+			}
+		}
+
+		/* "din" is digital input as 2 characters hex */
+		if (dp->din > 0) {
+			char *dinstring = GET_S(dp->din);
+			if (dinstring != NULL) {
+				unsigned long din = strtoul(dinstring, NULL, 16);
+				json_append_member(jmerge, "din1",	json_mkbool(din & 0x01));
+				json_append_member(jmerge, "din2",	json_mkbool(din & 0x02));
+			}
+		}
+
+		/* "dout" is digital output as 2 characters hex */
+		if (dp->dout > 0) {
+			char *doutstring = GET_S(dp->dout);
+			if (doutstring != NULL) {
+				unsigned long dout = strtoul(doutstring, NULL, 16);
+				json_append_member(jmerge, "dout1",	json_mkbool(dout & 0x01));
+				json_append_member(jmerge, "dout2",	json_mkbool(dout & 0x02));
+			}
+		}
+
+		/* "sent" sent time at device*/
+		if (dp->sent > 0) {
+			//fprintf(stderr, "sent pos %d nreports %d iospresent %d ac100present %d ac100number %d canpresent %d\n",
+					//dp->sent
+                                        //+ ((nreports - 1) * 12)
+                                        //+ (iospresent ? 0 : -1)
+                                        //+ (ac100present ? 0 : -1)
+                                        //+ ((ac100number - 1) * 3)
+					//+ (canpresent ? 0 : -1),
+					//nreports, iospresent, ac100present, ac100number, canpresent);
+			char *sent = GET_S(dp->sent
+					+ ((nreports - 1) * 12) 
+					+ (iospresent ? 0 : -1)
+					+ (ac100present ? 0 : -1)
+					+ ((ac100number - 1) * 3)
+					+ (canpresent ? 0 : -1)
+					);
+			if (sent != NULL) {
+				time_t epoch;
+
+				if (str_time_to_secs(sent, &epoch) != 1) {
+					xlog(ud, "Cannot convert sent time from [%s]\n", sent);
+				} else {
+					json_append_member(jmerge, "sent", json_mknumber(epoch));
+				}
+			}
+		}
+
+		/* "count" is counter for sent messages */
+		if (dp->count > 0) {
+			char *count = GET_S(dp->count 
+					+ ((nreports - 1) * 12) 
+					+ (iospresent ? 0 : -1)
+					+ (ac100present ? 0 : -1)
+					+ ((ac100number - 1) * 3)
+					+ (canpresent ? 0 : -1)
+					);
+			if (count != NULL) {
+				json_append_member(jmerge, "count", json_mkstring(count));
+			}
+		}
+
 	}
 
 	/* handle sub-reports of e.g GTFRI / GTERI. Even if a subtype
@@ -531,6 +871,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	int rep = 0;
 	do {
 		double lat, lon;
+		double vel, alt;
+		double mcc, mnc;
 		char *s;
 		JsonNode *obj;
 
@@ -538,6 +880,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 		int pos = (rep * 12); /* 12 elements in green area */
 
+		//fprintf(stderr, "DEBUG nofix (%d)\n", pos + dp->utc);
+		// TODO mnc etc. might be interesting though
 		if ((s = GET_S(pos + dp->utc)) == NULL) {
 			/* no fix */
 			continue;
@@ -568,26 +912,166 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "tst", json_mknumber(epoch));
 		}
 
+		mcc = GET_D(pos + dp->mcc);
+		if (!isnan(mcc)) {
+			json_append_member(obj, "mcc", json_mknumber(mcc));
+		}
+
+		mnc = GET_D(pos + dp->mnc);
+		if (!isnan(mnc)) {
+			json_append_member(obj, "mnc", json_mknumber(mnc));
+		}
+
+		if ((s = GET_S(pos + dp->lac)) != NULL) {
+			json_append_member(obj, "lac", json_mkstring(s));
+		}
+
+		if ((s = GET_S(pos + dp->cid)) != NULL) {
+			json_append_member(obj, "cid", json_mkstring(s));
+		}
+
 		json_append_member(obj, "_type", json_mkstring("location"));
 
 		if ((s = GET_S(pos + dp->acc)) != NULL) {
-			json_append_member(obj, "acc", json_mknumber(atoi(s)));
+
+			// Converting the HDOP value to accuracy in +- meters
+                        // There is no formula, so we use an estimate based on the occurances of the HDOP values:
+			// $ grep GTFRI data-louie.log | cut -d ',' -f 8-8 | sort | uniq -c | sort -n
+			//   109 4
+			//   654 3
+			//   677 2
+			//   730 5
+			//   974 0
+			// 35903 1
+
+			double acc;
+			int hdop = atoi(s);
+
+			switch (hdop) {
+				case 1:
+					acc = 10.0;
+					break;
+				case 2:
+					acc = 50.0;
+					break;
+				case 3:
+					acc = 100.0;
+					break;
+				case 4:
+					acc = 500.0;
+					break;
+				case 5:
+					acc = 1000.0;
+					break;
+				case 6:
+					acc = 5000.0;
+					break;
+				default:
+					acc = -1.0;
+					break;
+			}
+			json_append_member(obj, "acc", json_mknumber(acc));
 		}
 
-		if ((s = GET_S(pos + dp->vel)) != NULL) {
-			json_append_member(obj, "vel", json_mknumber(atoi(s)));
+		vel = GET_D(pos + dp->vel);
+		if (!isnan(vel)) {
+			json_append_member(obj, "vel", json_mkdouble(vel, 1));
 		}
 
-		if ((s = GET_S(pos + dp->alt)) != NULL) {
-			json_append_member(obj, "alt", json_mknumber(atoi(s)));
+		alt = GET_D(pos + dp->alt);
+		if (!isnan(alt)) {
+			json_append_member(obj, "alt", json_mkdouble(alt, 1));
 		}
 
 		if ((s = GET_S(pos + dp->cog)) != NULL) {
 			json_append_member(obj, "cog", json_mknumber(atoi(s)));
 		}
 
-		json_append_member(obj, "t", json_mkstring(subtype));
+		if (!strcmp(subtype, "GTFRI") || !strcmp(subtype, "GTERI")) {
+			switch (rid) {
+				default:
+					switch (rty) {
+						case 0:
+							json_append_member(obj, "t", json_mkstring("t"));
+							break;
+						case 1:
+						case 3:
+							json_append_member(obj, "t", json_mkstring("o")); /* corner report */
+							break;
+						case 2:
+							json_append_member(obj, "t", json_mkstring("c"));
+							break;
+						case 4:
+						case 6:
+							json_append_member(obj, "t", json_mkstring("M")); /* mileage */
+							break;
+						case 5:
+						default:
+							json_append_member(obj, "t", json_mkstring("GTFRI"));
+							break;
+					}
+					break;
+			}
+		} else if (!strcmp(subtype, "GTSTT") || !strcmp(subtype, "GTGSS")) {
+			switch (mst) {
+				case 16:
+				case 12:
+				case 41:
+				case 42:
+					json_append_member(obj, "t", json_mkstring("!"));
+					break;
+				case 11:
+					json_append_member(obj, "t", json_mkstring("L"));
+					break;
+				case 21:
+					json_append_member(obj, "t", json_mkstring("a"));
+					break;
+				case 22:
+					json_append_member(obj, "t", json_mkstring("v"));
+					break;
+				default:
+					json_append_member(obj, "t", json_mkstring("GTSTT"));
+					break;
+			}
+		} else if (!strcmp(subtype, "GTDOG")) {
+			json_append_member(obj, "t", json_mkstring("f"));
+		} else if (!strcmp(subtype, "GTPNL")) {
+			json_append_member(obj, "t", json_mkstring("1"));
+		} else if (!strcmp(subtype, "GTBTC")) {
+			json_append_member(obj, "t", json_mkstring("3"));
+		} else if (!strcmp(subtype, "GTSTC")) {
+			json_append_member(obj, "t", json_mkstring("2"));
+		} else if (!strcmp(subtype, "GTBPL")) {
+			json_append_member(obj, "t", json_mkstring("9"));
+		} else if (!strcmp(subtype, "GTRTL")) {
+			json_append_member(obj, "t", json_mkstring("u"));
+		} else if (!strcmp(subtype, "GTIGN")) {
+			json_append_member(obj, "t", json_mkstring("i"));
+		} else if (!strcmp(subtype, "GTIGF")) {
+			json_append_member(obj, "t", json_mkstring("I"));
+		} else if (!strcmp(subtype, "GTEPN")) {
+			json_append_member(obj, "t", json_mkstring("E"));
+		} else if (!strcmp(subtype, "GTEPF")) {
+			json_append_member(obj, "t", json_mkstring("e"));
+		} else if (!strcmp(subtype, "GTMPN")) {
+			json_append_member(obj, "t", json_mkstring("E"));
+		} else if (!strcmp(subtype, "GTMPF")) {
+			json_append_member(obj, "t", json_mkstring("e"));
+		} else if (!strcmp(subtype, "GTIGL")) {
+			json_append_member(obj, "t", json_mkstring(rty == 1 ? "I" : "i"));
+		} else if (!strcmp(subtype, "GTNMD")) {
+			/* "nmds" is the non movement detection status*/
+			if (dp->nmds > 0) {
+				double nmds = GET_D(dp->nmds);
+				json_append_member(jmerge, "nmds", json_mkbool(nmds == 1.0));
+			} else {
+				json_append_member(jmerge, "nmds", json_mkbool(false));
+			}
+		} else {
+			json_append_member(obj, "t", json_mkstring(subtype));
+		}
 
+		//fprintf(stderr, "lastlat\n");
 		if (!isnan(lastlat)) {
 			double meters = haversine_dist(lastlat, lastlon, lat, lon);
 
@@ -636,6 +1120,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 
   finish:
+	//fprintf(stderr, "DEBUG splitterfree(tparts) %d\n", __LINE__);
 	splitterfree(parts);
 	return (imei_dup);
 }
