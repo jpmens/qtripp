@@ -124,7 +124,6 @@ static char *imei_last_json(char *imei, char *last_json)
 			lj = is->last_json;
 		} else {
 			if (is->last_json != NULL) {
-				//fprintf(stderr, "DEBUG free(is->last_json) %d\n", __LINE__);
 				free(is->last_json);
 			}
 			lj = is->last_json	= strdup(last_json);
