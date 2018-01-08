@@ -620,7 +620,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 	}
 
-	/* "doff" is duration since ignition of in seconds */
+	/* "doff" is duration since ignition off in seconds */
 	if (dp->doff > 0) {
 		double doff = GET_D(dp->doff);
 		if (!isnan(doff)) {
