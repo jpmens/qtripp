@@ -764,14 +764,6 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			}
 		}
 
-		/* "batt" is backup battery percentage */
-		if (dp->batt > 0) {
-			double d = GET_D(((nreports - 1) * 12) + dp->batt);
-			if (!isnan(d)) {
-				json_append_member(jmerge, "batt", json_mknumber(d));
-			}
-		}
-
 		/* "ios" is io status as 4 characters hex*/
 		if (iospresent && dp->ios > 0) {
 		char *iosstring = GET_S(dp->ios);
