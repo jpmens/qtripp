@@ -42,6 +42,13 @@
 #define MAXLINELEN	(8192 * 2)
 #define QOS 		1
 
+/* DBGOUT defines fprintf(stderr, ... output
+ * DBGOUT != 0 means print each line
+ * DBGOUT != 1 means print "sent"
+ * DBGOUT != 2 means print "devs"
+ */
+#define DBGOUT 2
+
 struct my_stat {
 	char key[24];		/* key: subtype-protov */
 	long counter;
@@ -367,13 +374,10 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	++linecounter;
 
-#if 1
+#if DBGOUT != 0
 	fprintf(stderr, "DEBUG line #%ld (%lu) %s\n",
-		linecounter,
-		line != NULL ? strlen(line) : 0,
-		line != NULL ? line : "NULL");
+		linecounter, line != NULL ? strlen(line) : 0, line != NULL ? line : "NULL");
 #endif
-
 	if (*line == '*') {
 		// xlog(ud, "Control: %s\n", line);
 
@@ -590,7 +594,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
         /* some messages have an erim state. if so, two bits indicate the presence of other optional parts */
 	bool ac100present = true;
-	int ac100number = 0;
+	int ac100number = 1;
 	bool canpresent = true;
 	if (dp->erim > 0) {
 		char *erimstring = GET_S(dp->erim);
@@ -692,7 +696,9 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	/* "can" data is an optional component indicated by the erim mask */
 	if (canpresent) {
                 if (dp->can > 0) {
-                        char *can = GET_S(((nreports - 1) * 12) + (ac100number - 1) * 3 + dp->can);
+                        char *can = GET_S(((nreports - 1) * 12)
+				+ (ac100present ? ((ac100number - 1) * 3) : 0)
+				+ dp->can);
                         if (can != NULL) {
                                 json_append_member(jmerge, "can", json_mkstring(can));
                         }
@@ -775,9 +781,15 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		/* "devs" is device status as 10 characters hex*/
+#if DBGOUT == 2
+		fprintf(stderr, "DEBUG devs %d [%d]\n", dp->devs, ((nreports - 1) * 12) + dp->devs);
+#endif
 		if (dp->devs > 0) {
-			char *devsstring = GET_S(dp->devs);
+			char *devsstring = GET_S(((nreports - 1) * 12) + dp->devs);
 			if (devsstring != NULL) {
+#if DBGOUT == 2
+		fprintf(stderr, "DEBUG devs %d [%d] %s\n", dp->devs, ((nreports - 1) * 12) + dp->devs, devsstring ? devsstring : "NULL");
+#endif
 				unsigned long devs = strtoul(devsstring, NULL, 16);
 				json_append_member(jmerge, "dout1",	json_mkbool(devs & 0x000001));
 				json_append_member(jmerge, "dout2",	json_mkbool(devs & 0x000002));
@@ -812,22 +824,39 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		/* "sent" sent time at device*/
+#if DBGOUT == 1
+		fprintf(stderr, "DEBUG sent %d\n", dp->sent);
+#endif
 		if (dp->sent > 0) {
-			//fprintf(stderr, "sent pos %d nreports %d iospresent %d ac100present %d ac100number %d canpresent %d\n",
-					//dp->sent
-                                        //+ ((nreports - 1) * 12)
-                                        //+ (iospresent ? 0 : -1)
-                                        //+ (ac100present ? 0 : -1)
-                                        //+ ((ac100number - 1) * 3)
-					//+ (canpresent ? 0 : -1),
-					//nreports, iospresent, ac100present, ac100number, canpresent);
+#if DBGOUT == 1
+			fprintf(stderr, "DEBUG sent %d [%d]\n",
+					dp->sent,
+					dp->sent
+					+ ((nreports - 1) * 12) 
+					+ (iospresent ? 0 : -1)
+					+ (ac100present ? 0 : -1)
+					+ (ac100present ? ((ac100number - 1) * 3) : 0)
+					+ (canpresent ? 0 : -1)
+					);
+#endif
 			char *sent = GET_S(dp->sent
 					+ ((nreports - 1) * 12) 
 					+ (iospresent ? 0 : -1)
 					+ (ac100present ? 0 : -1)
-					+ ((ac100number - 1) * 3)
+					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1)
 					);
+#if DBGOUT == 1
+		        fprintf(stderr, "DEBUG sent %d [%d] %s\n",
+					dp->sent,
+					dp->sent
+					+ ((nreports - 1) * 12) 
+					+ (iospresent ? 0 : -1)
+					+ (ac100present ? 0 : -1)
+					+ (ac100present ? ((ac100number - 1) * 3) : 0)
+					+ (canpresent ? 0 : -1),
+					sent ? sent : "NULL");
+#endif
 			if (sent != NULL) {
 				time_t epoch;
 
@@ -845,7 +874,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ ((nreports - 1) * 12) 
 					+ (iospresent ? 0 : -1)
 					+ (ac100present ? 0 : -1)
-					+ ((ac100number - 1) * 3)
+					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1)
 					);
 			if (count != NULL) {
