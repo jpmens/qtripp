@@ -44,11 +44,11 @@
 
 /* DBGOUT defines fprintf(stderr, ... output
  * DBGOUT != 0 means print each line
- * DBGOUT != 1 means print "sent"
- * DBGOUT != 2 means print "devs"
- * DBGOUT != 3 means print "GTHBD"
+ * DBGOUT == 1 means print "sent"
+ * DBGOUT == 2 means print "devs"
+ * DBGOUT == 3 means print "GTHBD"
  */
-#define DBGOUT 3
+#define DBGOUT 0
 
 struct my_stat {
 	char key[24];		/* key: subtype-protov */
