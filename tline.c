@@ -46,8 +46,9 @@
  * DBGOUT != 0 means print each line
  * DBGOUT != 1 means print "sent"
  * DBGOUT != 2 means print "devs"
+ * DBGOUT != 3 means print "GTHBD"
  */
-#define DBGOUT 2
+#define DBGOUT 3
 
 struct my_stat {
 	char key[24];		/* key: subtype-protov */
@@ -488,9 +489,28 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					}
 					json_append_member(obj, "t", json_mkstring("p"));
 
+
 					if ((j = json_find_member(obj, "tst")) != NULL) {
-						j->number_ = time(0);
+						time_t tst = time(0);
+						char *sent = GET_S(4);
+#if DBGOUT == 3
+						fprintf(stderr, "DEBUG GTHBD send %s\n", sent ? sent : "NULL");
+#endif
+						if (sent != NULL) {
+							time_t epoch;
+
+							if (str_time_to_secs(sent, &epoch) != 1) {
+								xlog(ud, "GTHBD Cannot convert sent time from [%s]\n", sent);
+							} else {
+								tst = epoch;
+							}
+						}
+#if DBGOUT == 3
+						fprintf(stderr, "DEBUG GTHBD tst %ld\n", tst);
+#endif
+						j->number_ = tst;
 					}
+
 
 					transmit_json(ud, imei, obj);
 					json_delete(obj);
