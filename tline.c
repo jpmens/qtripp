@@ -42,13 +42,14 @@
 #define MAXLINELEN	(8192 * 2)
 #define QOS 		1
 
-/* DBGOUT defines fprintf(stderr, ... output
+/*
  * DBGOUT != 0 means print each line
  * DBGOUT == 1 means print "sent"
  * DBGOUT == 2 means print "devs"
  * DBGOUT == 3 means print "GTHBD"
  */
 #define DBGOUT 0
+#define DLOG(lev, fmt, ...)  if ((lev) == DBGOUT) fprintf(stderr, fmt, __VA_ARGS__)
 
 struct my_stat {
 	char key[24];		/* key: subtype-protov */
@@ -493,9 +494,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					if ((j = json_find_member(obj, "tst")) != NULL) {
 						time_t tst = time(0);
 						char *sent = GET_S(4);
-#if DBGOUT == 3
-						fprintf(stderr, "DEBUG GTHBD send %s\n", sent ? sent : "NULL");
-#endif
+
+						DLOG(3, "DEBUG GTHBD send %s\n", sent ? sent : "NULL");
 						if (sent != NULL) {
 							time_t epoch;
 
@@ -505,9 +505,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 								tst = epoch;
 							}
 						}
-#if DBGOUT == 3
-						fprintf(stderr, "DEBUG GTHBD tst %ld\n", tst);
-#endif
+						DLOG(3, "DEBUG GTHBD tst %ld\n", tst);
 						j->number_ = tst;
 					}
 
@@ -801,15 +799,11 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		/* "devs" is device status as 10 characters hex*/
-#if DBGOUT == 2
-		fprintf(stderr, "DEBUG devs %d [%d]\n", dp->devs, ((nreports - 1) * 12) + dp->devs);
-#endif
+		DLOG(2, "DEBUG devs %d [%d]\n", dp->devs, ((nreports - 1) * 12) + dp->devs);
 		if (dp->devs > 0) {
 			char *devsstring = GET_S(((nreports - 1) * 12) + dp->devs);
 			if (devsstring != NULL) {
-#if DBGOUT == 2
-		fprintf(stderr, "DEBUG devs %d [%d] %s\n", dp->devs, ((nreports - 1) * 12) + dp->devs, devsstring ? devsstring : "NULL");
-#endif
+				DLOG(2, "DEBUG devs %d [%d] %s\n", dp->devs, ((nreports - 1) * 12) + dp->devs, devsstring ? devsstring : "NULL");
 				unsigned long devs = strtoul(devsstring, NULL, 16);
 				json_append_member(jmerge, "dout1",	json_mkbool(devs & 0x000001));
 				json_append_member(jmerge, "dout2",	json_mkbool(devs & 0x000002));
@@ -844,12 +838,9 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		/* "sent" sent time at device*/
-#if DBGOUT == 1
-		fprintf(stderr, "DEBUG sent %d\n", dp->sent);
-#endif
+		DLOG(1, "DEBUG sent %d\n", dp->sent);
 		if (dp->sent > 0) {
-#if DBGOUT == 1
-			fprintf(stderr, "DEBUG sent %d [%d]\n",
+			DLOG(1, "DEBUG sent %d [%d]\n",
 					dp->sent,
 					dp->sent
 					+ ((nreports - 1) * 12) 
@@ -858,7 +849,6 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1)
 					);
-#endif
 			char *sent = GET_S(dp->sent
 					+ ((nreports - 1) * 12) 
 					+ (iospresent ? 0 : -1)
@@ -866,8 +856,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1)
 					);
-#if DBGOUT == 1
-		        fprintf(stderr, "DEBUG sent %d [%d] %s\n",
+		        DLOG(1, "DEBUG sent %d [%d] %s\n",
 					dp->sent,
 					dp->sent
 					+ ((nreports - 1) * 12) 
@@ -876,7 +865,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1),
 					sent ? sent : "NULL");
-#endif
+
 			if (sent != NULL) {
 				time_t epoch;
 
