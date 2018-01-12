@@ -64,7 +64,8 @@ struct my_imeistat {
 	long reports;
 	time_t last_seen;
 	char *name;
-	char *last_json;	/* JSON string of last published position */
+	double lat, lon;
+	bool validpos;
 	UT_hash_handle hh;
 };
 static struct my_imeistat *imei_stats = NULL;
@@ -92,54 +93,49 @@ static void imei_incr(char *imei, int reports)
 		strncpy(is->key, imei, 16);
 		is->last_seen	= time(0);
 		is->reports	= reports;
-		is->last_json	= NULL;
+		is->validpos	= false;
+		is->lat		= 0.0L;
+		is->lon		= 0.0L;
 		HASH_ADD_STR(imei_stats, key, is);
-		// printf("---------------------- add %d\n", reports);
 	} else {
 		is->last_seen	= time(0);
 		is->reports	+= reports;
-		// printf("---------------------- repl %d\n", reports);
 	}
 }
 
-/*
- * If last_json is not null, store it for imei, else return it
- */
-
-static char *imei_last_json(char *imei, char *last_json)
+static bool imei_last_position(char *imei, double *lat, double *lon, bool set)
 {
 	struct my_imeistat *is;
-	char *lj = NULL;
-
-	//fprintf(stderr, "DEBUG imei_last_json(%s, %s)\n",
-	//	imei != NULL ? imei : "NULL",
-	//	last_json != NULL ? last_json : "NULL");
+	bool rc = false;
 
 	HASH_FIND_STR(imei_stats, imei, is);
-	//fprintf(stderr, "DEBUG imei_last_json HASH_FIND_STR is:%p\n",
-	//	is);
-	//fprintf(stderr, "DEBUG imei_last_json HASH_FIND_STR is->last_json:%s\n",
-	//	(is != NULL && is->last_json != NULL) ? is->last_json : "NULL");
-
 	if (!is) {
 		is = (struct my_imeistat *)malloc(sizeof(struct my_imeistat));
 		strncpy(is->key, imei, 16);
 		is->last_seen	= time(0);
 		is->reports	= 0;
-		lj = is->last_json	= (last_json) ? strdup(last_json) : NULL;
+		is->validpos	= false;
+
+		if (set) {
+			is->validpos	= true;
+			is->lat		= *lat;
+			is->lon		= *lon;
+		}
 		HASH_ADD_STR(imei_stats, key, is);
 	} else {
-		if (last_json == NULL) {
-			lj = is->last_json;
-		} else {
-			if (is->last_json != NULL) {
-				free(is->last_json);
-			}
-			lj = is->last_json	= strdup(last_json);
+		if (set) {
+			is->validpos	= true;
+			is->lat		= *lat;
+			is->lon		= *lon;
 		}
+		*lat 	= is->lat;
+		*lon	= is->lon;
+		if (is->validpos)
+			rc = true;
 	}
-	return (lj);
+	return (rc);
 }
+
 
 static void stat_incr(char *subtype, char *protov, bool ig)
 {
@@ -249,7 +245,6 @@ void dump_stats(struct udata *ud)
  * to add to it.
  */
 
-// #include "mongoose.h"	// FIXME: remove
 void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 {
 	JsonNode *e, *extra;
@@ -263,8 +258,7 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 			JsonNode *j;
 
 			/* The object we're going to transmit _might_ already have
-			 * these extra variables if (and only if) it's one of the
-			 * object saved in imei_last_json; Remove the elements before
+			 * these extra variables; remove the elements before
 			 * adding them in again.
 			 */
 
@@ -282,25 +276,12 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 	}
 
 	if ((js = json_encode(obj)) != NULL) {
-		JsonNode *j;
-
 		xlog(ud, "PUBLISH: %s %s\n", topic, js);
 		pub(ud, topic, js, true);
-
-		/* We have a full JSON string. Is this a type location? If so, store it
-		 * in IMEI cache for using later on upon heartbeat (HBD).
-		 */
-
-		if ((j = json_find_member(obj, "_type")) != NULL) {
-			if (j->tag == JSON_STRING && !strcmp(j->string_, "location")) {
-				imei_last_json(imei, js);
-			}
-		}
 
 //		if (ud->cocorun) mg_printf(ud->coco, "%s", js);	// FIXME remove
 //		fprintf(stderr, "@@@@@@@@@ %d\n", ud->coco->sock);
 
-		//fprintf(stderr, "DEBUG free(js) %d\n", __LINE__);
 		free(js);
 	}
 }
@@ -457,62 +438,41 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		char rr[BUFSIZ];
 
 		if (!strcmp(subtype, "GTHBD")) {
-			char *js;
+			double last_lat, last_lon;
 
 			snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
 			*response = strdup(rr);
 
-			/* If we have a "last_json" for this IMEI, obtain it from cache and
-			 * modify it to replace "t:" with a "p:ing" and update the tst to
-			 * now(). Publish to MQTT in order to pass the heartbeat along to MQTT
-			 * with the last-known good values.
-			 * Also ensure lat/lon are JSON_DOUBLES so we keep precision.
+			/*
+			 * If we have a last valid lat/lon, we create a small "p"ing type
+			 * publish with our last valid position and the timestamp from the
+			 * heartbeat.
 			 */
 
-			if ((js = imei_last_json(imei, NULL)) != NULL) {
-				JsonNode *obj, *j;
+			if (imei_last_position(imei, &last_lat, &last_lon, false) == true) {
+				JsonNode *obj = json_mkobject();
+				time_t tst = time(0);
+				char *sent = GET_S(4);
 
-				/* TODO don't decode and readjust, but store JSON object rather than JSON string */
+				json_append_member(obj, "_type", json_mkstring("location"));
+				json_append_member(obj, "lat", json_mkdouble(last_lat, 6));
+				json_append_member(obj, "lon", json_mkdouble(last_lon, 6));
 
-				if ((obj = json_decode(js)) != NULL) {
+				if (sent != NULL) {
+					time_t epoch;
 
-					precision(obj, "lat", 6);
-					precision(obj, "lon", 6);
-					precision(obj, "odometer", 1);
-					precision(obj, "meters", 1);
-					precision(obj, "vel", 1);
-					precision(obj, "alt", 1);
-					precision(obj, "fcon", 1);
-					precision(obj, "ubatt", 1);
-
-					if ((j = json_find_member(obj, "t")) != NULL) {
-						json_remove_from_parent(j);
+					if (str_time_to_secs(sent, &epoch) != 1) {
+						xlog(ud, "GTHBD Cannot convert sent time from [%s]\n", sent);
+					} else {
+						tst = epoch;
 					}
-					json_append_member(obj, "t", json_mkstring("p"));
-
-
-					if ((j = json_find_member(obj, "tst")) != NULL) {
-						time_t tst = time(0);
-						char *sent = GET_S(4);
-
-						DLOG(3, "DEBUG GTHBD send %s\n", sent ? sent : "NULL");
-						if (sent != NULL) {
-							time_t epoch;
-
-							if (str_time_to_secs(sent, &epoch) != 1) {
-								xlog(ud, "GTHBD Cannot convert sent time from [%s]\n", sent);
-							} else {
-								tst = epoch;
-							}
-						}
-						DLOG(3, "DEBUG GTHBD tst %ld\n", tst);
-						j->number_ = tst;
-					}
-
-
-					transmit_json(ud, imei, obj);
-					json_delete(obj);
 				}
+				DLOG(3, "DEBUG GTHBD tst %ld\n", tst);
+				json_append_member(obj, "tst", json_mknumber(tst));
+				json_append_member(obj, "t", json_mkstring("p"));
+
+				transmit_json(ud, imei, obj);
+				json_delete(obj);
 			}
 		}
 		goto finish;
@@ -928,6 +888,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		if (isnan(lat) || isnan(lon)) {
 			continue;
 		}
+
+		imei_last_position(imei, &lat, &lon, true);
 
 		obj = json_mkobject();
 		json_append_member(obj, "lat", json_mkdouble(lat, 6));
