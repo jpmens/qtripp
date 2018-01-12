@@ -7,6 +7,7 @@ sundry/
 *.ini
 g
 qtripp
+qlog
 *.log
 *.log-*
 *.log.*

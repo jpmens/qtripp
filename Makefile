@@ -33,13 +33,15 @@ endif
 
 LIBDEV=libdev.a
 
-all: libdev qtripp
+all: libdev qtripp qlog
 
 
 qtripp: qtripp.o Makefile $(OBJS) $(LIBDEV)
 	$(CC) $(CFLAGS) -o qtripp qtripp.o $(OBJS) $(LIBDEV) $(LDFLAGS)
 	if test -r codesign.sh; then /bin/sh codesign.sh; fi
 
+qlog: qlog.o Makefile mongoose.o
+	$(CC) $(CFLAGS) -o qlog qlog.o mongoose.o $(LDFLAGS)
 
 conf.o: conf.c conf.h udata.h
 tline.o: tline.c tline.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h bean.h iinfo.h
