@@ -204,8 +204,22 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 					size_t nbytes = ml + 1;
 
 					if (ud->datalog) {
+						off_t pos;
+
 						write(ud->datalog, mb->buf, nbytes);
 						write(ud->datalog, "\n", 1);
+
+						pos = lseek(ud->datalog, 0, SEEK_CUR);
+						if (pos > (1024*1024)) {
+							char path[BUFSIZ];
+
+							close(ud->datalog);
+							snprintf(path, BUFSIZ, "%s.%ld", ud->cf->datalog, time(0));
+							link(ud->cf->datalog, path);
+							unlink(ud->cf->datalog);
+							ud->datalog = open(ud->cf->datalog, O_WRONLY | O_CREAT, 0666);
+						}
+
 					}
 
 					imei = process(ud, mb->buf, nbytes, nc);
