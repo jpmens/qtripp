@@ -34,6 +34,8 @@
 # define LINESIZE 8192
 #endif
 
+#define LOGFILE_SIZE (1024*1024)
+
 
 /*
  * Split the string at `s', separated by characters in `sep'
@@ -185,11 +187,32 @@ int str_time_to_secs(char *s, time_t *secs)
 	return (1);
 }
 
+void rotate_file(struct udata *ud)
+{
+	char path1[BUFSIZ], path2[BUFSIZ];
+	int n = 10;
+
+	snprintf(path2, BUFSIZ, "%s-%03d", ud->cf->logfile, n);
+	remove(path2);
+
+	for (n = 9; n > 0; n--) {
+		snprintf(path1, BUFSIZ, "%s-%03d", ud->cf->logfile, n);
+		snprintf(path2, BUFSIZ, "%s-%03d", ud->cf->logfile, n + 1);
+
+		link(path1, path2);
+		remove(path1);
+	}
+	link(ud->cf->logfile, path1);
+	remove(ud->cf->logfile);
+
+}
+
 void xlog(struct udata *ud, char *fmt, ...)
 {
 	va_list ap;
 	time_t now = time(0);
 	FILE *fp;
+	off_t pos;
 
 	fp = (ud == NULL) ? stderr : ud->logfp;
 
@@ -199,6 +222,12 @@ void xlog(struct udata *ud, char *fmt, ...)
 	vfprintf(fp, fmt, ap);
 	fflush(fp);
 	va_end(ap);
+
+	if ((pos = ftello(fp)) > LOGFILE_SIZE) {
+		fclose(ud->logfp);
+		rotate_file(ud);
+		ud->logfp = fopen(ud->cf->logfile, "a");
+	}
 }
 
 const char *tstamp(time_t t) {

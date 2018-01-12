@@ -416,6 +416,7 @@ int main(int argc, char **argv)
 
 	memset(&udata, 0, sizeof(udata));
         ud->debugging           = true;
+	ud->cf			= &cf;
 	ud->logfp		= fopen(cf.logfile, "a");
 
 	struct mbuf mbi;

@@ -8,6 +8,7 @@ sundry/
 g
 qtripp
 *.log
+*.log-*
 *.i
 extra-json/
 tags
