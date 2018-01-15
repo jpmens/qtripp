@@ -16,3 +16,4 @@ tags
 *.pyc
 contrib/bean-get
 *.make
+.make
