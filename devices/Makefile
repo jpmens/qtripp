@@ -1,4 +1,8 @@
 CFLAGS=-I.. -Wall -Werror
+PYTHON=python
+
+# echo "PYTHON=python2 > .make"
+-include .make
 
 D2C=./d2c.py
 DEPS= devices.yml
@@ -14,7 +18,7 @@ OBJS=$(LIBDEV)(reports.o) \
 all: $(OBJS)
 
 %.i: %.j2 $(D2C) $(DEPS)
-	python $(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
+	$(PYTHON) $(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
 
 reports.o: reports.c reports.h reports.i
 models.o: models.c models.h models.i
