@@ -1050,6 +1050,10 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "t", json_mkstring("E"));
 		} else if (!strcmp(subtype, "GTMPF")) {
 			json_append_member(obj, "t", json_mkstring("e"));
+		} else if (!strcmp(subtype, "GTSPD")) {
+			json_append_member(obj, "t", json_mkstring("s"));
+		} else if (!strcmp(subtype, "GTHBM")) {
+			json_append_member(obj, "t", json_mkstring("h"));
 		} else if (!strcmp(subtype, "GTIGL")) {
 			json_append_member(obj, "t", json_mkstring(rty == 1 ? "I" : "i"));
 		} else if (!strcmp(subtype, "GTNMD")) {
