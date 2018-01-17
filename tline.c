@@ -64,7 +64,7 @@ struct my_imeistat {
 	long reports;
 	time_t last_seen;
 	char *name;
-	double lat, lon;
+	double lat, lon, vel;
 	time_t tst;
 	bool validpos;
 	UT_hash_handle hh;
@@ -102,6 +102,7 @@ static void imei_incr(char *imei, int reports)
 		is->validpos	= false;
 		is->lat		= 0.0L;
 		is->lon		= 0.0L;
+		is->vel		= 0.0L;
 		is->tst		= time(0);
 		HASH_ADD_STR(imei_stats, key, is);
 	} else {
@@ -110,7 +111,7 @@ static void imei_incr(char *imei, int reports)
 	}
 }
 
-static bool imei_last_position(char *imei, double *lat, double *lon, time_t *tst, bool set)
+static bool imei_last_position(char *imei, double *lat, double *lon, time_t *tst, double *vel, bool set)
 {
 	struct my_imeistat *is;
 	bool rc = false;
@@ -127,6 +128,7 @@ static bool imei_last_position(char *imei, double *lat, double *lon, time_t *tst
 			is->validpos	= true;
 			is->lat		= *lat;
 			is->lon		= *lon;
+			is->vel		= *vel;
 			is->tst		= *tst;
 		}
 		HASH_ADD_STR(imei_stats, key, is);
@@ -135,10 +137,12 @@ static bool imei_last_position(char *imei, double *lat, double *lon, time_t *tst
 			is->validpos	= true;
 			is->lat		= *lat;
 			is->lon		= *lon;
+			is->vel		= *vel;
 			is->tst		= *tst;
 		}
 		*lat 	= is->lat;
 		*lon	= is->lon;
+		*vel	= is->vel;
 		*tst	= is->tst;
 		if (is->validpos)
 			rc = true;
@@ -448,7 +452,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		char rr[BUFSIZ];
 
 		if (!strcmp(subtype, "GTHBD")) {
-			double last_lat, last_lon;
+			double last_lat, last_lon, last_vel;
 			time_t last_tst;
 
 			snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
@@ -460,11 +464,12 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			 * heartbeat.
 			 */
 
-			if (imei_last_position(imei, &last_lat, &last_lon, &last_tst, false) == true) {
+			if (imei_last_position(imei, &last_lat, &last_lon, &last_tst, &last_vel, false) == true) {
 				JsonNode *obj = json_mkobject();
 				json_append_member(obj, "_type", json_mkstring("location"));
 				json_append_member(obj, "lat", json_mkdouble(last_lat, 6));
 				json_append_member(obj, "lon", json_mkdouble(last_lon, 6));
+				json_append_member(obj, "vel", json_mkdouble(last_vel, 1));
 				json_append_member(obj, "tst", json_mknumber(last_tst));
 				json_append_member(obj, "t", json_mkstring("p"));
 
@@ -890,6 +895,11 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		json_append_member(obj, "lat", json_mkdouble(lat, 6));
 		json_append_member(obj, "lon", json_mkdouble(lon, 6));
 
+		vel = GET_D(pos + dp->vel);
+		if (!isnan(vel)) {
+			json_append_member(obj, "vel", json_mkdouble(vel, 1));
+		}
+
 		if ((s = GET_S(pos + dp->utc)) != NULL) {
 			time_t epoch;
 
@@ -898,7 +908,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				continue;
 			}
 			json_append_member(obj, "tst", json_mknumber(epoch));
-		        imei_last_position(imei, &lat, &lon, &epoch, true);
+		        imei_last_position(imei, &lat, &lon, &epoch, &vel, true);
 		}
 
 		mcc = GET_D(pos + dp->mcc);
@@ -960,11 +970,6 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					break;
 			}
 			json_append_member(obj, "acc", json_mknumber(acc));
-		}
-
-		vel = GET_D(pos + dp->vel);
-		if (!isnan(vel)) {
-			json_append_member(obj, "vel", json_mkdouble(vel, 1));
 		}
 
 		alt = GET_D(pos + dp->alt);
