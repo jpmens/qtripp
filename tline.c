@@ -65,6 +65,7 @@ struct my_imeistat {
 	time_t last_seen;
 	char *name;
 	double lat, lon;
+	time_t tst;
 	bool validpos;
 	UT_hash_handle hh;
 };
@@ -74,6 +75,10 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 {
 	int rc;
 
+	FILE *fp = fopen("pub.debug", "a");
+	fprintf(fp, "%s %s\n", topic, payload);
+	fclose(fp);
+
 	rc = mosquitto_publish(ud->mosq, NULL, topic, strlen(payload), payload, QOS, retain);
 	if (rc) {
 		xlog(ud, "Publish failed: rc=%d...\n", rc);
@@ -81,6 +86,7 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 			mosquitto_reconnect(ud->mosq);
 		}
 	}
+	mosquitto_loop(ud->mosq, 200, 1);
 }
 
 static void imei_incr(char *imei, int reports)
@@ -96,6 +102,7 @@ static void imei_incr(char *imei, int reports)
 		is->validpos	= false;
 		is->lat		= 0.0L;
 		is->lon		= 0.0L;
+		is->tst		= time(0);
 		HASH_ADD_STR(imei_stats, key, is);
 	} else {
 		is->last_seen	= time(0);
@@ -103,7 +110,7 @@ static void imei_incr(char *imei, int reports)
 	}
 }
 
-static bool imei_last_position(char *imei, double *lat, double *lon, bool set)
+static bool imei_last_position(char *imei, double *lat, double *lon, time_t *tst, bool set)
 {
 	struct my_imeistat *is;
 	bool rc = false;
@@ -120,6 +127,7 @@ static bool imei_last_position(char *imei, double *lat, double *lon, bool set)
 			is->validpos	= true;
 			is->lat		= *lat;
 			is->lon		= *lon;
+			is->tst		= *tst;
 		}
 		HASH_ADD_STR(imei_stats, key, is);
 	} else {
@@ -127,9 +135,11 @@ static bool imei_last_position(char *imei, double *lat, double *lon, bool set)
 			is->validpos	= true;
 			is->lat		= *lat;
 			is->lon		= *lon;
+			is->tst		= *tst;
 		}
 		*lat 	= is->lat;
 		*lon	= is->lon;
+		*tst	= is->tst;
 		if (is->validpos)
 			rc = true;
 	}
@@ -439,6 +449,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 		if (!strcmp(subtype, "GTHBD")) {
 			double last_lat, last_lon;
+			time_t last_tst;
 
 			snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
 			*response = strdup(rr);
@@ -449,26 +460,12 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			 * heartbeat.
 			 */
 
-			if (imei_last_position(imei, &last_lat, &last_lon, false) == true) {
+			if (imei_last_position(imei, &last_lat, &last_lon, &last_tst, false) == true) {
 				JsonNode *obj = json_mkobject();
-				time_t tst = time(0);
-				char *sent = GET_S(4);
-
 				json_append_member(obj, "_type", json_mkstring("location"));
 				json_append_member(obj, "lat", json_mkdouble(last_lat, 6));
 				json_append_member(obj, "lon", json_mkdouble(last_lon, 6));
-
-				if (sent != NULL) {
-					time_t epoch;
-
-					if (str_time_to_secs(sent, &epoch) != 1) {
-						xlog(ud, "GTHBD Cannot convert sent time from [%s]\n", sent);
-					} else {
-						tst = epoch;
-					}
-				}
-				DLOG(3, "DEBUG GTHBD tst %ld\n", tst);
-				json_append_member(obj, "tst", json_mknumber(tst));
+				json_append_member(obj, "tst", json_mknumber(last_tst));
 				json_append_member(obj, "t", json_mkstring("p"));
 
 				transmit_json(ud, imei, obj);
@@ -889,8 +886,6 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			continue;
 		}
 
-		imei_last_position(imei, &lat, &lon, true);
-
 		obj = json_mkobject();
 		json_append_member(obj, "lat", json_mkdouble(lat, 6));
 		json_append_member(obj, "lon", json_mkdouble(lon, 6));
@@ -903,6 +898,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				continue;
 			}
 			json_append_member(obj, "tst", json_mknumber(epoch));
+		        imei_last_position(imei, &lat, &lon, &epoch, true);
 		}
 
 		mcc = GET_D(pos + dp->mcc);
