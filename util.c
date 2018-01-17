@@ -34,7 +34,7 @@
 # define LINESIZE 8192
 #endif
 
-#define LOGFILE_SIZE (1024*1024)
+#define LOGFILE_SIZE (10*1024*1024)
 
 
 /*

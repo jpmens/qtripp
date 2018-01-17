@@ -210,7 +210,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 						write(ud->datalog, "\n", 1);
 
 						pos = lseek(ud->datalog, 0, SEEK_CUR);
-						if (pos > (1024*1024)) {
+						if (pos > (10 * 1024*1024)) {
 							char path[BUFSIZ];
 
 							close(ud->datalog);
