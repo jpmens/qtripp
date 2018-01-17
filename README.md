@@ -1,13 +1,13 @@
 # qtripp
 
-The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for Queclink devices: _qtripp_ obtains GPS positions from these devices and publishes it over MQTT in [OwnTracks JSON format](http://owntracks.org/booklet/tech/json/) as `_location_ objects.
+The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for Queclink devices: _qtripp_ obtains GPS positions from these devices and publishes those over MQTT in [OwnTracks JSON format](http://owntracks.org/booklet/tech/json/) as `_location_ objects.
 
 ![qtripp](assets/qtripp.png)
 
 ## requirements
 
 * an Internet-facing server with an open TCP port
-* a Queclink device. We have tested GV65, GV55, GV200MT, and GV500. Others ought to be no problem, though you might have to adapt device configuration from the Protocol documentation.
+* a Queclink device. We have tested GV65, GV65+, GV55, GV200MT, and GV500. Others ought to be no problem, though you might have to adapt device configurations from the Protocol documentation.
 * an MQTT broker (see the [OwnTracks Booklet](http://owntracks.org/booklet/guide/broker/))
 * a bit of patience
 
@@ -30,6 +30,8 @@ The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for
 * support for 1-Wire temperature sensors (on GV65/GV65+)
 * raw data is copied to file for backup, replay, debugging, etc.
 * optional beanstalkd support (requires [beanstalk-client](https://github.com/deepfryed/beanstalk-client)) for mirroring. (sample workers are provided.) beanstalk host/port/tube are configurable; payload is OwnTracks JSON enriched with a field `imei` and a `raw_line` field which contains original ASCII device data (`+RESP:GT ... $`)
+
+## commands
 
 ```
 -t owntracks/qtripp/*/cmd -m list
@@ -69,6 +71,7 @@ The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for
 * [ini.c](https://github.com/benhoyt/inih), by Ben Hoyt
 * [mongoose](https://github.com/cesanta/mongoose), by Cesanta
 
-## author
+## authors
 
 * Jan-Piet Mens (@jpmens)
+* Christoph Krey (@ckrey)
