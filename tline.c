@@ -908,7 +908,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 		}
 
 		if ((s = GET_S(pos + dp->cog)) != NULL) {
-			json_append_member(obj, "cog", json_mknumber(atoi(s)));
+			cog = atoi(s);
+			json_append_member(obj, "cog", json_mknumber(cog));
 		}
 
 		if ((s = GET_S(pos + dp->utc)) != NULL) {
