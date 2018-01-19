@@ -186,7 +186,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
 	/*
 	 * The principle here is that on EV_RECV we fill our own buffer (called `mb')
-	 * and clear out what we received. Then, on EV_POLL, we search throught the
+	 * and clear out what we received. Then, on EV_POLL, we search through the
 	 * buffer looking for our records (+....$) and process each individually.
 	 */
 
