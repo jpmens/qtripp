@@ -36,7 +36,6 @@ struct udata {
 #ifdef WITH_BEAN
 	int bean_socket;
 #endif
-	void *mb;			/* Will hold mbuf */
 };
 
 #endif

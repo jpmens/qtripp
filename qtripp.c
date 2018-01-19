@@ -60,6 +60,7 @@ struct conndata {
 	int sock;		/* key */
 	char *imei;
 	char *client_ip;
+	struct mbuf *mb;		/* Connection-specific mbuf */
 	struct mg_connection *nc;
 	UT_hash_handle hh;		/* makes this hashable for key sock */
 	UT_hash_handle hh_imei;		/* makes this hashable for alternate key imei */
@@ -174,7 +175,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	struct conndata *co;
 	struct udata *ud = (struct udata *)nc->mgr->user_data;
 	size_t ml;	/* mb len */
-	struct mbuf *mb = (struct mbuf *)ud->mb;
+	struct mbuf *mb;
 
 	/*
 	 * On a new connection (EV_ACCEPT), add an an entry hashed by socket number
@@ -185,13 +186,23 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	 */
 
 	/*
-	 * The principle here is that on EV_RECV we fill our own buffer (called `mb')
-	 * and clear out what we received. Then, on EV_POLL, we search through the
-	 * buffer looking for our records (+....$) and process each individually.
+	 * The principle here is that on EV_RECV we fill our own buffer (called
+	 * `mb', and stored in connection data) and clear out what we received.
+	 * Then, on EV_POLL, we search through the buffer looking for our
+	 * records (+....$) and process each individually.
 	 */
 
 	switch (ev) {
 		case MG_EV_POLL:
+			/*
+			 * If we haven't recorded a connection to us yet for the current
+			 * socket, abandon as we can't do anything anyway.
+			 */
+
+			if ((co = find_conn(nc->sock)) == NULL) {
+				return;
+			}
+			mb = co->mb;
 
 			/*
 			 * A record is +...$
@@ -249,6 +260,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 				co = add_conn(nc->sock);
 				co->client_ip = strdup(buf);
 				co->nc = nc;
+				co->mb = (struct mbuf *)malloc(sizeof (struct mbuf));
+				mbuf_init(co->mb, 48);
 				xlog(ud, "Adding connection on socket %d: IP is %s\n", nc->sock, co->client_ip);
 			}
 
@@ -256,6 +269,10 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			break;
 
 		case MG_EV_RECV:
+
+			co = find_conn(nc->sock);	/* If we can't find a connection, panic */
+			assert(co != NULL);
+
 
 			if (ud->cf->debughex) {
 				mg_hexdump_connection(nc, ud->cf->debughex, io->buf, io->len, ev);
@@ -267,7 +284,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			 * we do the real work during POLL.
 			 */
 
-			mbuf_append(mb, io->buf, io->len);
+			mbuf_append(co->mb, io->buf, io->len);
 			mbuf_remove(io, io->len);
 			break;
 
@@ -432,11 +449,6 @@ int main(int argc, char **argv)
         ud->debugging           = true;
 	ud->cf			= &cf;
 	ud->logfp		= fopen(cf.logfile, "a");
-
-	struct mbuf mbi;
-	udata.mb = (struct mbuf *)&mbi;
-	mbuf_init(udata.mb, 48);
-
 
         load_models();
         load_reports();
