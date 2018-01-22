@@ -40,7 +40,7 @@
 #include "ignores.h"
 
 #define MAXLINELEN	(8192 * 2)
-#define QOS 		1
+#define QOS 		2
 
 /*
  * DBGOUT != 0 means print each line

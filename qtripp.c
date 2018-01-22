@@ -98,6 +98,7 @@ struct conndata *add_conn(int sock)
 	co->imei	= NULL;
 	co->client_ip	= NULL;
 	co->nc		= NULL;
+	co->mb		= NULL;
 	return (co);
 }
 
@@ -115,6 +116,8 @@ void delete_conn(struct conndata *co)
 
 	if (co->imei) free(co->imei);
 	if (co->client_ip) free(co->client_ip);
+	if (co->mb) mbuf_free(co->mb);
+
 	HASH_DEL(conns_by_sock, co);
 	// free(co);
 	co = NULL;
@@ -261,7 +264,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 				co->client_ip = strdup(buf);
 				co->nc = nc;
 				co->mb = (struct mbuf *)malloc(sizeof (struct mbuf));
-				mbuf_init(co->mb, 48);
+				mbuf_init(co->mb, 1024);
 				xlog(ud, "Adding connection on socket %d: IP is %s\n", nc->sock, co->client_ip);
 			}
 
