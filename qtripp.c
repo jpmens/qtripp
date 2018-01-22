@@ -436,6 +436,7 @@ int main(int argc, char **argv)
 	struct mg_bind_opts bind_opts;
 	struct udata udata, *ud = &udata;
 	struct mosquitto *mosq;
+	bool clean_session = false;
 	char err[1024];
 	const char *e = NULL;
 	int mid, rc;
@@ -477,7 +478,7 @@ int main(int argc, char **argv)
 
 	mosquitto_lib_init();
 
-	mosq = mosquitto_new(cf.client_id, true, &udata);
+	mosq = mosquitto_new(cf.client_id, clean_session, &udata);
 	if (!mosq) {
 		fprintf(stderr, "Error: Out of memory.\n");
 		mosquitto_lib_cleanup();
