@@ -23,5 +23,5 @@ int handle_file_reports(struct udata *ud, FILE *fp);
 void pub(struct udata *ud, char *topic, char *payload, bool retain);
 void print_stats(struct udata *ud);
 void dump_stats(struct udata *ud);
-void pong(struct udata *ud);
+void pong(struct udata *ud, char *topic);
 void pseudo_lwt(struct udata *ud, char *imei);

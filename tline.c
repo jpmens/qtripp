@@ -195,10 +195,9 @@ void print_stats(struct udata *ud)
 	/* FIXME: consider deleting keys when they've been listed? */
 }
 
-void pong(struct udata *ud)
+void pong(struct udata *ud, char *topic)
 {
-	if (ud->cf->reporttopic)
-		pub(ud, (char *)ud->cf->reporttopic, "pong", false);
+	pub(ud, topic, "pong", false);
 }
 
 void dump_stats(struct udata *ud)
