@@ -412,7 +412,7 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
          *       bool retain;
          */
 
-        xlog(ud, "MQTT SUBSCRIBE: %s %s\n", (char *)m->topic, (char *)m->payload);
+        xlog(ud, "MQTT on_message: %s %s\n", (char *)m->topic, (char *)m->payload);
 	device_id = topic_to_device((char *)m->topic);
 
 	if (!strcmp(device_id, "*")) {
