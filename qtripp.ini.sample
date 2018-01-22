@@ -37,6 +37,7 @@ port = 1883
 #password = 
 cafile =
 certfile =
+client_id =
 keyfile =
 subscribe=	owntracks/qtripp/+/cmd
 reporttopic = owntracks/qtripp
