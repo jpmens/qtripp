@@ -423,9 +423,7 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
 		else if (strcmp((char *)m->payload, "dump") == 0)
 			dump_stats(ud);
 		else if (strcmp((char *)m->payload, "ping") == 0)
-			pong(ud, (char *)m->topic);
-		else if (strcmp((char *)m->payload, "pong") == 0)
-			; /* IGNORE */
+			pong(ud);
 
 		return;
 	}
