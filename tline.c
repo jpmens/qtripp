@@ -195,6 +195,12 @@ void print_stats(struct udata *ud)
 	/* FIXME: consider deleting keys when they've been listed? */
 }
 
+void pong(struct udata *ud)
+{
+	if (ud->cf->reporttopic)
+		pub(ud, (char *)ud->cf->reporttopic, "pong", false);
+}
+
 void dump_stats(struct udata *ud)
 {
 	char path[BUFSIZ];
@@ -221,7 +227,6 @@ void dump_stats(struct udata *ud)
 
 		if ((js = json_stringify(obj, "  ")) != NULL) {
 			fprintf(fp, "%s\n", js);
-			//fprintf(stderr, "DEBUG free(js) %d\n", __LINE__);
 			free(js);
 		}
 		json_delete(obj);
@@ -247,7 +252,6 @@ void dump_stats(struct udata *ud)
 
 		if ((js = json_stringify(obj, "  ")) != NULL) {
 			fprintf(fp, "%s\n", js);
-			//fprintf(stderr, "DEBUG free(js) %d\n", __LINE__);
 			free(js);
 		}
 		json_delete(obj);
@@ -1128,7 +1132,6 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 
   finish:
-	//fprintf(stderr, "DEBUG splitterfree(tparts) %d\n", __LINE__);
 	splitterfree(parts);
 	return (imei_dup);
 }
