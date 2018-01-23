@@ -547,10 +547,7 @@ int main(int argc, char **argv)
 	}
 
 
-	// mosquitto_loop_start(mosq);
-
 	rc = mosquitto_connect_async(mosq, cf.host, cf.port, 60);
-	// rc = mosquitto_connect(mosq, cf.host, cf.port, 60);
 
 	udata.mosq	= mosq;
 	udata.datalog 	= 0;
