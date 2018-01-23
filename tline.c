@@ -41,6 +41,7 @@
 
 #define MAXLINELEN	(8192 * 2)
 #define QOS 		2
+#define NAGIOSREPORT	"nagios/qtripp"
 
 /*
  * DBGOUT != 0 means print each line
@@ -198,8 +199,7 @@ void print_stats(struct udata *ud)
 
 void pong(struct udata *ud)
 {
-	if (ud->cf->reporttopic)
-		pub(ud, (char *)ud->cf->reporttopic, "pong", false);
+	pub(ud, NAGIOSREPORT, "pong", false);
 }
 
 void dump_stats(struct udata *ud)
