@@ -1023,17 +1023,17 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			switch (mst) {
 				case 16:
 				case 12:
-				case 41:
-				case 42:
 					json_append_member(obj, "t", json_mkstring("!"));
 					break;
 				case 11:
 					json_append_member(obj, "t", json_mkstring("L"));
 					break;
 				case 21:
+				case 41:
 					json_append_member(obj, "t", json_mkstring("a"));
 					break;
 				case 22:
+				case 42:
 					json_append_member(obj, "t", json_mkstring("v"));
 					break;
 				default:
