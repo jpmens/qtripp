@@ -83,11 +83,12 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 	rc = mosquitto_publish(ud->mosq, NULL, topic, strlen(payload), payload, QOS, retain);
 	if (rc) {
 		xlog(ud, "Publish failed: rc=%d...\n", rc);
+#if 1
 		if (rc == MOSQ_ERR_NO_CONN) {
 			mosquitto_reconnect(ud->mosq);
 		}
+#endif
 	}
-	mosquitto_loop(ud->mosq, 200, 1);
 }
 
 static void imei_incr(char *imei, int reports)

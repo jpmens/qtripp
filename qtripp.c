@@ -433,6 +433,35 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
 	write_to_connection(mgr, device_id, (char *)m->payload);
 	free(device_id);
 }
+
+void on_connect(struct mosquitto *mosq, void *userdata, int rc)
+{
+	struct udata *ud = (struct udata *)userdata;
+	char err[1024];
+	JsonNode *j;
+	int mid;
+	if (rc) {
+		if (rc == MOSQ_ERR_ERRNO) {
+			strerror_r(errno, err, 1024);
+			xlog(ud, "connecting to MQTT broker on %s:%d Error: %s\n",
+				ud->cf->host, ud->cf->port,
+				err);
+		} else {
+			xlog(ud, "Unable to connect to MQTT (%d).\n", rc);
+		}
+		return;
+	}
+
+	xlog(ud, "Connack string: %s\n", mosquitto_connack_string(rc));
+	xlog(ud, "Connected to MQTT broker on %s:%d\n",
+			ud->cf->host, ud->cf->port);
+
+	json_foreach(j, ud->cf->subscriptions) {
+		xlog(ud, "subscribing to %s\n", j->string_);
+		mosquitto_subscribe(mosq, &mid, j->string_, 0);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	struct mg_mgr mgr;
@@ -441,11 +470,9 @@ int main(int argc, char **argv)
 	struct udata udata, *ud = &udata;
 	struct mosquitto *mosq;
 	bool clean_session = false;
-	char err[1024];
 	const char *e = NULL;
-	int mid, rc;
 	struct my_device *d, *tmp;
-	JsonNode *j;
+	int rc;
 
         if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
 		xlog(NULL, "Can't load/parse ini file.\n");
@@ -494,6 +521,7 @@ int main(int argc, char **argv)
 	}
 
 	mosquitto_message_callback_set(mosq, on_message);
+	mosquitto_connect_callback_set(mosq, on_connect);
 
 	if (cf.cafile && *cf.cafile) {
 
@@ -519,27 +547,10 @@ int main(int argc, char **argv)
 	}
 
 
-	rc = mosquitto_connect(mosq, cf.host, cf.port, 60);
-	if (rc) {
-		if (rc == MOSQ_ERR_ERRNO) {
-			strerror_r(errno, err, 1024);
-			xlog(ud, "connecting to MQTT on %s:%d: Error: %s\n",
-				cf.host, cf.port, err);
-		} else {
-			xlog(ud, "Unable to connect to MQTT (%d).\n", rc);
-		}
-		return (-2);
-	}
+	// mosquitto_loop_start(mosq);
 
-	xlog(ud, "Connected to MQTT broker on %s:%d\n",
-			cf.host, cf.port);
-
-	json_foreach(j, cf.subscriptions) {
-		xlog(ud, "subscribing to %s\n", j->string_);
-		mosquitto_subscribe(mosq, &mid, j->string_, 0);
-	}
-
-	mosquitto_loop_start(mosq);
+	rc = mosquitto_connect_async(mosq, cf.host, cf.port, 60);
+	// rc = mosquitto_connect(mosq, cf.host, cf.port, 60);
 
 	udata.mosq	= mosq;
 	udata.datalog 	= 0;
@@ -603,6 +614,7 @@ int main(int argc, char **argv)
 
 	while (1) {
 		mg_mgr_poll(&mgr, 1000);
+		mosquitto_loop(mosq, 0, 1);
 #if 0
 		fprintf(stderr, "Loop.. cocorun == %d\n", ud->cocorun); // FIXME
 		if (ud->cocorun == false) {
