@@ -18,3 +18,5 @@ tags
 contrib/bean-get
 *.make
 .make
+names/
+dump/
