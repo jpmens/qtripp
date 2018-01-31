@@ -77,10 +77,6 @@ void pub(struct udata *ud, char *topic, char *payload, bool retain)
 {
 	int rc;
 
-	FILE *fp = fopen("pub.debug", "a");
-	fprintf(fp, "%s %s\n", topic, payload);
-	fclose(fp);
-
 	rc = mosquitto_publish(ud->mosq, NULL, topic, strlen(payload), payload, QOS, retain);
 	if (rc) {
 		xlog(ud, "Publish failed: rc=%d...\n", rc);
