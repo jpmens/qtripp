@@ -238,7 +238,20 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
 					imei = process(ud, mb->buf, nbytes, nc);
 
-					if (imei != NULL) {
+					if (imei != NULL && ud->cf->datadir != NULL) {
+						char path[BUFSIZ];
+						int fd;
+
+						snprintf(path, sizeof(path), "%s/data-%s",
+							ud->cf->datadir, imei);
+						if ((fd = open(path, O_CREAT|O_WRONLY|O_APPEND, 0644)) != -1) {
+							write(fd, mb->buf, nbytes);
+							write(fd, "\n", 1);
+							close(fd);
+						}
+
+
+
 						if ((co = (struct conndata *)nc->user_data) != NULL) {
 							xlog(ud, "Found connection on socket %d: IP is %s: IMEI <%s>\n", co->sock, co->client_ip, imei);
 							if (co->imei == NULL) {

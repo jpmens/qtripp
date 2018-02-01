@@ -55,6 +55,7 @@ typedef struct config {
 	const char *extra_json;
 	const char *reporttopic;
 	const char *dumpdir;
+	const char *datadir;
 	const char *namesdir;
 } config;
 
