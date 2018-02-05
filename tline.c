@@ -1147,6 +1147,7 @@ int handle_file_reports(struct udata *ud, FILE *fp)
 		line[strcspn(line, "\r\n")] = '\0';
 
 		handle_report(ud, line, &response);
+		mosquitto_loop(ud->mosq, 0, 1);
 	}
 	return (0);
 }

@@ -579,6 +579,8 @@ int main(int argc, char **argv)
 			exit(3);
 		}
 		handle_file_reports(ud, fp);
+		mosquitto_disconnect(ud->mosq);
+		mosquitto_destroy(ud->mosq);
 		exit(0);
 	}
 
