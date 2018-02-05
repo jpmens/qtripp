@@ -524,7 +524,7 @@ int main(int argc, char **argv)
 
 	mosq = mosquitto_new(cf.client_id, clean_session, &udata);
 	if (!mosq) {
-		fprintf(stderr, "Error: Out of memory.\n");
+		fprintf(stderr, "Error: mosquitto_new() says 'out of memory'.\n");
 		mosquitto_lib_cleanup();
 		return (-1);
 	}
