@@ -70,7 +70,13 @@ int ini_handler(void *cf, const char *section, const char *key, const char *val)
 		if (_eq("host"))	c->host = strdup(val);
 		if (_eq("username"))    c->username = strdup(val);
 		if (_eq("password"))    c->password = strdup(val);
-		if (_eq("client_id"))   c->client_id = strdup(val);
+		if (_eq("client_id")) {
+			c->client_id = (val && *val) ? strdup(val) : NULL;
+			if (c->client_id == NULL) {
+				fprintf(stderr, "client_id must not be NULL\n");
+				exit(3);
+			}
+		}
 		if (_eq("cafile"))      c->cafile = strdup(val);
 		if (_eq("capath"))      c->capath = strdup(val);
 		if (_eq("certfile"))    c->certfile = strdup(val);
