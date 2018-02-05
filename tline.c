@@ -538,15 +538,17 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	int rty = 0;
 
 	if (dp->rid > 0) {
-		rid = GET_D(dp->rid);
-		if (!isnan(rid)) {
+		double frid = GET_D(dp->rid);
+		if (!isnan(frid)) {
+			rid = frid;
 			json_append_member(jmerge, "rid", json_mknumber(rid));
 		}
 	}
 
 	if (dp->rty > 0) {
-		rty = GET_D(dp->rty);
-		if (!isnan(rty)) {
+		double frty = GET_D(dp->rty);
+		if (!isnan(frty)) {
+			rty = frty;
 			json_append_member(jmerge, "rty", json_mknumber(rty));
 		}
 	}
