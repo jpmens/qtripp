@@ -303,6 +303,10 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 
 		free(js);
 	}
+
+	if (extra != NULL)
+		json_delete(extra);
+
 }
 
 /*
@@ -404,8 +408,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	}
 	strcpy(abr, tparts[0]);
 	strcpy(subtype, tparts[1]);
-	//fprintf(stderr, "DEBUG splitterfree(tparts) %d\n", __LINE__);
-	//splitterfree(tparts);
+	splitterfree(tparts);
 
 
 	char *imei = GET_S(2);
@@ -1138,7 +1141,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 int handle_file_reports(struct udata *ud, FILE *fp)
 {
 	char line[MAXLINELEN];
-	char *response = NULL;
+	char *response = NULL, *r;
 
 	while (fgets(line, sizeof(line) - 1, fp) != NULL) {
 		if (*line == '#' || *line == '\n')
@@ -1146,7 +1149,12 @@ int handle_file_reports(struct udata *ud, FILE *fp)
 
 		line[strcspn(line, "\r\n")] = '\0';
 
-		handle_report(ud, line, &response);
+		response = NULL;
+		r = handle_report(ud, line, &response);
+		if (r)
+			free(r);
+		if (response && *response)
+			free(response);
 		mosquitto_loop(ud->mosq, 0, 1);
 	}
 	return (0);
