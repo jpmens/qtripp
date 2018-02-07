@@ -1,5 +1,5 @@
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/common.h"
+#line 1 "mongoose/src/mg_common.h"
 #endif
 /*
  * Copyright (c) 2004-2013 Sergey Lyubka
@@ -23,7 +23,7 @@
 #ifndef CS_MONGOOSE_SRC_COMMON_H_
 #define CS_MONGOOSE_SRC_COMMON_H_
 
-#define MG_VERSION "6.7"
+#define MG_VERSION "6.10"
 
 /* Local tweaks, applied before any of Mongoose's own headers. */
 #ifdef MG_LOCALS
@@ -46,9 +46,10 @@
 #define CS_P_WINDOWS 2
 #define CS_P_ESP32 15
 #define CS_P_ESP8266 3
-#define CS_P_CC3200 4
-#define CS_P_MSP432 5
 #define CS_P_CC3100 6
+#define CS_P_CC3200 4
+#define CS_P_CC3220 17
+#define CS_P_MSP432 5
 #define CS_P_TM4C129 14
 #define CS_P_MBED 7
 #define CS_P_WINCE 8
@@ -58,15 +59,17 @@
 #define CS_P_NRF52 10
 #define CS_P_PIC32 11
 #define CS_P_STM32 16
-/* Next id: 17 */
+/* Next id: 18 */
 
 /* If not specified explicitly, we guess platform by defines. */
 #ifndef CS_PLATFORM
 
 #if defined(TARGET_IS_MSP432P4XX) || defined(__MSP432P401R__)
 #define CS_PLATFORM CS_P_MSP432
-#elif defined(cc3200)
+#elif defined(cc3200) || defined(TARGET_IS_CC3200)
 #define CS_PLATFORM CS_P_CC3200
+#elif defined(cc3220) || defined(TARGET_IS_CC3220)
+#define CS_PLATFORM CS_P_CC3220
 #elif defined(__unix__) || defined(__APPLE__)
 #define CS_PLATFORM CS_P_UNIX
 #elif defined(WINCE)
@@ -111,8 +114,9 @@
 /* Amalgamated: #include "common/platforms/platform_windows.h" */
 /* Amalgamated: #include "common/platforms/platform_esp32.h" */
 /* Amalgamated: #include "common/platforms/platform_esp8266.h" */
-/* Amalgamated: #include "common/platforms/platform_cc3200.h" */
 /* Amalgamated: #include "common/platforms/platform_cc3100.h" */
+/* Amalgamated: #include "common/platforms/platform_cc3200.h" */
+/* Amalgamated: #include "common/platforms/platform_cc3220.h" */
 /* Amalgamated: #include "common/platforms/platform_mbed.h" */
 /* Amalgamated: #include "common/platforms/platform_nrf51.h" */
 /* Amalgamated: #include "common/platforms/platform_nrf52.h" */
@@ -206,6 +210,12 @@
 #include <windows.h>
 #include <process.h>
 
+#if _MSC_VER < 1700
+typedef int bool;
+#else
+#include <stdbool.h>
+#endif
+
 #if defined(_MSC_VER) && _MSC_VER >= 1800
 #define strdup _strdup
 #endif
@@ -223,14 +233,12 @@
 #endif
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
-#define sleep(x) Sleep((x) *1000)
 #define to64(x) _atoi64(x)
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
 #define popen(x, y) _popen((x), (y))
 #define pclose(x) _pclose(x)
 #define fileno _fileno
 #endif
-#define rmdir _rmdir
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 #define fseeko(x, y, z) _fseeki64((x), (y), (z))
 #else
@@ -321,6 +329,16 @@ typedef struct _stati64 cs_stat_t;
 #define MG_NET_IF MG_NET_IF_SOCKET
 #endif
 
+unsigned int sleep(unsigned int seconds);
+
+/* https://stackoverflow.com/questions/16647819/timegm-cross-platform */
+#define timegm _mkgmtime
+
+#define gmtime_r(a, b) \
+  do {                 \
+    *(b) = *gmtime(a); \
+  } while (0)
+
 #endif /* CS_PLATFORM == CS_P_WINDOWS */
 #endif /* CS_COMMON_PLATFORMS_PLATFORM_WINDOWS_H_ */
 #ifdef MG_MODULE_LINES
@@ -369,6 +387,7 @@ typedef struct _stati64 cs_stat_t;
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -488,6 +507,7 @@ typedef struct stat cs_stat_t;
 #include <fcntl.h>
 #include <inttypes.h>
 #include <machine/endian.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -531,6 +551,7 @@ typedef struct stat cs_stat_t;
 #include <fcntl.h>
 #include <inttypes.h>
 #include <machine/endian.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -538,7 +559,9 @@ typedef struct stat cs_stat_t;
 #define SIZE_T_FMT "u"
 typedef struct stat cs_stat_t;
 #define DIRSEP '/'
+#if !defined(MGOS_VFS_DEFINE_DIRENT)
 #define CS_DEFINE_DIRENT
+#endif
 
 #define to64(x) strtoll(x, NULL, 10)
 #define INT64_FMT PRId64
@@ -546,7 +569,7 @@ typedef struct stat cs_stat_t;
 #define __cdecl
 #define _FILE_OFFSET_BITS 32
 
-#ifndef RTOS_SDK
+#if !defined(RTOS_SDK) && !defined(__cplusplus)
 #define fileno(x) -1
 #endif
 
@@ -558,15 +581,21 @@ typedef struct stat cs_stat_t;
 #ifndef MG_NET_IF
 #include <lwip/opt.h>
 #if LWIP_SOCKET /* RTOS SDK has LWIP sockets */
-#  define MG_NET_IF MG_NET_IF_SOCKET
+#define MG_NET_IF MG_NET_IF_SOCKET
 #else
-#  define MG_NET_IF MG_NET_IF_LWIP_LOW_LEVEL
+#define MG_NET_IF MG_NET_IF_LWIP_LOW_LEVEL
 #endif
 #endif
 
 #ifndef CS_ENABLE_STDIO
 #define CS_ENABLE_STDIO 1
 #endif
+
+#define inet_ntop(af, src, dst, size)                                          \
+  (((af) == AF_INET) ? ipaddr_ntoa_r((const ip_addr_t *) (src), (dst), (size)) \
+                     : NULL)
+#define inet_pton(af, src, dst) \
+  (((af) == AF_INET) ? ipaddr_aton((src), (ip_addr_t *) (dst)) : 0)
 
 #endif /* CS_PLATFORM == CS_P_ESP8266 */
 #endif /* CS_COMMON_PLATFORMS_PLATFORM_ESP8266_H_ */
@@ -601,7 +630,7 @@ typedef struct stat cs_stat_t;
 
 #include <simplelink.h>
 #include <netapp.h>
-#undef timeval 
+#undef timeval
 
 typedef int sock_t;
 #define INVALID_SOCKET (-1)
@@ -635,6 +664,7 @@ int inet_pton(int af, const char *src, void *dst);
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
@@ -700,7 +730,7 @@ struct stat {
 };
 
 int _stat(const char *pathname, struct stat *st);
-#define stat(a, b) _stat(a, b)
+int stat(const char *pathname, struct stat *st);
 
 #define __S_IFMT 0170000
 
@@ -716,8 +746,10 @@ int _stat(const char *pathname, struct stat *st);
 #define S_ISDIR(mode) __S_ISTYPE((mode), __S_IFDIR)
 #define S_ISREG(mode) __S_ISTYPE((mode), __S_IFREG)
 
-/* As of 5.2.7, TI compiler does not support va_copy() yet. */
+/* 5.x series compilers don't have va_copy, 16.x do. */
+#if __TI_COMPILER_VERSION__ < 16000000
 #define va_copy(apc, ap) ((apc) = (ap))
+#endif
 
 #endif /* __TI_COMPILER_VERSION__ */
 
@@ -838,7 +870,8 @@ int _stat(const char *pathname, struct stat *st);
 #define CS_ENABLE_STDIO 1
 #endif
 
-#if (defined(CC3200_FS_SPIFFS) || defined(CC3200_FS_SLFS)) && !defined(MG_ENABLE_FILESYSTEM)
+#if (defined(CC3200_FS_SPIFFS) || defined(CC3200_FS_SLFS)) && \
+    !defined(MG_ENABLE_FILESYSTEM)
 #define MG_ENABLE_FILESYSTEM 1
 #endif
 
@@ -882,15 +915,15 @@ typedef struct stat cs_stat_t;
 #define __cdecl
 
 #ifndef MG_NET_IF
-#  include <lwip/opt.h>
-#  if LWIP_SOCKET
-#    define MG_NET_IF MG_NET_IF_SOCKET
-#  else
-#    define MG_NET_IF MG_NET_IF_LWIP_LOW_LEVEL
-#  endif
-#  define MG_LWIP 1
+#include <lwip/opt.h>
+#if LWIP_SOCKET
+#define MG_NET_IF MG_NET_IF_SOCKET
+#else
+#define MG_NET_IF MG_NET_IF_LWIP_LOW_LEVEL
+#endif
+#define MG_LWIP 1
 #elif MG_NET_IF == MG_NET_IF_SIMPLELINK
-#  include "common/platforms/simplelink/cs_simplelink.h"
+/* Amalgamated: #include "common/platforms/simplelink/cs_simplelink.h" */
 #endif
 
 #ifndef CS_ENABLE_STDIO
@@ -1012,16 +1045,16 @@ in_addr_t inet_addr(const char *cp);
 
 #define to64(x) strtoll(x, NULL, 10)
 
-#define MG_NET_IF             MG_NET_IF_LWIP_LOW_LEVEL
-#define MG_LWIP               1
-#define MG_ENABLE_IPV6        1
+#define MG_NET_IF MG_NET_IF_LWIP_LOW_LEVEL
+#define MG_LWIP 1
+#define MG_ENABLE_IPV6 1
 
 /*
  * For ARM C Compiler, make lwip to export `struct timeval`; for other
  * compilers, suppress it.
  */
 #if !defined(__ARMCC_VERSION)
-# define LWIP_TIMEVAL_PRIVATE  0
+#define LWIP_TIMEVAL_PRIVATE 0
 #else
 struct timeval;
 int gettimeofday(struct timeval *tp, void *tzp);
@@ -1052,18 +1085,19 @@ int gettimeofday(struct timeval *tp, void *tzp);
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
 
 #define to64(x) strtoll(x, NULL, 10)
 
-#define MG_NET_IF             MG_NET_IF_LWIP_LOW_LEVEL
-#define MG_LWIP               1
-#define MG_ENABLE_IPV6        1
+#define MG_NET_IF MG_NET_IF_LWIP_LOW_LEVEL
+#define MG_LWIP 1
+#define MG_ENABLE_IPV6 1
 
 #if !defined(ENOSPC)
-# define ENOSPC 28  /* No space left on device */
+#define ENOSPC 28 /* No space left on device */
 #endif
 
 /*
@@ -1071,7 +1105,7 @@ int gettimeofday(struct timeval *tp, void *tzp);
  * compilers, suppress it.
  */
 #if !defined(__ARMCC_VERSION)
-# define LWIP_TIMEVAL_PRIVATE  0
+#define LWIP_TIMEVAL_PRIVATE 0
 #endif
 
 #define INT64_FMT PRId64
@@ -1095,9 +1129,10 @@ int gettimeofday(struct timeval *tp, void *tzp);
 #ifndef CS_COMMON_PLATFORMS_SIMPLELINK_CS_SIMPLELINK_H_
 #define CS_COMMON_PLATFORMS_SIMPLELINK_CS_SIMPLELINK_H_
 
+#if defined(MG_NET_IF) && MG_NET_IF == MG_NET_IF_SIMPLELINK
+
 /* If simplelink.h is already included, all bets are off. */
-#if defined(MG_NET_IF) && MG_NET_IF == MG_NET_IF_SIMPLELINK && \
-    !defined(__SIMPLELINK_H__)
+#if !defined(__SIMPLELINK_H__)
 
 #include <stdbool.h>
 
@@ -1111,6 +1146,12 @@ int gettimeofday(struct timeval *tp, void *tzp);
 #undef fd_set
 #endif
 
+#if CS_PLATFORM == CS_P_CC3220
+#include <ti/drivers/net/wifi/porting/user.h>
+#include <ti/drivers/net/wifi/simplelink.h>
+#include <ti/drivers/net/wifi/sl_socket.h>
+#include <ti/drivers/net/wifi/netapp.h>
+#else
 /* We want to disable SL_INC_STD_BSD_API_NAMING, so we include user.h ourselves
  * and undef it. */
 #define PROVISIONING_API_H_
@@ -1120,6 +1161,7 @@ int gettimeofday(struct timeval *tp, void *tzp);
 
 #include <simplelink/include/simplelink.h>
 #include <simplelink/include/netapp.h>
+#endif /* CS_PLATFORM == CS_P_CC3220 */
 
 /* Now define only the subset of the BSD API that we use.
  * Notably, close(), read() and write() are not defined. */
@@ -1182,13 +1224,65 @@ int sl_fs_init(void);
 
 void sl_restart_cb(struct mg_mgr *mgr);
 
-int sl_set_ssl_opts(struct mg_connection *nc);
+int sl_set_ssl_opts(int sock, struct mg_connection *nc);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* MG_NET_IF == MG_NET_IF_SIMPLELINK && !defined(__SIMPLELINK_H__) */
+#endif /* !defined(__SIMPLELINK_H__) */
+
+/* Compatibility with older versions of SimpleLink */
+#if SL_MAJOR_VERSION_NUM < 2
+
+#define SL_ERROR_BSD_EAGAIN SL_EAGAIN
+#define SL_ERROR_BSD_EALREADY SL_EALREADY
+#define SL_ERROR_BSD_ENOPROTOOPT SL_ENOPROTOOPT
+#define SL_ERROR_BSD_ESECDATEERROR SL_ESECDATEERROR
+#define SL_ERROR_BSD_ESECSNOVERIFY SL_ESECSNOVERIFY
+#define SL_ERROR_FS_FAILED_TO_ALLOCATE_MEM SL_FS_ERR_FAILED_TO_ALLOCATE_MEM
+#define SL_ERROR_FS_FILE_HAS_NOT_BEEN_CLOSE_CORRECTLY \
+  SL_FS_FILE_HAS_NOT_BEEN_CLOSE_CORRECTLY
+#define SL_ERROR_FS_FILE_NAME_EXIST SL_FS_FILE_NAME_EXIST
+#define SL_ERROR_FS_FILE_NOT_EXISTS SL_FS_ERR_FILE_NOT_EXISTS
+#define SL_ERROR_FS_NO_AVAILABLE_NV_INDEX SL_FS_ERR_NO_AVAILABLE_NV_INDEX
+#define SL_ERROR_FS_NOT_ENOUGH_STORAGE_SPACE SL_FS_ERR_NO_AVAILABLE_BLOCKS
+#define SL_ERROR_FS_NOT_SUPPORTED SL_FS_ERR_NOT_SUPPORTED
+#define SL_ERROR_FS_WRONG_FILE_NAME SL_FS_WRONG_FILE_NAME
+#define SL_ERROR_FS_INVALID_HANDLE SL_FS_ERR_INVALID_HANDLE
+#define SL_NETCFG_MAC_ADDRESS_GET SL_MAC_ADDRESS_GET
+#define SL_SOCKET_FD_ZERO SL_FD_ZERO
+#define SL_SOCKET_FD_SET SL_FD_SET
+#define SL_SOCKET_FD_ISSET SL_FD_ISSET
+#define SL_SO_SECURE_DOMAIN_NAME_VERIFICATION SO_SECURE_DOMAIN_NAME_VERIFICATION
+
+#define SL_FS_READ FS_MODE_OPEN_READ
+#define SL_FS_WRITE FS_MODE_OPEN_WRITE
+
+#define SL_FI_FILE_SIZE(fi) ((fi).FileLen)
+#define SL_FI_FILE_MAX_SIZE(fi) ((fi).AllocatedLen)
+
+#define SlDeviceVersion_t SlVersionFull
+#define sl_DeviceGet sl_DevGet
+#define SL_DEVICE_GENERAL SL_DEVICE_GENERAL_CONFIGURATION
+#define SL_LEN_TYPE _u8
+#define SL_OPT_TYPE _u8
+
+#else /* SL_MAJOR_VERSION_NUM >= 2 */
+
+#define FS_MODE_OPEN_CREATE(max_size, flag) \
+  (SL_FS_CREATE | SL_FS_CREATE_MAX_SIZE(max_size))
+#define SL_FI_FILE_SIZE(fi) ((fi).Len)
+#define SL_FI_FILE_MAX_SIZE(fi) ((fi).MaxSize)
+
+#define SL_LEN_TYPE _u16
+#define SL_OPT_TYPE _u16
+
+#endif /* SL_MAJOR_VERSION_NUM < 2 */
+
+int slfs_open(const unsigned char *fname, uint32_t flags);
+
+#endif /* MG_NET_IF == MG_NET_IF_SIMPLELINK */
 
 #endif /* CS_COMMON_PLATFORMS_SIMPLELINK_CS_SIMPLELINK_H_ */
 #ifdef MG_MODULE_LINES
@@ -1375,18 +1469,18 @@ typedef struct _stati64 {
 #endif
 
 #ifndef _UINTPTR_T_DEFINED
-typedef unsigned int* uintptr_t;
+typedef unsigned int *uintptr_t;
 #endif
 
 #define _S_IFREG 2
 #define _S_IFDIR 4
 
 #ifndef S_ISDIR
-#define S_ISDIR(x) (((x) & _S_IFDIR) != 0)
+#define S_ISDIR(x) (((x) &_S_IFDIR) != 0)
 #endif
 
 #ifndef S_ISREG
-#define S_ISREG(x) (((x) & _S_IFREG) != 0)
+#define S_ISREG(x) (((x) &_S_IFREG) != 0)
 #endif
 
 int open(const char *filename, int oflag, int pmode);
@@ -1423,7 +1517,8 @@ typedef struct stat cs_stat_t;
 #define MG_NET_IF MG_NET_IF_LWIP_LOW_LEVEL
 
 /*
- * LPCXpress comes with 3 C library implementations: Newlib, NewlibNano and Redlib.
+ * LPCXpress comes with 3 C library implementations: Newlib, NewlibNano and
+ *Redlib.
  * See https://community.nxp.com/message/630860 for more details.
  *
  * Redlib is the default and lacks certain things, so we provide them.
@@ -1519,7 +1614,7 @@ typedef TCP_SOCKET sock_t;
 #define CS_ENABLE_STDIO 1
 #endif
 
-char* inet_ntoa(struct in_addr in);
+char *inet_ntoa(struct in_addr in);
 
 #endif /* CS_PLATFORM == CS_P_PIC32 */
 
@@ -1536,15 +1631,18 @@ char* inet_ntoa(struct in_addr in);
 #define CS_COMMON_PLATFORMS_PLATFORM_STM32_H_
 #if CS_PLATFORM == CS_P_STM32
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
-#include <memory.h>
 #include <fcntl.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <dirent.h>
+
 #include <stm32_sdk_hal.h>
 
 #define to64(x) strtoll(x, NULL, 10)
@@ -1560,8 +1658,6 @@ typedef struct stat cs_stat_t;
 #ifndef MG_ENABLE_FILESYSTEM
 #define MG_ENABLE_FILESYSTEM 1
 #endif
-
-#define CS_DEFINE_DIRENT
 
 #endif /* CS_PLATFORM == CS_P_STM32 */
 #endif /* CS_COMMON_PLATFORMS_PLATFORM_STM32_H_ */
@@ -1726,6 +1822,8 @@ void cs_hmac_sha1(const unsigned char *key, size_t key_len,
 #ifndef CS_COMMON_CS_TIME_H_
 #define CS_COMMON_CS_TIME_H_
 
+#include <time.h>
+
 /* Amalgamated: #include "common/platform.h" */
 
 #ifdef __cplusplus
@@ -1734,6 +1832,12 @@ extern "C" {
 
 /* Sub-second granularity time(). */
 double cs_time(void);
+
+/*
+ * Similar to (non-standard) timegm, converts broken-down time into the number
+ * of seconds since Unix Epoch.
+ */
+double cs_timegm(const struct tm *tm);
 
 #ifdef __cplusplus
 }
@@ -1757,7 +1861,7 @@ double cs_time(void);
 
 #ifdef __cplusplus
 extern "C" {
-#endif /* __cplusplus */
+#endif
 
 /* Describes chunk of memory */
 struct mg_str {
@@ -1766,10 +1870,14 @@ struct mg_str {
 };
 
 /*
- * Helper functions for creating mg_str struct from plain C string.
+ * Helper function for creating mg_str struct from plain C string.
  * `NULL` is allowed and becomes `{NULL, 0}`.
  */
 struct mg_str mg_mk_str(const char *s);
+
+/*
+ * Like `mg_mk_str`, but takes string length explicitly.
+ */
 struct mg_str mg_mk_str_n(const char *s, size_t len);
 
 /* Macro for initializing mg_str. */
@@ -1799,12 +1907,29 @@ struct mg_str mg_strdup(const struct mg_str s);
  */
 struct mg_str mg_strdup_nul(const struct mg_str s);
 
+/*
+ * Locates character in a string.
+ */
+const char *mg_strchr(const struct mg_str s, int c);
+
+/*
+ * Compare two `mg_str`s; return value is the same as `strcmp`.
+ */
 int mg_strcmp(const struct mg_str str1, const struct mg_str str2);
+
+/*
+ * Like `mg_strcmp`, but compares at most `n` characters.
+ */
 int mg_strncmp(const struct mg_str str1, const struct mg_str str2, size_t n);
+
+/*
+ * Finds the first occurrence of a substring `needle` in the `haystack`.
+ */
+const char *mg_strstr(const struct mg_str haystack, const struct mg_str needle);
 
 #ifdef __cplusplus
 }
-#endif /* __cplusplus */
+#endif
 
 #endif /* CS_COMMON_MG_STR_H_ */
 #ifdef MG_MODULE_LINES
@@ -1890,15 +2015,15 @@ void mbuf_trim(struct mbuf *);
 
 #endif /* CS_COMMON_MBUF_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "common/base64.h"
+#line 1 "common/cs_base64.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
  * All rights reserved
  */
 
-#ifndef CS_COMMON_BASE64_H_
-#define CS_COMMON_BASE64_H_
+#ifndef CS_COMMON_CS_BASE64_H_
+#define CS_COMMON_CS_BASE64_H_
 
 #ifndef DISABLE_BASE64
 #define DISABLE_BASE64 0
@@ -1937,7 +2062,7 @@ int cs_base64_decode(const unsigned char *s, int len, char *dst, int *dec_len);
 
 #endif /* DISABLE_BASE64 */
 
-#endif /* CS_COMMON_BASE64_H_ */
+#endif /* CS_COMMON_CS_BASE64_H_ */
 #ifdef MG_MODULE_LINES
 #line 1 "common/str_util.h"
 #endif
@@ -1952,6 +2077,7 @@ int cs_base64_decode(const unsigned char *s, int len, char *dst, int *dec_len);
 #include <stdarg.h>
 #include <stdlib.h>
 
+/* Amalgamated: #include "common/mg_str.h" */
 /* Amalgamated: #include "common/platform.h" */
 
 #ifndef CS_ENABLE_STRDUP
@@ -1983,9 +2109,21 @@ int cs_base64_decode(const unsigned char *s, int len, char *dst, int *dec_len);
 extern "C" {
 #endif
 
+/*
+ * Equivalent of standard `strnlen()`.
+ */
 size_t c_strnlen(const char *s, size_t maxlen);
+
+/*
+ * Equivalent of standard `snprintf()`.
+ */
 int c_snprintf(char *buf, size_t buf_size, const char *format, ...);
+
+/*
+ * Equivalent of standard `vsnprintf()`.
+ */
 int c_vsnprintf(char *buf, size_t buf_size, const char *format, va_list ap);
+
 /*
  * Find the first occurrence of find in s, where the search is limited to the
  * first slen characters of s.
@@ -2006,6 +2144,9 @@ void cs_to_hex(char *to, const unsigned char *p, size_t len);
 void cs_from_hex(char *to, const char *p, size_t len);
 
 #if CS_ENABLE_STRDUP
+/*
+ * Equivalent of standard `strdup()`, defined if only `CS_ENABLE_STRDUP` is 1.
+ */
 char *strdup(const char *src);
 #endif
 
@@ -2033,12 +2174,14 @@ int mg_casecmp(const char *s1, const char *s2);
  * enough buffer on heap and returns allocated buffer.
  * This is a supposed use case:
  *
+ * ```c
  *    char buf[5], *p = buf;
  *    mg_avprintf(&p, sizeof(buf), "%s", "hi there");
  *    use_p_somehow(p);
  *    if (p != buf) {
  *      free(p);
  *    }
+ * ```
  *
  * The purpose of this is to avoid malloc-ing if generated strings are small.
  */
@@ -2046,6 +2189,55 @@ int mg_asprintf(char **buf, size_t size, const char *fmt, ...);
 
 /* Same as mg_asprintf, but takes varargs list. */
 int mg_avprintf(char **buf, size_t size, const char *fmt, va_list ap);
+
+/*
+ * A helper function for traversing a comma separated list of values.
+ * It returns a list pointer shifted to the next value or NULL if the end
+ * of the list found.
+ * The value is stored in a val vector. If the value has a form "x=y", then
+ * eq_val vector is initialised to point to the "y" part, and val vector length
+ * is adjusted to point only to "x".
+ * If the list is just a comma separated list of entries, like "aa,bb,cc" then
+ * `eq_val` will contain zero-length string.
+ *
+ * The purpose of this function is to parse comma separated string without
+ * any copying/memory allocation.
+ */
+const char *mg_next_comma_list_entry(const char *list, struct mg_str *val,
+                                     struct mg_str *eq_val);
+
+/*
+ * Like `mg_next_comma_list_entry()`, but takes `list` as `struct mg_str`.
+ */
+struct mg_str mg_next_comma_list_entry_n(struct mg_str list, struct mg_str *val,
+                                         struct mg_str *eq_val);
+
+/*
+ * Matches 0-terminated string (mg_match_prefix) or string with given length
+ * mg_match_prefix_n against a glob pattern. Glob syntax:
+ * ```
+ * - * matches zero or more characters until a slash character /
+ * - ** matches zero or more characters
+ * - ? Matches exactly one character which is not a slash /
+ * - | or ,  divides alternative patterns
+ * - any other character matches itself
+ * ```
+ * Match is case-insensitive. Return number of bytes matched.
+ * Examples:
+ * ```
+ * mg_match_prefix("a*f", len, "abcdefgh") == 6
+ * mg_match_prefix("a*f", len, "abcdexgh") == 0
+ * mg_match_prefix("a*f|de*,xy", len, "defgh") == 5
+ * mg_match_prefix("?*", len, "abc") == 3
+ * mg_match_prefix("?*", len, "") == 0
+ * ```
+ */
+size_t mg_match_prefix(const char *pattern, int pattern_len, const char *str);
+
+/*
+ * Like `mg_match_prefix()`, but takes `pattern` and `str` as `struct mg_str`.
+ */
+size_t mg_match_prefix_n(const struct mg_str pattern, const struct mg_str str);
 
 #ifdef __cplusplus
 }
@@ -2808,7 +3000,7 @@ struct {								\
 
 #endif /* !_SYS_QUEUE_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/features.h"
+#line 1 "mongoose/src/mg_features.h"
 #endif
 /*
  * Copyright (c) 2014-2016 Cesanta Software Limited
@@ -2910,12 +3102,12 @@ struct {								\
 #define MG_ENABLE_IPV6 0
 #endif
 
-#ifndef MG_ENABLE_JAVASCRIPT
-#define MG_ENABLE_JAVASCRIPT 0
-#endif
-
 #ifndef MG_ENABLE_MQTT
 #define MG_ENABLE_MQTT 1
+#endif
+
+#ifndef MG_ENABLE_SOCKS
+#define MG_ENABLE_SOCKS 0
 #endif
 
 #ifndef MG_ENABLE_MQTT_BROKER
@@ -2965,10 +3157,6 @@ struct {								\
   (CS_PLATFORM == CS_P_WINDOWS || CS_PLATFORM == CS_P_UNIX)
 #endif
 
-#ifndef MG_ENABLE_TUN
-#define MG_ENABLE_TUN MG_ENABLE_HTTP_WEBSOCKET
-#endif
-
 #ifndef MG_ENABLE_SNTP
 #define MG_ENABLE_SNTP 0
 #endif
@@ -2991,7 +3179,7 @@ struct {								\
 
 #endif /* CS_MONGOOSE_SRC_FEATURES_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/net_if.h"
+#line 1 "mongoose/src/mg_net_if.h"
 #endif
 /*
  * Copyright (c) 2014-2016 Cesanta Software Limited
@@ -3124,7 +3312,7 @@ void mg_if_timer(struct mg_connection *c, double now);
 
 #endif /* CS_MONGOOSE_SRC_NET_IF_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/ssl_if.h"
+#line 1 "mongoose/src/mg_ssl_if.h"
 #endif
 /*
  * Copyright (c) 2014-2016 Cesanta Software Limited
@@ -3182,7 +3370,7 @@ int mg_ssl_if_write(struct mg_connection *nc, const void *data, size_t len);
 
 #endif /* CS_MONGOOSE_SRC_SSL_IF_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/net.h"
+#line 1 "mongoose/src/mg_net.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -3214,13 +3402,8 @@ int mg_ssl_if_write(struct mg_connection *nc, const void *data, size_t len);
 #ifndef CS_MONGOOSE_SRC_NET_H_
 #define CS_MONGOOSE_SRC_NET_H_
 
-#if MG_ENABLE_JAVASCRIPT
-#define EXCLUDE_COMMON
-#include <v7.h>
-#endif
-
-/* Amalgamated: #include "mongoose/src/common.h" */
-/* Amalgamated: #include "mongoose/src/net_if.h" */
+/* Amalgamated: #include "mg_common.h" */
+/* Amalgamated: #include "mg_net_if.h" */
 /* Amalgamated: #include "common/mbuf.h" */
 
 #ifndef MG_VPRINTF_BUFFER_SIZE
@@ -3281,10 +3464,7 @@ struct mg_mgr {
   void *user_data; /* User data */
   int num_ifaces;
   struct mg_iface **ifaces; /* network interfaces */
-#if MG_ENABLE_JAVASCRIPT
-  struct v7 *v7;
-#endif
-  const char *nameserver; /* DNS server to use */
+  const char *nameserver;   /* DNS server to use */
 };
 
 /*
@@ -3335,12 +3515,11 @@ struct mg_connection {
 #define MG_F_IS_WEBSOCKET (1 << 8)       /* Websocket specific */
 
 /* Flags that are settable by user */
-#define MG_F_SEND_AND_CLOSE (1 << 10)       /* Push remaining data and close  */
-#define MG_F_CLOSE_IMMEDIATELY (1 << 11)    /* Disconnect */
-#define MG_F_WEBSOCKET_NO_DEFRAG (1 << 12)  /* Websocket specific */
-#define MG_F_DELETE_CHUNK (1 << 13)         /* HTTP specific */
-#define MG_F_ENABLE_BROADCAST (1 << 14)     /* Allow broadcast address usage */
-#define MG_F_TUN_DO_NOT_RECONNECT (1 << 15) /* Don't reconnect tunnel */
+#define MG_F_SEND_AND_CLOSE (1 << 10)      /* Push remaining data and close  */
+#define MG_F_CLOSE_IMMEDIATELY (1 << 11)   /* Disconnect */
+#define MG_F_WEBSOCKET_NO_DEFRAG (1 << 12) /* Websocket specific */
+#define MG_F_DELETE_CHUNK (1 << 13)        /* HTTP specific */
+#define MG_F_ENABLE_BROADCAST (1 << 14)    /* Allow broadcast address usage */
 
 #define MG_F_USER_1 (1 << 20) /* Flags left for application */
 #define MG_F_USER_2 (1 << 21)
@@ -3748,17 +3927,6 @@ int mg_resolve(const char *domain_name, char *ip_addr_buf, size_t buf_len);
  */
 int mg_check_ip_acl(const char *acl, uint32_t remote_ip);
 
-#if MG_ENABLE_JAVASCRIPT
-/*
- * Enables server-side JavaScript scripting.
- * Requires a `-DMG_ENABLE_JAVASCRIPT` compilation flag and V7 engine sources.
- * V7 instance must not be destroyed during manager's lifetime.
- * Returns a V7 error.
- */
-enum v7_err mg_enable_javascript(struct mg_mgr *m, struct v7 *v7,
-                                 const char *init_js_file_name);
-#endif
-
 /*
  * Schedules an MG_EV_TIMER event to be delivered at `timestamp` time.
  * `timestamp` is UNIX time (the number of seconds since Epoch). It is
@@ -3796,7 +3964,7 @@ double mg_time(void);
 
 #endif /* CS_MONGOOSE_SRC_NET_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/uri.h"
+#line 1 "mongoose/src/mg_uri.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -3810,7 +3978,7 @@ double mg_time(void);
 #ifndef CS_MONGOOSE_SRC_URI_H_
 #define CS_MONGOOSE_SRC_URI_H_
 
-/* Amalgamated: #include "mongoose/src/net.h" */
+/* Amalgamated: #include "mg_net.h" */
 
 #ifdef __cplusplus
 extern "C" {
@@ -3866,7 +4034,7 @@ int mg_normalize_uri_path(const struct mg_str *in, struct mg_str *out);
 #endif /* __cplusplus */
 #endif /* CS_MONGOOSE_SRC_URI_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/util.h"
+#line 1 "mongoose/src/mg_util.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -3882,15 +4050,19 @@ int mg_normalize_uri_path(const struct mg_str *in, struct mg_str *out);
 
 #include <stdio.h>
 
-/* Amalgamated: #include "mongoose/src/common.h" */
-/* Amalgamated: #include "mongoose/src/net_if.h" */
+/* Amalgamated: #include "mg_common.h" */
+/* Amalgamated: #include "mg_net_if.h" */
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#ifndef MAX_PATH_SIZE
-#define MAX_PATH_SIZE 500
+#ifndef MG_MAX_PATH
+#ifdef PATH_MAX
+#define MG_MAX_PATH PATH_MAX
+#else
+#define MG_MAX_PATH 256
+#endif
 #endif
 
 /*
@@ -3995,9 +4167,10 @@ void mg_set_close_on_exec(sock_t);
  *
  * If both port number and IP address are printed, they are separated by `:`.
  * If compiled with `-DMG_ENABLE_IPV6`, IPv6 addresses are supported.
+ * Return length of the stringified address.
  */
-void mg_conn_addr_to_str(struct mg_connection *nc, char *buf, size_t len,
-                         int flags);
+int mg_conn_addr_to_str(struct mg_connection *c, char *buf, size_t len,
+                        int flags);
 #if MG_NET_IF == MG_NET_IF_SOCKET
 /* Legacy interface. */
 void mg_sock_to_str(sock_t sock, char *buf, size_t len, int flags);
@@ -4008,8 +4181,8 @@ void mg_sock_to_str(sock_t sock, char *buf, size_t len, int flags);
  *
  * `flags` is MG_SOCK_STRINGIFY_IP and/or MG_SOCK_STRINGIFY_PORT.
  */
-void mg_sock_addr_to_str(const union socket_address *sa, char *buf, size_t len,
-                         int flags);
+int mg_sock_addr_to_str(const union socket_address *sa, char *buf, size_t len,
+                        int flags);
 
 #if MG_ENABLE_HEXDUMP
 /*
@@ -4042,32 +4215,6 @@ void mg_hexdump_connection(struct mg_connection *nc, const char *path,
 int mg_is_big_endian(void);
 
 /*
- * A helper function for traversing a comma separated list of values.
- * It returns a list pointer shifted to the next value or NULL if the end
- * of the list found.
- * The value is stored in a val vector. If the value has a form "x=y", then
- * eq_val vector is initialised to point to the "y" part, and val vector length
- * is adjusted to point only to "x".
- * If the list is just a comma separated list of entries, like "aa,bb,cc" then
- * `eq_val` will contain zero-length string.
- *
- * The purpose of this function is to parse comma separated string without
- * any copying/memory allocation.
- */
-const char *mg_next_comma_list_entry(const char *list, struct mg_str *val,
-                                     struct mg_str *eq_val);
-
-/*
- * Matches 0-terminated string (mg_match_prefix) or string with given length
- * mg_match_prefix_n against a glob pattern.
- *
- * Match is case-insensitive. Returns number of bytes matched, or -1 if no
- * match.
- */
-int mg_match_prefix(const char *pattern, int pattern_len, const char *str);
-int mg_match_prefix_n(const struct mg_str pattern, const struct mg_str str);
-
-/*
  * Use with cs_base64_init/update/finish in order to write out base64 in chunks.
  */
 void mg_mbuf_append_base64_putc(char ch, void *user_data);
@@ -4085,12 +4232,20 @@ void mg_mbuf_append_base64(struct mbuf *mbuf, const void *data, size_t len);
 void mg_basic_auth_header(const struct mg_str user, const struct mg_str pass,
                           struct mbuf *buf);
 
+/*
+ * URL-escape the specified string.
+ * All non-printable characters are escaped, plus `._-$,;~()/`.
+ * Input need not be NUL-terminated, but the returned string is.
+ * Returned string is heap-allocated and must be free()'d.
+ */
+struct mg_str mg_url_encode(const struct mg_str src);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 #endif /* CS_MONGOOSE_SRC_UTIL_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/http.h"
+#line 1 "mongoose/src/mg_http.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -4106,7 +4261,7 @@ void mg_basic_auth_header(const struct mg_str user, const struct mg_str pass,
 
 #if MG_ENABLE_HTTP
 
-/* Amalgamated: #include "mongoose/src/net.h" */
+/* Amalgamated: #include "mg_net.h" */
 /* Amalgamated: #include "common/mg_str.h" */
 
 #ifdef __cplusplus
@@ -4119,14 +4274,6 @@ extern "C" {
 
 #ifndef MG_MAX_HTTP_REQUEST_SIZE
 #define MG_MAX_HTTP_REQUEST_SIZE 1024
-#endif
-
-#ifndef MG_MAX_PATH
-#ifdef PATH_MAX
-#define MG_MAX_PATH PATH_MAX
-#else
-#define MG_MAX_PATH 256
-#endif
 #endif
 
 #ifndef MG_MAX_HTTP_SEND_MBUF
@@ -4375,10 +4522,8 @@ void mg_send_websocket_frame(struct mg_connection *nc, int op_and_flags,
                              const void *data, size_t data_len);
 
 /*
- * Sends multiple websocket frames.
- *
- * Like `mg_send_websocket_frame()`, but composes a frame from multiple
- *buffers.
+ * Like `mg_send_websocket_frame()`, but composes a single frame from multiple
+ * buffers.
  */
 void mg_send_websocket_framev(struct mg_connection *nc, int op_and_flags,
                               const struct mg_str *strings, int num_strings);
@@ -4435,6 +4580,30 @@ extern void mg_hash_md5_v(size_t num_msgs, const uint8_t *msgs[],
 extern void mg_hash_sha1_v(size_t num_msgs, const uint8_t *msgs[],
                            const size_t *msg_lens, uint8_t *digest);
 
+/*
+ * Flags for `mg_http_is_authorized()`.
+ */
+#define MG_AUTH_FLAG_IS_DIRECTORY (1 << 0)
+#define MG_AUTH_FLAG_IS_GLOBAL_PASS_FILE (1 << 1)
+#define MG_AUTH_FLAG_ALLOW_MISSING_FILE (1 << 2)
+
+/*
+ * Checks whether an http request is authorized. `domain` is the authentication
+ * realm, `passwords_file` is a htdigest file (can be created e.g. with
+ * `htdigest` utility). If either `domain` or `passwords_file` is NULL, this
+ * function always returns 1; otherwise checks the authentication in the
+ * http request and returns 1 only if there is a match; 0 otherwise.
+ */
+int mg_http_is_authorized(struct http_message *hm, struct mg_str path,
+                          const char *domain, const char *passwords_file,
+                          int flags);
+
+/*
+ * Sends 401 Unauthorized response.
+ */
+void mg_http_send_digest_auth_request(struct mg_connection *c,
+                                      const char *domain);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
@@ -4443,7 +4612,7 @@ extern void mg_hash_sha1_v(size_t num_msgs, const uint8_t *msgs[],
 
 #endif /* CS_MONGOOSE_SRC_HTTP_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/http_server.h"
+#line 1 "mongoose/src/mg_http_server.h"
 #endif
 /*
  * === Server API reference
@@ -4866,6 +5035,18 @@ int mg_http_check_digest_auth(struct http_message *hm, const char *auth_domain,
                               FILE *fp);
 
 /*
+ * Authenticates given response params against an opened password file.
+ * Returns 1 if authenticated, 0 otherwise.
+ *
+ * It's used by mg_http_check_digest_auth().
+ */
+int mg_check_digest_auth(struct mg_str method, struct mg_str uri,
+                         struct mg_str username, struct mg_str cnonce,
+                         struct mg_str response, struct mg_str qop,
+                         struct mg_str nc, struct mg_str nonce,
+                         struct mg_str auth_domain, FILE *fp);
+
+/*
  * Sends buffer `buf` of size `len` to the client using chunked HTTP encoding.
  * This function sends the buffer size as hex number + newline first, then
  * the buffer itself, then the newline. For example,
@@ -4974,7 +5155,7 @@ void mg_http_reverse_proxy(struct mg_connection *nc,
 
 #endif /* CS_MONGOOSE_SRC_HTTP_SERVER_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/http_client.h"
+#line 1 "mongoose/src/mg_http_client.h"
 #endif
 /*
  * === Client API reference
@@ -5032,14 +5213,14 @@ struct mg_connection *mg_connect_http_opt(
 int mg_http_create_digest_auth_header(char *buf, size_t buf_len,
                                       const char *method, const char *uri,
                                       const char *auth_domain, const char *user,
-                                      const char *passwd);
+                                      const char *passwd, const char *nonce);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 #endif /* CS_MONGOOSE_SRC_HTTP_CLIENT_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/mqtt.h"
+#line 1 "mongoose/src/mg_mqtt.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -5065,11 +5246,12 @@ int mg_http_create_digest_auth_header(char *buf, size_t buf_len,
 #ifndef CS_MONGOOSE_SRC_MQTT_H_
 #define CS_MONGOOSE_SRC_MQTT_H_
 
-/* Amalgamated: #include "mongoose/src/net.h" */
+/* Amalgamated: #include "mg_net.h" */
 
 struct mg_mqtt_message {
   int cmd;
   int qos;
+  int len; /* message length in the IO buffer */
   struct mg_str topic;
   struct mg_str payload;
 
@@ -5105,6 +5287,7 @@ struct mg_send_mqtt_handshake_opts {
 /* mg_mqtt_proto_data should be in header to allow external access to it */
 struct mg_mqtt_proto_data {
   uint16_t keep_alive;
+  double last_control_time;
 };
 
 /* Message types */
@@ -5268,7 +5451,7 @@ int mg_mqtt_vmatch_topic_expression(const char *exp, struct mg_str topic);
 
 #endif /* CS_MONGOOSE_SRC_MQTT_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/mqtt_server.h"
+#line 1 "mongoose/src/mg_mqtt_server.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -5297,13 +5480,15 @@ int mg_mqtt_vmatch_topic_expression(const char *exp, struct mg_str topic);
 #if MG_ENABLE_MQTT_BROKER
 
 /* Amalgamated: #include "common/queue.h" */
-/* Amalgamated: #include "mongoose/src/mqtt.h" */
+/* Amalgamated: #include "mg_mqtt.h" */
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#define MG_MQTT_MAX_SESSION_SUBSCRIPTIONS 512;
+#ifndef MG_MQTT_MAX_SESSION_SUBSCRIPTIONS
+#define MG_MQTT_MAX_SESSION_SUBSCRIPTIONS 512
+#endif
 
 struct mg_mqtt_broker;
 
@@ -5373,7 +5558,7 @@ struct mg_mqtt_session *mg_mqtt_next(struct mg_mqtt_broker *brk,
 #endif /* MG_ENABLE_MQTT_BROKER */
 #endif /* CS_MONGOOSE_SRC_MQTT_BROKER_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/dns.h"
+#line 1 "mongoose/src/mg_dns.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -5387,7 +5572,7 @@ struct mg_mqtt_session *mg_mqtt_next(struct mg_mqtt_broker *brk,
 #ifndef CS_MONGOOSE_SRC_DNS_H_
 #define CS_MONGOOSE_SRC_DNS_H_
 
-/* Amalgamated: #include "mongoose/src/net.h" */
+/* Amalgamated: #include "mg_net.h" */
 
 #ifdef __cplusplus
 extern "C" {
@@ -5540,7 +5725,7 @@ void mg_set_protocol_dns(struct mg_connection *nc);
 #endif /* __cplusplus */
 #endif /* CS_MONGOOSE_SRC_DNS_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/dns_server.h"
+#line 1 "mongoose/src/mg_dns_server.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -5558,7 +5743,7 @@ void mg_set_protocol_dns(struct mg_connection *nc);
 
 #if MG_ENABLE_DNS_SERVER
 
-/* Amalgamated: #include "mongoose/src/dns.h" */
+/* Amalgamated: #include "mg_dns.h" */
 
 #ifdef __cplusplus
 extern "C" {
@@ -5637,7 +5822,7 @@ void mg_dns_send_reply(struct mg_connection *nc, struct mg_dns_reply *r);
 #endif /* MG_ENABLE_DNS_SERVER */
 #endif /* CS_MONGOOSE_SRC_DNS_SERVER_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/resolv.h"
+#line 1 "mongoose/src/mg_resolv.h"
 #endif
 /*
  * Copyright (c) 2014 Cesanta Software Limited
@@ -5651,7 +5836,7 @@ void mg_dns_send_reply(struct mg_connection *nc, struct mg_dns_reply *r);
 #ifndef CS_MONGOOSE_SRC_RESOLV_H_
 #define CS_MONGOOSE_SRC_RESOLV_H_
 
-/* Amalgamated: #include "mongoose/src/dns.h" */
+/* Amalgamated: #include "mg_dns.h" */
 
 #ifdef __cplusplus
 extern "C" {
@@ -5721,7 +5906,7 @@ int mg_resolve_from_hosts_file(const char *host, union socket_address *usa);
 #endif /* __cplusplus */
 #endif /* CS_MONGOOSE_SRC_RESOLV_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/coap.h"
+#line 1 "mongoose/src/mg_coap.h"
 #endif
 /*
  * Copyright (c) 2015 Cesanta Software Limited
@@ -5889,7 +6074,7 @@ uint32_t mg_coap_compose(struct mg_coap_message *cm, struct mbuf *io);
 
 #endif /* CS_MONGOOSE_SRC_COAP_H_ */
 #ifdef MG_MODULE_LINES
-#line 1 "mongoose/src/sntp.h"
+#line 1 "mongoose/src/mg_sntp.h"
 #endif
 /*
  * Copyright (c) 2016 Cesanta Software Limited
@@ -5945,3 +6130,72 @@ struct mg_connection *mg_sntp_get_time(struct mg_mgr *mgr,
 #endif
 
 #endif /* CS_MONGOOSE_SRC_SNTP_H_ */
+#ifdef MG_MODULE_LINES
+#line 1 "mongoose/src/mg_socks.h"
+#endif
+/*
+ * Copyright (c) 2017 Cesanta Software Limited
+ * All rights reserved
+ */
+
+#ifndef CS_MONGOOSE_SRC_SOCKS_H_
+#define CS_MONGOOSE_SRC_SOCKS_H_
+
+#if MG_ENABLE_SOCKS
+
+#define MG_SOCKS_VERSION 5
+
+#define MG_SOCKS_HANDSHAKE_DONE MG_F_USER_1
+#define MG_SOCKS_CONNECT_DONE MG_F_USER_2
+
+/* SOCKS5 handshake methods */
+enum mg_socks_handshake_method {
+  MG_SOCKS_HANDSHAKE_NOAUTH = 0,     /* Handshake method - no authentication */
+  MG_SOCKS_HANDSHAKE_GSSAPI = 1,     /* Handshake method - GSSAPI auth */
+  MG_SOCKS_HANDSHAKE_USERPASS = 2,   /* Handshake method - user/password auth */
+  MG_SOCKS_HANDSHAKE_FAILURE = 0xff, /* Handshake method - failure */
+};
+
+/* SOCKS5 commands */
+enum mg_socks_command {
+  MG_SOCKS_CMD_CONNECT = 1,       /* Command: CONNECT */
+  MG_SOCKS_CMD_BIND = 2,          /* Command: BIND */
+  MG_SOCKS_CMD_UDP_ASSOCIATE = 3, /* Command: UDP ASSOCIATE */
+};
+
+/* SOCKS5 address types */
+enum mg_socks_address_type {
+  MG_SOCKS_ADDR_IPV4 = 1,   /* Address type: IPv4 */
+  MG_SOCKS_ADDR_DOMAIN = 3, /* Address type: Domain name */
+  MG_SOCKS_ADDR_IPV6 = 4,   /* Address type: IPv6 */
+};
+
+/* SOCKS5 response codes */
+enum mg_socks_response {
+  MG_SOCKS_SUCCESS = 0,            /* Response: success */
+  MG_SOCKS_FAILURE = 1,            /* Response: failure */
+  MG_SOCKS_NOT_ALLOWED = 2,        /* Response: connection not allowed */
+  MG_SOCKS_NET_UNREACHABLE = 3,    /* Response: network unreachable */
+  MG_SOCKS_HOST_UNREACHABLE = 4,   /* Response: network unreachable */
+  MG_SOCKS_CONN_REFUSED = 5,       /* Response: network unreachable */
+  MG_SOCKS_TTL_EXPIRED = 6,        /* Response: network unreachable */
+  MG_SOCKS_CMD_NOT_SUPPORTED = 7,  /* Response: network unreachable */
+  MG_SOCKS_ADDR_NOT_SUPPORTED = 8, /* Response: network unreachable */
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+/* Turn the connection into the SOCKS server */
+void mg_set_protocol_socks(struct mg_connection *c);
+
+/* Create socks tunnel for the client connection */
+struct mg_iface *mg_socks_mk_iface(struct mg_mgr *, const char *proxy_addr);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif
+#endif
