@@ -404,6 +404,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	 */
 	if ((n = splitter(parts[0], ":", tparts)) != 2) {
 		xlog(ud, "Cannot split type from parts[0]\n");
+		if (n != -1)
+			splitterfree(tparts);
 		goto finish;
 	}
 	strcpy(abr, tparts[0]);
