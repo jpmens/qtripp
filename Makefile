@@ -42,6 +42,7 @@ qtripp: qtripp.o Makefile $(OBJS) $(LIBDEV)
 
 qlog: qlog.o Makefile mongoose.o
 	$(CC) $(CFLAGS) -o qlog qlog.o mongoose.o $(LDFLAGS)
+	if test -r codesign.sh; then /bin/sh codesign.sh; fi
 
 conf.o: conf.c conf.h udata.h
 tline.o: tline.c tline.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h bean.h iinfo.h
