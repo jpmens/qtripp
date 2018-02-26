@@ -228,7 +228,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 							char path[BUFSIZ];
 
 							close(ud->datalog);
-							snprintf(path, BUFSIZ, "%s.%ld", ud->cf->datalog, time(0));
+							snprintf(path, BUFSIZ, "%s.%lld", ud->cf->datalog, (long long)time(0));
 							link(ud->cf->datalog, path);
 							unlink(ud->cf->datalog);
 							ud->datalog = open(ud->cf->datalog, O_WRONLY | O_CREAT, 0666);
