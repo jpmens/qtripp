@@ -21,8 +21,10 @@
 #include <stdlib.h>
 #include "uthash.h"
 
+#define IINFOKEYSIZE 18
+
 struct _iinfo {
-	char key[18];		/* "123456789012345" (imei) */
+	char key[IINFOKEYSIZE];		/* "123456789012345" (imei) */
 	char *name;		/* "JP's car" */
         UT_hash_handle hh;
 };

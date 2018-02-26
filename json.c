@@ -37,10 +37,11 @@
 /* Sadly, strdup is not portable. */
 static char *json_strdup(const char *str)
 {
-	char *ret = (char*) malloc(strlen(str) + 1);
+	size_t n = strlen(str) + 1;
+	char *ret = (char*) malloc(n);
 	if (ret == NULL)
 		out_of_memory();
-	strcpy(ret, str);
+	strlcpy(ret, str, n);
 	return ret;
 }
 
@@ -1246,7 +1247,7 @@ static void emit_number(SB *out, double num)
 	 * like 0.3 -> 0.299999999999999988898 .
 	 */
 	char buf[64];
-	sprintf(buf, "%.16g", num);
+	snprintf(buf, 64, "%.16g", num);
 
 	if (number_is_valid(buf))
 		sb_puts(out, buf);
@@ -1258,8 +1259,8 @@ static void emit_double(SB *out, double num, int width) // JPM
 {
 	char buf[64], fmt[64];
 	// sprintf(fmt, "%%.%dg", width);
-	sprintf(fmt, "%%.%dlf", width);
-	sprintf(buf, fmt, num);
+	snprintf(fmt, 64, "%%.%dlf", width);
+	snprintf(buf, 64, fmt, num);
 
 	// printf("fmt=[%s]\nbuf=[%s]\n", fmt, buf); fflush(stdout);
 	

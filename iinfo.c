@@ -56,7 +56,7 @@ struct _iinfo *lookup_iinfo(const char *directory, char *key)
 		char *name = slurp_file(path, true);
 
 		s = (struct _iinfo *)malloc(sizeof(struct _iinfo));
-		strcpy(s->key, key);
+		strlcpy(s->key, key, IINFOKEYSIZE);
 		s->name = (name) ? name : strdup(".");
 
 		HASH_ADD_STR(myhash, key, s);

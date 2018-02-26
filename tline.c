@@ -408,8 +408,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			splitterfree(tparts);
 		goto finish;
 	}
-	strcpy(abr, tparts[0]);
-	strcpy(subtype, tparts[1]);
+	strlcpy(abr, tparts[0], sizeof(abr));
+	strlcpy(subtype, tparts[1], sizeof(subtype));
 	splitterfree(tparts);
 
 
