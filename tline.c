@@ -472,7 +472,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			/*
 			 * If we have a last valid lat/lon, we create a small "p"ing type
 			 * publish with our last valid position and the timestamp from the
-			 * heartbeat.
+			 * heartbeat, adding "sent" as the current time(0) to identify
+			 * when this ping originated.
 			 */
 
 			if (imei_last_position(imei, &last_lat, &last_lon, &last_tst, &last_vel, &last_cog, false) == true) {
@@ -483,6 +484,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				json_append_member(obj, "vel", json_mkdouble(last_vel, 1));
 				json_append_member(obj, "cog", json_mknumber(last_cog));
 				json_append_member(obj, "tst", json_mknumber(last_tst));
+				json_append_member(obj, "tst", json_mknumber(time(0)));
 				json_append_member(obj, "t", json_mkstring("p"));
 
 				transmit_json(ud, imei, obj);
