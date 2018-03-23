@@ -8,6 +8,7 @@
 
 #ifndef HAVE_STRLCPY
 
+#include <string.h>
 #include "strlcpy.h"
 
 size_t

@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "strlcpy.h"
 
 #define out_of_memory() do {                    \
 		fprintf(stderr, "Out of memory.\n");    \
