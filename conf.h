@@ -57,6 +57,7 @@ typedef struct config {
 	const char *dumpdir;
 	const char *datadir;
 	const char *namesdir;
+	const char *rawtopic;
 } config;
 
 int ini_handler(void *cf, const char *section, const char *key, const char *val);

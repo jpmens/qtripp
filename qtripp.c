@@ -147,7 +147,7 @@ void print_conns(struct udata *ud)
 
 char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *nc)
 {
-	char *imei, *response = NULL;
+	char *imei, *response = NULL, *rt;
 	struct mbuf mcopy;
 
 	/* I have to turn mbuf into a string and must not modify it; copy  yes,
@@ -166,6 +166,15 @@ char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *
 		mg_printf(nc, "%s", response);
 		free(response);
 	}
+
+	/* If we have an IMEI, publish the RAW string
+	 * to MQTT as a backup
+	 */
+
+	asprintf(&rt, "%s/%s", (char *)ud->cf->rawtopic, imei);
+	pub(ud, rt, mcopy.buf, false);
+	free(rt);
+
 	mbuf_free(&mcopy);
 	return (imei);
 }
