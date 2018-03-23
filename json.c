@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "strlcpy.h"
 
 #define out_of_memory() do {                    \
 		fprintf(stderr, "Out of memory.\n");    \
@@ -42,7 +41,7 @@ static char *json_strdup(const char *str)
 	char *ret = (char*) malloc(n);
 	if (ret == NULL)
 		out_of_memory();
-	strlcpy(ret, str, n);
+	strcpy(ret, str);
 	return ret;
 }
 

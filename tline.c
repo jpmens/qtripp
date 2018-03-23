@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "strlcpy.h"
 #include <unistd.h>
 #include <math.h>
 #include <mosquitto.h>
@@ -409,8 +408,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			splitterfree(tparts);
 		goto finish;
 	}
-	strlcpy(abr, tparts[0], sizeof(abr));
-	strlcpy(subtype, tparts[1], sizeof(subtype));
+	strcpy(abr, tparts[0]);
+	strcpy(subtype, tparts[1]);
 	splitterfree(tparts);
 
 

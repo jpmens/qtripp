@@ -18,7 +18,6 @@
  */
 
 #include <string.h>
-#include "strlcpy.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -57,7 +56,7 @@ struct _iinfo *lookup_iinfo(const char *directory, char *key)
 		char *name = slurp_file(path, true);
 
 		s = (struct _iinfo *)malloc(sizeof(struct _iinfo));
-		strlcpy(s->key, key, IINFOKEYSIZE);
+		strcpy(s->key, key);
 		s->name = (name) ? name : strdup(".");
 
 		HASH_ADD_STR(myhash, key, s);
