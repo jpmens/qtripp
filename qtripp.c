@@ -213,6 +213,17 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			if ((co = find_conn(nc->sock)) == NULL) {
 				return;
 			}
+
+			/*
+			 * If we don't receive anything from a device for more than
+			 * 20 minutes, we can assume the connection to be dead.
+			 * (Our devices are configured to a 15 minute heartbeat interval)
+			 */
+			if (time(NULL) - nc->last_io_time > 20 * 60) {
+				xlog(ud, "Closing inactive connection on socket %d: IP is %s: IMEI <%s>\n", co->sock, co->client_ip, imei);
+				nc->flags |= MG_F_CLOSE_IMMEDIATELY;
+			}
+
 			mb = co->mb;
 
 			/*
