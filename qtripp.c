@@ -220,7 +220,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			 * (Our devices are configured to a 15 minute heartbeat interval)
 			 */
 			if (time(NULL) - nc->last_io_time > 20 * 60) {
-				xlog(ud, "Closing inactive connection on socket %d: IP is %s: IMEI <%s>\n", co->sock, co->client_ip, imei);
+				xlog(ud, "Closing inactive connection on socket %d: IP is %s\n", co->sock, co->client_ip);
 				nc->flags |= MG_F_CLOSE_IMMEDIATELY;
 			}
 
