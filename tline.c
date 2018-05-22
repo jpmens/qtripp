@@ -484,7 +484,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				json_append_member(obj, "vel", json_mkdouble(last_vel, 1));
 				json_append_member(obj, "cog", json_mknumber(last_cog));
 				json_append_member(obj, "tst", json_mknumber(last_tst));
-				json_append_member(obj, "tst", json_mknumber(time(0)));
+				json_append_member(obj, "sent", json_mknumber(time(0)));
 				json_append_member(obj, "t", json_mkstring("p"));
 
 				transmit_json(ud, imei, obj);
