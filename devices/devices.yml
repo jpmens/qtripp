@@ -136,8 +136,8 @@
 # GV500
 # Most fields are shared, but all messages include a VIN after IMEI
 #
-- subtypes: [ GTTOW, GTSPD, GTRTL, GTDOG, GTIGL, GTHBM ]
-  versions: [ "360701", "360801" ]
+- subtypes: [ GTTOW, GTGEO, GTSPD, GTRTL, GTDOG, GTIGL, GTHBM ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -161,7 +161,7 @@
   count: 22
 
 - subtypes: [ GTFRI ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -179,6 +179,7 @@
   mnc: 16
   lac: 17
   cid: 18
+  reserved: 19
   odometer: 20
   hmc: 21
   reserved: 22
@@ -192,7 +193,7 @@
   count: 30
 
 - subtypes: [ GTEPS ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -210,12 +211,13 @@
   mnc: 16
   lac: 17
   cid: 18
+  reserved: 19
   odometer: 20
   sent: 21
   count: 22
 
 - subtypes: [ GTPNA, GTPFA, GTPDP ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -223,7 +225,7 @@
   count: 6
 
 - subtypes: [ GTBPL ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -244,7 +246,7 @@
   count: 19
 
 - subtypes: [ GTSTT ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -265,7 +267,7 @@
   count: 19
 
 - subtypes: [ GTIGN ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -288,7 +290,7 @@
   count: 21
 
 - subtypes: [ GTIGF ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -311,7 +313,7 @@
   count: 21
 
 - subtypes: [ GTMPN, GTMPF, GTBTC, GTCRA ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -331,7 +333,7 @@
   count: 18
 
 - subtypes: [ GTSTC ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -352,7 +354,7 @@
   count: 19
 
 - subtypes: [ GTIDN, GTSTR, GTSTP, GTSLP ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -370,13 +372,12 @@
   lac: 16
   cid: 17
   reserved: 18
-  hmc: 19
-  odometer: 20
-  sent: 21
-  count: 22
+  odometer: 19
+  sent: 20
+  count: 21
 
 - subtypes: [ GTIDF ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -394,7 +395,7 @@
   lac: 16
   cid: 17
   reserved: 18
-  odometer: 29
+  odometer: 19
   sent: 20
   count: 21
 
