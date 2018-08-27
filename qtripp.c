@@ -140,6 +140,19 @@ void print_conns(struct udata *ud)
 	}
 }
 
+int count_conns(char *imei)
+{
+        struct conndata *co;
+        int count = 0;
+
+        for (co = conns_by_sock; co != NULL; co = (struct conndata *)(co->hh.next)) {
+                if (co->imei && strcmp(co->imei, imei) == 0) {
+                        count++;
+                }
+        }
+        return count;
+}
+
 /*
  * We've obtained a "line" of text from a tracker via TCP in `buf' (0-terminated).
  * If `response' is non-Null, write its content back to the device.
@@ -332,7 +345,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 						co->imei ? co->imei : "");
 				}
 
-				if (co->imei && strcmp(co->imei, "123456789012345") != 0) {
+				if (co->imei && strcmp(co->imei, "123456789012345") != 0 && count_conns(co->imei) < 2) {
 					pseudo_lwt(ud, co->imei);
 				}
 
