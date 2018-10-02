@@ -1,4 +1,5 @@
 
+
 # Point BSC at the directory into which you've built beanstalk-client
 BSC=/usr/local/src/beanstalk-client
 
@@ -12,9 +13,11 @@ LOCAL_CONF = $(wildcard $(host-name).make)
 -include $(LOCAL_CONF)
 
 BEANSTALK=no
+STATSD = yes
+
 #
 CC=gcc -g
-CFLAGS= -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror 
+CFLAGS= -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
 LDFLAGS=-L /usr/local/lib -lmosquitto -lm
 
 OBJS=	util.o \
@@ -29,6 +32,11 @@ ifeq ($(BEANSTALK),yes)
 	OBJS += bean.o
 	CFLAGS += -DWITH_BEAN -I$(BSC)
 	LDFLAGS += -L $(BSC) -lbeanstalk
+endif
+
+ifeq ($(STATSD),yes)
+	CFLAGS += -DSTATSD
+	LDFLAGS += -lstatsdclient
 endif
 
 LIBDEV=libdev.a

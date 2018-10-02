@@ -32,7 +32,9 @@
 #ifdef WITH_BEAN
 # include "bean.h"
 #endif
-
+#ifdef STATSD
+# include <statsd/statsd-client.h>
+#endif
 #include "models.h"
 #include "devices.h"
 #include "reports.h"
@@ -44,6 +46,9 @@
 static config cf = {
         .host           = "localhost",
         .port           = 1883,
+#ifdef STATSD
+	.statsdhost	= "127.0.0.1",
+#endif
 #ifdef WITH_BEAN
 	.bean_host	= "127.0.0.1",
 	.bean_port	= 11300,
@@ -163,6 +168,8 @@ char *process(struct udata *ud, char *buf, size_t buflen, struct mg_connection *
 	char *imei, *response = NULL, rt[5120];
 	struct mbuf mcopy;
 
+	STATSD_INC(ud->cf->sd, "line.process");
+
 	/* I have to turn mbuf into a string and must not modify it; copy  yes,
 	 * ineffective, but ok for now. I could, alternatively chop the $ here,
 	 * and replace by 0
@@ -234,6 +241,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			 */
 			if (time(NULL) - nc->last_io_time > 20 * 60) {
 				xlog(ud, "Closing inactive connection on socket %d: IP is %s\n", co->sock, co->client_ip);
+				STATSD_INC(ud->cf->sd, "connection.forceclose");
 				nc->flags |= MG_F_CLOSE_IMMEDIATELY;
 			}
 
@@ -286,6 +294,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 
 						if ((co = (struct conndata *)nc->user_data) != NULL) {
 							xlog(ud, "Found connection on socket %d: IP is %s: IMEI <%s>\n", co->sock, co->client_ip, imei);
+							STATSD_INC(ud->cf->sd, "connection.reuse");
 							if (co->imei == NULL) {
 								co->imei = strdup(imei);
 								HASH_ADD_KEYPTR(hh_imei, conns_by_imei, co->imei, strlen(co->imei), co);
@@ -311,6 +320,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 				co->mb = (struct mbuf *)malloc(sizeof (struct mbuf));
 				mbuf_init(co->mb, 1024);
 				xlog(ud, "Adding connection on socket %d: IP is %s\n", nc->sock, co->client_ip);
+				STATSD_INC(ud->cf->sd, "connection.new");
 			}
 
 			nc->user_data = co;
@@ -339,6 +349,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 		case MG_EV_CLOSE:
 			if ((co = (struct conndata *)nc->user_data) != NULL) {
 				if (co->imei) {
+					STATSD_INC(ud->cf->sd, "connection.close");
 					xlog(ud, "Disconnected connection on socket %d: IP was %s, IMEI <%s>\n",
 						co->sock,
 						co->client_ip ? co->client_ip : "unknown",
@@ -460,6 +471,8 @@ void on_message(struct mosquitto *mosq, void *userdata, const struct mosquitto_m
          *       bool retain;
          */
 
+	STATSD_INC(ud->cf->sd, "mqtt.message.in");
+
         xlog(ud, "MQTT on_message: %s %s\n", (char *)m->topic, (char *)m->payload);
 	device_id = topic_to_device((char *)m->topic);
 
@@ -560,6 +573,13 @@ int main(int argc, char **argv)
 		mosquitto_lib_cleanup();
 		return (-1);
 	}
+
+#ifdef STATSD
+	if (cf.statsdhost) {
+		cf.sd = statsd_init_with_namespace(cf.statsdhost, 8125, "qtripp");
+		STATSD_INC(cf.sd, "program.launched");
+	}
+#endif
 
 	if (cf.username || cf.password) {
 		mosquitto_username_pw_set(mosq, cf.username, cf.password);

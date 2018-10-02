@@ -40,6 +40,9 @@ int ini_handler(void *cf, const char *section, const char *key, const char *val)
 		if (_eq("dumpdir"))     c->dumpdir = strdup(val);
 		if (_eq("datadir"))     c->datadir = strdup(val);
 		if (_eq("namesdir"))    c->namesdir = strdup(val);
+#ifdef STATSD
+		if (_eq("statsdhost"))  c->statsdhost = strdup(val);
+#endif
 	}
 
 	if (!strcmp(section, "devices")) {

@@ -24,6 +24,14 @@
 #include "uthash.h"
 #include "json.h"
 #include "ini.h"        /* https://github.com/benhoyt/inih */
+#ifdef STATSD
+# include <statsd/statsd-client.h>
+# define SAMPLE_RATE     1.0
+
+# define STATSD_INC(statsd_link, metric) statsd_inc(statsd_link, (metric), SAMPLE_RATE)
+#else
+# define STATSD_INC(statsd_link, metric) /*nothing*/
+#endif
 
 struct my_device {
 	char *did;              /* key, deviceId*/
@@ -58,6 +66,10 @@ typedef struct config {
 	const char *datadir;
 	const char *namesdir;
 	const char *rawtopic;
+#ifdef STATSD
+	statsd_link *sd;
+	const char *statsdhost;
+#endif
 } config;
 
 int ini_handler(void *cf, const char *section, const char *key, const char *val);

@@ -195,6 +195,7 @@ void print_stats(struct udata *ud)
 
 void pong(struct udata *ud)
 {
+	STATSD_INC(ud->cf->sd, "pong");
 	pub(ud, NAGIOSREPORT, "pong", false);
 }
 
@@ -296,6 +297,7 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 
 	if ((js = json_encode(obj)) != NULL) {
 		xlog(ud, "PUBLISH: %s %s\n", topic, js);
+		STATSD_INC(ud->cf->sd, "mqtt.message.publish");
 		pub(ud, topic, js, true);
 
 //		if (ud->cocorun) mg_printf(ud->coco, "%s", js);	// FIXME remove
@@ -341,6 +343,8 @@ void pseudo_lwt(struct udata *ud, char *imei)
 	if (!imei || !*imei)
 		return;
 
+	STATSD_INC(ud->cf->sd, "mqtt.message.lwt");
+
 	json_append_member(o, "_type", json_mkstring("lwt"));
 	json_append_member(o, "imei", json_mkstring(imei));
 	json_append_member(o, "tst", json_mknumber(time(0)));
@@ -377,6 +381,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	struct _device *dp;
 	struct _ignore *ip;
 	bool subtype_ignored = false;
+
+	STATSD_INC(ud->cf->sd, "reports");
 
 	++linecounter;
 
@@ -425,6 +431,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	 */
 
 	if (!imei || !*imei || !protov || !*protov) {
+		STATSD_INC(ud->cf->sd, "reports.bad");
 		goto finish;
 	}
 
@@ -435,6 +442,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	stat_incr(subtype, protov, subtype_ignored);
 
 	if (subtype_ignored) {
+		STATSD_INC(ud->cf->sd, "reports.subtype.ignored");
 		xlog(ud, "Ignoring %s: %s (%s)\n",
 			(*subtype) ? subtype : "<nil>",
 			(ip->reason && *ip->reason) ? ip->reason : "<nil>",
@@ -465,6 +473,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			double last_lat, last_lon, last_vel;
 			long last_cog;
 			time_t last_tst;
+
+			STATSD_INC(ud->cf->sd, "reports.gthbd");
 
 			snprintf(rr, sizeof(rr), "+SACK:GTHBD,,%s$", GET_S(5) ? GET_S(5) : "0000");
 			*response = strdup(rr);
