@@ -145,13 +145,20 @@ void print_conns(struct udata *ud)
 	}
 }
 
+/*
+ * Count connections. If imei is NULL, count all current otherwise
+ * those on which imei is connected.
+ */
+
 int count_conns(char *imei)
 {
         struct conndata *co;
         int count = 0;
 
         for (co = conns_by_sock; co != NULL; co = (struct conndata *)(co->hh.next)) {
-                if (co->imei && strcmp(co->imei, imei) == 0) {
+		if (!imei) {
+			count++;
+		} else if (co->imei && strcmp(co->imei, imei) == 0) {
                         count++;
                 }
         }
@@ -244,6 +251,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 				STATSD_INC(ud->cf->sd, "connection.forceclose");
 				nc->flags |= MG_F_CLOSE_IMMEDIATELY;
 			}
+
+			STATSD_GAUGE(ud->cf->sd, "connection.active", count_conns(NULL));
 
 			mb = co->mb;
 

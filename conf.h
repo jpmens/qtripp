@@ -29,8 +29,10 @@
 # define SAMPLE_RATE     1.0
 
 # define STATSD_INC(statsd_link, metric) statsd_inc(statsd_link, (metric), SAMPLE_RATE)
+# define STATSD_GAUGE(statsd_link, metric, val) statsd_gauge(statsd_link, metric, val)
 #else
 # define STATSD_INC(statsd_link, metric) /*nothing*/
+# define STATSD_GAUGE(statsd_link, metric, val) /* nothing */
 #endif
 
 struct my_device {
