@@ -72,6 +72,7 @@ The _Queclink Track (air) Interface Protocol Processor_ is a TCP GPRS server for
 * [json.c](https://ccodearchive.net/info/json.html), by Joey Adams
 * [ini.c](https://github.com/benhoyt/inih), by Ben Hoyt
 * [mongoose](https://github.com/cesanta/mongoose), by Cesanta
+* [statsd-c-client](https://github.com/romanbsd/statsd-c-client)
 
 ## authors
 
