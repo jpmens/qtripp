@@ -57,6 +57,9 @@
     GTTMZ: Timezone Report
     GTUPC: OTA Update
     GTVER: Version
+    GTVMS: Virtual Ignition Mode Selection
+    GTVVS: Voltage Virtual Ignition Settings
+    GTAVS: Accelerometer Virtual Ignition Settings
 
 #
 # models
