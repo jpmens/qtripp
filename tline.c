@@ -795,12 +795,12 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				unsigned long devs = strtoul(devsstring, NULL, 16);
 				json_append_member(jmerge, "dout1",	json_mkbool(devs & 0x000001));
 				json_append_member(jmerge, "dout2",	json_mkbool(devs & 0x000002));
-				json_append_member(jmerge, "ign",	json_mkbool(devs & 0x000100));
 				json_append_member(jmerge, "din1",	json_mkbool(devs & 0x000200));
 				json_append_member(jmerge, "din2",	json_mkbool(devs & 0x000400));
 				json_append_member(jmerge, "motion",	json_mkbool(devs & 0x020000));
 				json_append_member(jmerge, "tow",	json_mkbool(devs & 0x040000));
 				json_append_member(jmerge, "fake",	json_mkbool(devs & 0x080000));
+				json_append_member(jmerge, "ign",	json_mkbool(devs & 0x200000));
 				json_append_member(jmerge, "sens",	json_mkbool(devs & 0x400000));
 			}
 		}
