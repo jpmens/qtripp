@@ -33,7 +33,7 @@
 # include "bean.h"
 #endif
 #ifdef STATSD
-# include <statsd/statsd-client.h>
+# include "statsd/statsd-client.h"
 #endif
 #include "models.h"
 #include "devices.h"

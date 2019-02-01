@@ -25,7 +25,7 @@
 #include "json.h"
 #include "ini.h"        /* https://github.com/benhoyt/inih */
 #ifdef STATSD
-# include <statsd/statsd-client.h>
+# include "statsd/statsd-client.h"
 # define SAMPLE_RATE     1.0
 
 # define STATSD_INC(statsd_link, metric) statsd_inc(statsd_link, (metric), SAMPLE_RATE)

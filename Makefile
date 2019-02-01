@@ -26,7 +26,8 @@ OBJS=	util.o \
 	conf.o \
 	mongoose.o \
 	iinfo.o \
-	tline.o
+	tline.o \
+	statsd/statsd-client.o
 
 ifeq ($(BEANSTALK),yes)
 	OBJS += bean.o
@@ -36,7 +37,6 @@ endif
 
 ifeq ($(STATSD),yes)
 	CFLAGS += -DSTATSD
-	LDFLAGS += -lstatsdclient
 endif
 
 LIBDEV=libdev.a
