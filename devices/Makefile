@@ -1,12 +1,21 @@
 CFLAGS=-I.. -Wall -Werror
 PYTHON=python
 
+# Are we running next to a virtualenv called `venv/`?
+# If so, use that Python binary
+ifeq ($(shell test -e venv/bin/python && echo -n yes),yes)
+	PYTHON_BIN=venv/bin/python
+else
+	PYTHON_BIN=$(PYTHON)
+endif
+
 # echo "PYTHON=python2 > .make"
 -include .make
 
 D2C=./d2c.py
 DEPS= devices.yml
 LIBDEV=../libdev.a
+ARFLAGS=rvU
 
 .DELETE_ON_ERROR:
 
@@ -18,7 +27,7 @@ OBJS=$(LIBDEV)(reports.o) \
 all: $(OBJS)
 
 %.i: %.j2 $(D2C) $(DEPS)
-	$(PYTHON) $(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
+	$(PYTHON_BIN) $(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
 
 reports.o: reports.c reports.h reports.i
 models.o: models.c models.h models.i
