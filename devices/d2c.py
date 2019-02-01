@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -B
 
 #
 # qtripp
@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #/
 
+from __future__ import print_function
 import os
 import sys
 import glob
@@ -47,14 +48,14 @@ def loadf(filename):
         f.close()
 
         if not doc:
-            print "Can't load file %s" % filename
+            print("Can't load file %s" % filename)
 
         return doc
 
     except KeyboardInterrupt:
         sys.exit(1)
     except:
-        print >> sys.stderr, "*********** File == ", filename
+        print("*********** File == {f}".format(f=filename), file=sys.stderr)
         raise
 
 
@@ -62,11 +63,11 @@ if __name__ == '__main__':
     try:
         (otype, path) = sys.argv[1:]
     except:
-        print "Usage: report-type filename"
+        print("Usage: report-type filename")
         sys.exit(1)
 
     doc = loadf(path)
-    # print json.dumps(doc, indent=4)
+    # print(json.dumps(doc, indent=4))
 
     devicelist = []
 
@@ -79,17 +80,17 @@ if __name__ == '__main__':
             data = {
                 otype : o[otype],
             }
-            # print data
+            # print(data)
             output = render_template('%s.j2' % otype, data)
-            print output
+            print(output)
             sys.exit(0)
 
     if len(devicelist):
-        # print json.dumps(devicelist, indent=4)
+        # print(json.dumps(devicelist, indent=4))
         data = {
             'devices' : devicelist,
         }
         output = render_template('devices.j2', data)
-        print output
+        print(output)
         sys.exit(0)
 
