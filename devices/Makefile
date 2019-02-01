@@ -15,16 +15,20 @@ endif
 D2C=./d2c.py
 DEPS= devices.yml
 LIBDEV=../libdev.a
-ARFLAGS=rvU
+ARFLAGS=rcs
 
 .DELETE_ON_ERROR:
 
-OBJS=$(LIBDEV)(reports.o) \
-	$(LIBDEV)(models.o) \
-	$(LIBDEV)(devices.o) \
-	$(LIBDEV)(ignores.o)
+OBJS=reports.o \
+	models.o \
+	devices.o \
+	ignores.o
 
-all: $(OBJS)
+all: $(LIBDEV)
+
+$(LIBDEV): $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+
 
 %.i: %.j2 $(D2C) $(DEPS)
 	$(PYTHON_BIN) $(D2C) $* devices.yml > $@.tmp && mv $@.tmp $@
