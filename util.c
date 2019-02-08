@@ -274,17 +274,21 @@ char *device_to_topic(config *cf, char *did)
 	return (d->topic);
 }
 
-JsonNode *extra_json(config *cf, char *did)
+/*
+ * `ef' is an open constfile, and `did' is an IMEI.
+ * See if there is an `<imei>-json' key in the CDB
+ * and return decoded JSON
+ */
+
+JsonNode *extra_json(cofi *ef, char *did)
 {
-	char path[BUFSIZ];
-	char *bp = NULL;
+	char key[BUFSIZ], valbuf[BUFSIZ], *v;
 	JsonNode *j = NULL;
 
-	snprintf(path, sizeof(path), "%s/%s", cf->extra_json, did);
+	snprintf(key, sizeof(key), "%s-json", did);
 
-	if ((bp = slurp_file(path, true)) != NULL) {
-		j = json_decode(bp);
-		free(bp);
+	if ((v = constfile_stab(ef, key, valbuf, sizeof(valbuf))) != NULL) {
+		j = json_decode(valbuf);
 	}
 	return (j);
 }

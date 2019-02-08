@@ -18,15 +18,15 @@ STATSD = yes
 #
 CC=gcc -g
 CFLAGS= -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
-LDFLAGS=-L /usr/local/lib -lmosquitto -lm
+LDFLAGS=-L /usr/local/lib -lmosquitto -lm -lcdb
 
 OBJS=	util.o \
 	json.o \
 	ini.o \
 	conf.o \
 	mongoose.o \
-	iinfo.o \
 	tline.o \
+	constfile.o \
 	statsd/statsd-client.o
 
 ifeq ($(BEANSTALK),yes)
@@ -52,12 +52,12 @@ qlog: qlog.o Makefile mongoose.o
 	$(CC) $(CFLAGS) -o qlog qlog.o mongoose.o $(LDFLAGS)
 	if test -r codesign.sh; then /bin/sh codesign.sh; fi
 
-conf.o: conf.c conf.h udata.h
-tline.o: tline.c tline.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h bean.h iinfo.h
-qtripp.o: qtripp.c conf.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h tline.h
-util.o: util.c util.h json.h udata.h
-bean.o: bean.c udata.h
-iinfo.o: iinfo.c iinfo.h util.h
+conf.o: conf.c conf.h udata.h constfile.h
+tline.o: tline.c tline.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h bean.h constfile.h
+qtripp.o: qtripp.c conf.h util.h json.h ini.h devices/devices.h devices/models.h devices/reports.h udata.h tline.h constfile.h
+util.o: util.c util.h json.h udata.h constfile.h
+bean.o: bean.c udata.h constfile.h
+constfile.o: constfile.c constfile.h
 
 .PHONY: libdev
 

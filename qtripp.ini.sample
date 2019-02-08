@@ -14,14 +14,15 @@ logfile = qtripp.log
 ; is written
 ; debughex = debug.hex
 
-extra_json = extra-json
-
 ; for commands which cause qtripp to store something
 ; this directory, if configured, must exist and be writeable
 dumpdir = dump/
 
 ; incoming data files are written into this directory
 datadir = data/
+
+; path to CDB containing names and extra data in JSON, keyed on IMEI
+cdb_path = my.cdb
 
 ; the `[devices]` section lists a topic to publish to for a particular device.
 ; For example, the device with the deviceId `543210987654321` will publish to

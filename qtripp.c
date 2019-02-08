@@ -550,6 +550,7 @@ int main(int argc, char **argv)
         ud->debugging           = true;
 	ud->cf			= &cf;
 	ud->logfp		= fopen(cf.logfile, "a");
+	ud->ef			= constfile_open((char *)cf.cdb_path);
 
         load_models();
         load_reports();

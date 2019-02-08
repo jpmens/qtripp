@@ -24,6 +24,7 @@
 #include "uthash.h"
 #include "json.h"
 #include "ini.h"        /* https://github.com/benhoyt/inih */
+#include "constfile.h"
 #ifdef STATSD
 # include "statsd/statsd-client.h"
 # define SAMPLE_RATE     1.0
@@ -62,16 +63,15 @@ typedef struct config {
 	const char *client_id;
 	JsonNode *subscriptions;
 	struct my_device *devices;
-	const char *extra_json;
 	const char *reporttopic;
 	const char *dumpdir;
 	const char *datadir;
-	const char *namesdir;
 	const char *rawtopic;
 #ifdef STATSD
 	statsd_link *sd;
 	const char *statsdhost;
 #endif
+	const char *cdb_path;
 } config;
 
 int ini_handler(void *cf, const char *section, const char *key, const char *val);

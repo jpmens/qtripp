@@ -29,10 +29,10 @@
 #include "conf.h"
 #include "udata.h"
 #include "tline.h"
+#include "constfile.h"
 #ifdef WITH_BEAN
 # include "bean.h"
 #endif
-#include "iinfo.h"
 
 #include "models.h"
 #include "devices.h"
@@ -273,7 +273,7 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 
 	topic = device_to_topic(ud->cf, imei);
 
-	if ((extra = extra_json(ud->cf, imei)) != NULL) {
+	if ((extra = extra_json(ud->ef, imei)) != NULL) {
 		json_foreach(e, extra) {
 			JsonNode *j;
 
@@ -381,6 +381,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	struct _device *dp;
 	struct _ignore *ip;
 	bool subtype_ignored = false;
+	char cbuf[BUFSIZ], *cname;
 
 	STATSD_INC(ud->cf->sd, "reports");
 
@@ -454,11 +455,12 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	imei_dup = strdup(imei);
 
 	struct _model *model = lookup_models(protov);
-	struct _iinfo *iinfo = lookup_iinfo(ud->cf->namesdir, imei);
+
+	cname = constfile_stab(ud->ef, imei, cbuf, sizeof(cbuf));
 
 	xlog(ud, "+++ I=%s (%s) M=%s np=%d P=%s C=%ld T=%s:%s (%s) LINE=%s\n",
 		imei,
-		(iinfo) ? iinfo->name : ".",
+		(cname) ? cname : ".",
 		(model) ? model->desc : "unknown",
 		nparts, protov,
 		linecounter,

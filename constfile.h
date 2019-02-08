@@ -1,6 +1,10 @@
+#ifndef _CONSTFILE_H_
+#define  _CONSTFILE_H_
+#include <sys/time.h>
+
 /*
- * qtripp
- * Copyright (C) 2017 Jan-Piet Mens <jp@mens.de>
+ * constfile
+ * Copyright (C) 2018 Jan-Piet Mens <jp@mens.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,17 +21,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <string.h>
-#include <stdlib.h>
-#include "uthash.h"
+typedef struct cofi {
+        char *filename;
+        int fd;
+        time_t mtime;
+} cofi;
 
-#define IINFOKEYSIZE 18
+cofi *constfile_open(char *filename);
+void constfile_close(cofi *f);
+void constfile_checkfile(cofi *f);
+char *constfile_stab(cofi *f, char *key, char *buf, unsigned buflen);
 
-struct _iinfo {
-	char key[IINFOKEYSIZE];		/* "123456789012345" (imei) */
-	char *name;		/* "JP's car" */
-        UT_hash_handle hh;
-};
-
-void free_iinfo();
-struct _iinfo *lookup_iinfo(const char *directory, char *key);
+#endif /* _CONSTFILE_H_ */
