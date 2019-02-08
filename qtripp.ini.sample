@@ -22,6 +22,12 @@ dumpdir = dump/
 datadir = data/
 
 ; path to CDB containing names and extra data in JSON, keyed on IMEI
+;
+;	cat <<! | cdb -c -m /tmp/my.db
+;	123456789012345 my-car
+;	123456789012345-json { "plate" : "LA-RG-0", "numero" : 859 }
+;	!
+;
 cdb_path = my.cdb
 
 ; the `[devices]` section lists a topic to publish to for a particular device.
