@@ -300,9 +300,6 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 		STATSD_INC(ud->cf->sd, "mqtt.message.publish");
 		pub(ud, topic, js, true);
 
-//		if (ud->cocorun) mg_printf(ud->coco, "%s", js);	// FIXME remove
-//		fprintf(stderr, "@@@@@@@@@ %d\n", ud->coco->sock);
-
 		free(js);
 	}
 

@@ -378,46 +378,6 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	}
 }
 
-#if 0
-static void coco_ev_handler(struct mg_connection *nc, int ev, void *p)
-{
-	struct udata *ud = (struct udata *)nc->mgr->user_data;
-
-	switch (ev) {
-	case MG_EV_ACCEPT:
-	case MG_EV_CONNECT:
-		// puts("EV_CONNECT/ACCEPT");
-		ud->cocorun = true;
-		// mg_send(nc, "helLO", 5);
-		// mg_printf(nc, "Hi %s, how is it?", "Julie");
-		break;
-
-	case MG_EV_CLOSE:
-		ud->cocorun = false;
-		nc->flags |= MG_F_CLOSE_IMMEDIATELY;
-		// puts("EV_CLOSE");
-		break;
-
-	case MG_EV_RECV:
-		puts("EV_RECV");
-		fwrite(nc->recv_mbuf.buf, 1, nc->recv_mbuf.len, stdout);
-		mbuf_remove(&nc->recv_mbuf, nc->recv_mbuf.len);
-
-		break;
-
-#if 0
-	case MG_EV_TIMER:
-		puts("TIMER!!!!");
-		nc->flags |= MG_F_CLOSE_IMMEDIATELY;
-		break;
-#endif
-
-	default:
-		break;
-	}
-}
-#endif
-
 /*
  * Return a pointer to a malloced device name contained in
  * the bit before "/cmd" of an MQTT topic. Caller must free.
@@ -669,32 +629,9 @@ int main(int argc, char **argv)
 	udata.mgr = &mgr;
 	mgr.user_data = &udata; // experiment
 
-#if 0
-	const char *address = "127.0.0.1:8881";		// FIXME: config
-	struct mg_connect_opts conn_opts;
-
-#define COCO_CONN do { \
-	memset(&conn_opts, 0, sizeof(conn_opts)); \
-	conn_opts.error_string = &e; \
-	ud->cocorun = true; \
-	if ((ud->coco = mg_connect_opt(&mgr, address, coco_ev_handler, conn_opts)) == NULL) { \
-		fprintf(stderr, "mg_connect(%s) failed: %s\n", address, *conn_opts.error_string); \
-		exit(EXIT_FAILURE); \
-	} \
-	} while (0) 
-
-	COCO_CONN;
-#endif
-
 	while (1) {
 		mg_mgr_poll(&mgr, 1000);
 		mosquitto_loop(mosq, 0, 1);
-#if 0
-		fprintf(stderr, "Loop.. cocorun == %d\n", ud->cocorun); // FIXME
-		if (ud->cocorun == false) {
-			COCO_CONN;
-		}
-#endif
 	}
 
 	mg_mgr_free(&mgr);

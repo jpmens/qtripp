@@ -32,8 +32,6 @@ struct udata {
         int datalog;
         struct mg_mgr *mgr;     	/* mongoose manager */
         struct config *cf;
-	struct mg_connection *coco;	/* if configured, the mirror connection */
-	bool cocorun;			/* true if connected; false if to be connected */
 	cofi *ef;			/* an open constfile to cdb */
 #ifdef WITH_BEAN
 	int bean_socket;
