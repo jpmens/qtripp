@@ -20,4 +20,3 @@ data/
 contrib/bean-get
 *.make
 .make
-uploader/tt
