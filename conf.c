@@ -37,6 +37,7 @@ int ini_handler(void *cf, const char *section, const char *key, const char *val)
 		if (_eq("logfile"))	c->logfile = strdup(val);
 		if (_eq("debughex"))	c->debughex = strdup(val);
 		if (_eq("dumpdir"))     c->dumpdir = strdup(val);
+		if (_eq("datadir"))     c->datadir = strdup(val);
 		if (_eq("cdb_path"))    c->cdb_path = strdup(val);
 #ifdef STATSD
 		if (_eq("statsdhost"))  c->statsdhost = strdup(val);
