@@ -502,9 +502,13 @@ int main(int argc, char **argv)
 	const char *e = NULL;
 	struct my_device *d, *tmp;
 	int rc;
+	char *ini_file;
 
-        if (ini_parse("qtripp.ini", ini_handler, &cf) < 0) {
-		xlog(NULL, "Can't load/parse ini file.\n");
+	if ((ini_file = getenv("QTRIPPINI")) == NULL)
+		ini_file = "qtripp.ini";
+
+        if (ini_parse(ini_file, ini_handler, &cf) < 0) {
+		xlog(NULL, "Can't load/parse ini file at %s\n", ini_file);
                 return (1);
         }
 
