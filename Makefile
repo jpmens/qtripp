@@ -17,7 +17,7 @@ STATSD = yes
 
 #
 CC=gcc -g
-CFLAGS= -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
+CFLAGS += -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
 LDFLAGS=-L /usr/local/lib -lmosquitto -lm -lcdb
 
 OBJS=	util.o \
