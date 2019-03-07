@@ -1,4 +1,4 @@
-CFLAGS=-I.. -Wall -Werror
+CFLAGS += -I.. -Wall -Werror
 PYTHON=python
 
 # Are we running next to a virtualenv called `venv/`?
