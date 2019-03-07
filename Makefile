@@ -18,6 +18,9 @@ STATSD = yes
 #
 CC=gcc -g
 CFLAGS += -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
+ifdef LOGFILE_SIZE
+CFLAGS += -DLOGFILE_SIZE=$(LOGFILE_SIZE)
+endif
 LDFLAGS=-L /usr/local/lib -lmosquitto -lm -lcdb
 
 OBJS=	util.o \
@@ -69,5 +72,5 @@ clean:
 	$(MAKE) -C devices clean
 
 clobber: clean
-	rm -f qtripp
+	rm -f qtripp qlog
 	$(MAKE) -C devices clobber
