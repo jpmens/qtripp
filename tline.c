@@ -297,7 +297,7 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 
 	/*
 	 * Ensure TID is a string for Traccar owntracks decoder; we had a case
-	 * of tid being a number (53). Also forget about checkif for number and
+	 * of tid being a number (53). Also forget about checking for number and
 	 * formatting that; we just add last two chars of IMEI as tid.
 	 */
 
