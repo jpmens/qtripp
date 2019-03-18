@@ -295,6 +295,19 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 		}
 	}
 
+	/*
+	 * Ensure TID is a string for Traccar owntracks decoder; we had a case
+	 * of tid being a number (53). Also forget about checkif for number and
+	 * formatting that; we just add last two chars of IMEI as tid.
+	 */
+
+	if ((e = json_find_member(obj, "tid")) != NULL) {
+		if (e->tag != JSON_STRING) {
+			json_remove_from_parent(e);
+			json_append_member(obj, "tid", json_mkstring(imei + (strlen(imei) - 2)));
+		}
+	}
+
 	if ((js = json_encode(obj)) != NULL) {
 		xlog(ud, "PUBLISH: %s %s\n", topic, js);
 		STATSD_INC(ud->cf->sd, "mqtt.message.publish");
