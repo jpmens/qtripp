@@ -23,44 +23,7 @@
 # ignores
 #
 - ignores:
-    GTAIF: Configuration Information
-    GTALC: Configuration Information
-    GTALM: Configuration Information
-    GTALS: Configuration Information
-    GTALL: Configuration Information
-    GTANT: external GPS antenna status reported
-    GTBAT: Power Supply Information
-    GTCFU: CAN FOTA Upgrade
-    GTCID: ICCID of the SIM care
-    GTCRD: Crash Data
-    GTCSQ: GSM Signal Level
-    GTCVN: CAN Version
-    GTDAT: CAN Config Data
-    GTDOS: Status Of Wave Shape 1 Output Changes
-    GTGCR: Location as Center of Geo-Fence
-    GTGEO: Entering/Exiting Geo fence
-    GTGES: Entering/Exiting Geo fence
-    GTGPJ: GPS jamming status
-    GTGSM: Service And Neighbor Cell Information
-    GTGSV: Satellite Information
-    GTGTS: Terminal State Information
-    GTGPS: GPS Information
-    GTIDA: ID authorisation check
-    GTINF: Device Information
-    GTIOS: IO Status Information
-    GTJDR: jamming indication
-    GTJDS: jamming detection status
-    GTLBC: Location by Call
-    GTMOA: Mobileye System Alert Report
-    GTRMD: enter or leave GSM roam state
-    GTSWG: Switched on or off Geo-Fence 0 via function key
-    GTTEM: Temperature Alarm
-    GTTMZ: Timezone Report
-    GTUPC: OTA Update
-    GTVER: Version
-    GTVMS: Virtual Ignition Mode Selection
-    GTVVS: Voltage Virtual Ignition Settings
-    GTAVS: Accelerometer Virtual Ignition Settings
+    NONE: none
 
 #
 # models
@@ -140,6 +103,44 @@
     GTDOG: watchdog reboot
     GTRTL: GPS detected
 
+    GTAIF: Configuration Information
+    GTALC: Configuration Information
+    GTALM: Configuration Information
+    GTALS: Configuration Information
+    GTALL: Configuration Information
+    GTANT: external GPS antenna status reported
+    GTBAT: Power Supply Information
+    GTCFU: CAN FOTA Upgrade
+    GTCID: ICCID of the SIM care
+    GTCRD: Crash Data
+    GTCSQ: GSM Signal Level
+    GTCVN: CAN Version
+    GTDAT: CAN Config Data
+    GTDOS: Status Of Wave Shape 1 Output Changes
+    GTGCR: Location as Center of Geo-Fence
+    GTGEO: Entering/Exiting Geo fence
+    GTGES: Entering/Exiting Geo fence
+    GTGPJ: GPS jamming status
+    GTGSM: Service And Neighbor Cell Information
+    GTGSV: Satellite Information
+    GTGTS: Terminal State Information
+    GTGPS: GPS Information
+    GTIDA: ID authorisation check
+    GTINF: Device Information
+    GTIOS: IO Status Information
+    GTJDR: jamming indication
+    GTJDS: jamming detection status
+    GTLBC: Location by Call
+    GTMOA: Mobileye System Alert Report
+    GTRMD: enter or leave GSM roam state
+    GTSWG: Switched on or off Geo-Fence 0 via function key
+    GTTEM: Temperature Alarm
+    GTTMZ: Timezone Report
+    GTUPC: OTA Update
+    GTVER: Version
+    GTVMS: Virtual Ignition Mode Selection
+    GTVVS: Voltage Virtual Ignition Settings
+    GTAVS: Accelerometer Virtual Ignition Settings
 #
 # GV500
 # Most fields are shared, but all messages include a VIN after IMEI
