@@ -1081,7 +1081,11 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			json_append_member(obj, "t", json_mkstring("u"));
 		} else if (!strcmp(subtype, "GTIGN")) {
 			json_append_member(obj, "t", json_mkstring("i"));
+		} else if (!strcmp(subtype, "GTVGN")) {
+			json_append_member(obj, "t", json_mkstring("i"));
 		} else if (!strcmp(subtype, "GTIGF")) {
+			json_append_member(obj, "t", json_mkstring("I"));
+		} else if (!strcmp(subtype, "GTVGF")) {
 			json_append_member(obj, "t", json_mkstring("I"));
 		} else if (!strcmp(subtype, "GTEPN")) {
 			json_append_member(obj, "t", json_mkstring("E"));
