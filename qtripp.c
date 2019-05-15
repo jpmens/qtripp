@@ -491,6 +491,51 @@ void on_connect(struct mosquitto *mosq, void *userdata, int rc)
 	}
 }
 
+static char *mosquitto_reason(int rc)
+{
+
+        static char *reasons[] = {
+                "MOSQ_ERR_SUCCESS",             /*  0 */
+                "MOSQ_ERR_NOMEM",               /*  1 */
+                "MOSQ_ERR_PROTOCOL",            /*  2 */
+                "MOSQ_ERR_INVAL",               /*  3 */
+                "MOSQ_ERR_NO_CONN",             /*  4 */
+                "MOSQ_ERR_CONN_REFUSED",        /*  5 */
+                "MOSQ_ERR_NOT_FOUND",           /*  6 */
+                "MOSQ_ERR_CONN_LOST",           /*  7 */
+                "MOSQ_ERR_TLS",                 /*  8 */
+                "MOSQ_ERR_PAYLOAD_SIZE",        /*  9 */
+                "MOSQ_ERR_NOT_SUPPORTED",       /* 10 */
+                "MOSQ_ERR_AUTH",                /* 11 */
+                "MOSQ_ERR_ACL_DENIED",          /* 12 */
+                "MOSQ_ERR_UNKNOWN",             /* 13 */
+                "MOSQ_ERR_ERRNO",               /* 14 */
+                "MOSQ_ERR_EAI",                 /* 15 */
+                "MOSQ_ERR_PROXY",               /* 16 */
+                "MOSQ_ERR_PLUGIN_DEFER",        /* 17 */
+                "MOSQ_ERR_MALFORMED_UTF8",      /* 18 */
+                "MOSQ_ERR_KEEPALIVE",           /* 19 */
+                "MOSQ_ERR_LOOKUP"               /* 20 */
+        };
+
+        return ((rc >= 0 && rc <= MOSQ_ERR_LOOKUP) ? reasons[rc] : "unknown reason");
+}
+
+void on_disconnect(struct mosquitto *mosq, void *userdata, int reason)
+{
+	struct udata *ud = (struct udata *)userdata;
+
+	if (reason) {
+		if (reason == MOSQ_ERR_ERRNO) {
+			xlog(ud, "Disconnected. Reason: 0x%02X [%s] %m\n",
+				reason, mosquitto_reason(reason));
+		} else {
+			xlog(ud, "Disconnected. Reason: 0x%02X [%s]\n",
+			reason, mosquitto_reason(reason));
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
 	struct mg_mgr mgr;
@@ -557,12 +602,24 @@ int main(int argc, char **argv)
 	}
 #endif
 
+	rc = mosquitto_reconnect_delay_set(mosq,
+					5,        /* delay */
+					20,       /* delay_max */
+					0);       /* exponential backoff */
+	if (rc != MOSQ_ERR_SUCCESS) {
+		xlog(ud, "Cannot set reconnect_delay: %s\n",
+			mosquitto_strerror(rc));
+		exit(3);
+	}
+
+
 	if (cf.username || cf.password) {
 		mosquitto_username_pw_set(mosq, cf.username, cf.password);
 	}
 
 	mosquitto_message_callback_set(mosq, on_message);
 	mosquitto_connect_callback_set(mosq, on_connect);
+	mosquitto_disconnect_callback_set(mosq, on_disconnect);
 
 	if (cf.cafile && *cf.cafile) {
 
@@ -637,7 +694,14 @@ int main(int argc, char **argv)
 
 	while (1) {
 		mg_mgr_poll(&mgr, 1000);
-		mosquitto_loop(mosq, 0, 1);
+		rc = mosquitto_loop(mosq, 0, 1);
+		if (rc == 4) {
+			xlog(ud, "Reconnecting to MQTT\n");
+			rc = mosquitto_reconnect(mosq);
+			if (rc != MOSQ_ERR_SUCCESS) {
+				sleep(1);
+			}
+		}
 	}
 
 	mg_mgr_free(&mgr);
