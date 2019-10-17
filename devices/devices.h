@@ -65,6 +65,9 @@ struct _device {
 	int adid;
 	int adty;
 	int adda;
+	int dgn;
+	int da;
+	int xyz;
 
 	int vin;	/* Vehicle Identification Number */
 	int rpm;	/* engine rpm */

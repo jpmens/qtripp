@@ -67,6 +67,9 @@ struct _device devices[] = {
 		{% set adid  = dev['adid'] | default(-1) %}
 		{% set adty  = dev['adty'] | default(-1) %}
 		{% set adda  = dev['adda'] | default(-1) %}
+		{% set dgn  = dev['dgn'] | default(-1) %}
+		{% set da  = dev['da'] | default(-1) %}
+		{% set xyz  = dev['xyz'] | default(-1) %}
 		{% set vin  = dev['vin'] | default(-1) %}
 		{% set rpm  = dev['rpm'] | default(-1) %}
 		{% set fcon  = dev['fcon'] | default(-1) %}
@@ -84,6 +87,7 @@ struct _device devices[] = {
 	{{don}}, {{doff}}, {{nmds}},
 	{{erim}}, {{can}}, {{uart}}, {{anum}}, {{adid}},
 	{{adty}}, {{adda}},
+	{{dgn}}, {{da}}, {{xyz}},
 	{{vin}}, {{rpm}}, {{fcon}}, {{flvl}}, {{add_name}}
 },
 {%      endfor %}

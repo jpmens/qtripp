@@ -614,6 +614,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	bool ac100present = true;
 	int ac100number = 1;
 	bool canpresent = true;
+	bool xyzpresent = true;
+	int xyznumber = 1;
 	if (dp->erim > 0) {
 		char *erimstring = GET_S(dp->erim);
 		if (erimstring != NULL) {
@@ -623,6 +625,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 			//fprintf(stderr, "ac100present bool %d\n", ac100present);
 			canpresent = ((erim & 0x04) != 0);
 			//fprintf(stderr, "canpresent bool %d\n", canpresent);
+			xyzpresent = ((erim & 0x10) != 0);
+			//fprintf(stderr, "xyzpresent bool %d\n", xyzpresent);
 		}
 	}
 
@@ -721,6 +725,36 @@ char *handle_report(struct udata *ud, char *line, char **response)
                                 json_append_member(jmerge, "can", json_mkstring(can));
                         }
                 }
+	}
+
+	/* "xyzpresent" was set from the erimask and indicates if there are any xyz data following */
+	if (xyzpresent) {
+		/* "dgn" up to 3 xyz data readings may be present */
+		double dgn = GET_D(((nreports - 1) * 12) + dp->dgn);
+		//fprintf(stderr, "dgn double %g\n", dgn);
+		if (!isnan(dgn) && dgn > 0) {
+			int x;
+
+			json_append_member(jmerge, "dgn", json_mknumber(dgn));
+			xyznumber = dgn;
+			for (x = 0; x < dgn; x++) {
+				/* "da", "xyz" for each item we have data-attribute and xyz-axix-data*/
+				//fprintf(stderr, "da offset %d\n", ((nreports - 1) * 12) + x * 2 + dp->da);
+				double da = GET_D(((nreports - 1) * 12) + x * 2 + dp->da);
+				//fprintf(stderr, "adty offset %d\n", ((nreports - 1) * 12) + x * 2 + dp->xyz);
+				char *xyz = GET_S(((nreports - 1) * 12) + x * 2 + dp->xyz);
+				//fprintf(stderr, "da %g xyz %s\n", da, xyz ? xyz : "NULL");
+				if (xyz != NULL) {
+					static char identifier[16];
+					/* "da-xx" we append the item number to the name */
+					sprintf(identifier, "da-%02d", x);
+					//fprintf(stderr, "identifier %s\n", identifier);
+					json_append_member(jmerge, identifier, json_mkdouble(da, 0));
+					sprintf(identifier, "xyz-%02d", x);
+					json_append_member(jmerge, identifier, json_mkstring(xyz));
+				}
+			}
+		}
 	}
 
 	/*
@@ -848,6 +882,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ (ac100present ? 0 : -1)
 					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1)
+					+ (xyzpresent ? ((xyznumber - 1) * 2) : 0)
 					);
 			char *sent = GET_S(dp->sent
 					+ ((nreports - 1) * 12) 
@@ -855,6 +890,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ (ac100present ? 0 : -1)
 					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1)
+					+ (xyzpresent ? ((xyznumber - 1) * 2) : 0)
 					);
 		        DLOG(1, "DEBUG sent %d [%d] %s\n",
 					dp->sent,
@@ -863,7 +899,8 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ (iospresent ? 0 : -1)
 					+ (ac100present ? 0 : -1)
 					+ (ac100present ? ((ac100number - 1) * 3) : 0)
-					+ (canpresent ? 0 : -1),
+					+ (canpresent ? 0 : -1)
+					+ (xyzpresent ? ((xyznumber - 1) * 2) : 0),
 					sent ? sent : "NULL");
 
 			if (sent != NULL) {
@@ -885,6 +922,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					+ (ac100present ? 0 : -1)
 					+ (ac100present ? ((ac100number - 1) * 3) : 0)
 					+ (canpresent ? 0 : -1)
+					+ (xyzpresent ? ((xyznumber - 1) * 2) : 0)
 					);
 			if (count != NULL) {
 				json_append_member(jmerge, "count", json_mkstring(count));
