@@ -614,7 +614,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 	bool ac100present = true;
 	int ac100number = 1;
 	bool canpresent = true;
-	bool xyzpresent = true;
+	bool xyzpresent = false;
 	int xyznumber = 1;
 	if (dp->erim > 0) {
 		char *erimstring = GET_S(dp->erim);
