@@ -1,6 +1,6 @@
 /*
  * qlog
- * Copyright (C) 2018 Jan-Piet Mens <jp@mens.de>
+ * Copyright (C) 2018-2020 Jan-Piet Mens <jp@mens.de>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,75 +21,74 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <netinet/in.h>
 #include "mongoose.h"
 
 #define DATAFILE	"qlog.data"
 
+static char *ev_names[] = {
+	"MG_EV_POLL",		// 0    /* Sent to each connection on each mg_mgr_poll() call */
+	"MG_EV_ACCEPT",		// 1  /* New connection accepted. union socket_address * */
+	"MG_EV_CONNECT",	// 2 /* connect() succeeded or failed. int *  */
+	"MG_EV_RECV",		// 3    /* Data has been received. int *num_bytes */
+	"MG_EV_SEND",		// 4    /* Data has been written to a socket. int *num_bytes */
+	"MG_EV_CLOSE",		// 5   /* Connection is closed. NULL */
+	"MG_EV_TIMER",		// 6   /* now >= conn->ev_timer_time. double * */
+	NULL };
+
 struct udata {
 	int fd;			/* Open data file */
-	void *mb;		/* Will hold mbuf */
 };
 
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 {
 	struct mbuf *io = &nc->recv_mbuf;
 	struct udata *ud = (struct udata *)nc->mgr->user_data;
+	struct sockaddr_in *sa;
 	size_t ml;      /* mb len */
-	struct mbuf *mb = (struct mbuf *)ud->mb;
-	char buf[BUFSIZ];
+	int octets, n;
+	char buf[128];
+
+	fprintf(stderr, "ev=%d %-15s, sock=%d ",
+		ev,
+		(ev >= 0 && ev <= 6) ?  ev_names[ev] : "??",
+		nc->sock);
+	if (ev == MG_EV_RECV)
+		fprintf(stderr, " (ed=%d) ", *(int *)ev_data);
+	fprintf(stderr, "\n");
 
 	switch (ev) {
 		case MG_EV_POLL:
-
-			/*
-			 * A record is +...$
-			 * Search for the '$', cut there, process, and remove what we've
-			 * done thus far from `mb' and await more data.
-			 */
-
-			for (ml = 0; ml < mb->len; ml++) {
-				if (mb->buf[ml] == '$') {
-					off_t pos;
-					size_t nbytes = ml + 1;
-
-					write(ud->fd, mb->buf, nbytes);
-					write(ud->fd, "\n", 1);
-
-					pos = lseek(ud->fd, 0, SEEK_CUR);
-					if (pos > (1024*1024)) {
-						char path[BUFSIZ];
-
-						close(ud->fd);
-						snprintf(path, BUFSIZ, "%s.%ld", DATAFILE, time(0));
-						link(DATAFILE, path);
-						unlink(DATAFILE);
-						ud->fd = open(DATAFILE, O_WRONLY | O_CREAT, 0666);
-					}
-
-					/* Clear what we've used from `mb' */
-					mbuf_remove(mb, nbytes);
-					break;
-				}
-			}
 			break;
 
 		case MG_EV_ACCEPT:
+			sa = (struct sockaddr_in *)ev_data;
+			printf("IP = %s\n", inet_ntoa(sa->sin_addr));
 			mg_sock_addr_to_str(ev_data, buf, sizeof(buf), MG_SOCK_STRINGIFY_IP);
 			syslog(LOG_INFO, "Connection from socket %s", buf);
 			break;
 
 		case MG_EV_RECV:
-			/*
-			 * shove the bytes into our `mb' buffer, and return, after
-			 * clearing our working buffer;
-			 * we do the real work during POLL.
-			 */
-
-			mbuf_append(mb, io->buf, io->len);
-			mbuf_remove(io, io->len);
+			octets = *(int *)ev_data;
+			for (ml = 0; ml < io->len; ml++) {
+				if (io->buf[ml] == '$') {
+					size_t nbytes = ml + 1;
+					n = write(ud->fd, io->buf, nbytes);
+					write(ud->fd, "\n", 1);
+					mbuf_remove(io, nbytes);
+					if (io->len > 0) {
+						ml = -1;	/* Reset; restart loop at zero */
+					}
+				}
+			}
 			break;
 
-		default:
+		case MG_EV_CLOSE:
+			syslog(LOG_INFO, "Flushing %ld bytes", io->len);
+			if ((n = write(ud->fd, io->buf, io->len)) != io->len) {
+				syslog(LOG_ERR, "Short write on flush: %m");
+			}
+			mbuf_remove(io, io->len);
 			break;
 	}
 }
@@ -123,25 +122,22 @@ int main(int argc, char **argv)
 
 	memset(&bind_opts, 0, sizeof(bind_opts));
 	bind_opts.error_string = &e;
-	bind_opts.user_data = NULL;
 
 	syslog(LOG_INFO, "Listening for GPRS on port %s", port_str);
 
+	bind_opts.user_data = "HELLO DOLLY";
+
+	mgr.user_data = &udata;
 	c = mg_bind_opt(&mgr, port_str, ev_handler, bind_opts);
 	if (c == NULL) {
 		syslog(LOG_ERR, "Error starting server: %s: %m", *bind_opts.error_string);
 		exit(1);
 	}
 
-	struct mbuf mbi;
-	udata.mb = (struct mbuf *)&mbi;
-	mbuf_init(udata.mb, 48);
-
-	mgr.user_data = &udata; // experiment
-
 	while (1) {
-		mg_mgr_poll(&mgr, 1000);
+		mg_mgr_poll(&mgr, 10000);
 	}
+	fprintf(stderr, "NOTREACHED\n");
 
 	/* NOTREACHED */
 	mg_mgr_free(&mgr);

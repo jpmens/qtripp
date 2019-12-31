@@ -1,2 +1,12 @@
-- one logfile per device (IMEI)
+DONE one logfile per device (IMEI)
 - more specific mqtt pubs for, say, battery (/status)
+
+DONE cdb for names, data, extra.json, etc. with a small utility to create/edit that data
+
+In order to detect whether a device has gone offline:
+  - whenever I get a HBD or a position for a device, update the IMEI's
+    entry in conns_by_imei for that device (set a timestamp = now())
+  - periodically (mongoose timer?) check that each of the connections
+    had done something; if no activity for 15 minutes, close the TCP
+    connection and produce an MQTT LWT for that IMEI in order to inform
+    Traccar that the device has gone away
