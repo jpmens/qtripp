@@ -46,7 +46,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 	struct udata *ud = (struct udata *)nc->mgr->user_data;
 	struct sockaddr_in *sa;
 	size_t ml;      /* mb len */
-	int octets, n;
+	int n;
+	// int octets;
 	char buf[128];
 
 	fprintf(stderr, "ev=%d %-15s, sock=%d ",
@@ -69,7 +70,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data)
 			break;
 
 		case MG_EV_RECV:
-			octets = *(int *)ev_data;
+			//notused   // octets = *(int *)ev_data;
 			for (ml = 0; ml < io->len; ml++) {
 				if (io->buf[ml] == '$') {
 					size_t nbytes = ml + 1;
