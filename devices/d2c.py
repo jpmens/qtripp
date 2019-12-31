@@ -44,7 +44,7 @@ def loadf(filename):
     try:
         f = codecs.open(filename, 'r', 'utf-8')
         str = f.read()
-        doc = yaml.load(str)
+        doc = yaml.safe_load(str)
         f.close()
 
         if not doc:
