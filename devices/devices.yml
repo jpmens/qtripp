@@ -38,6 +38,7 @@
     38: GV65+
     42: GMT200N
     45: GB100
+    F1: GV350MB
 
 # messages
 #
@@ -111,15 +112,22 @@
     GTANT: external GPS antenna status reported
     GTBAT: Power Supply Information
     GTCFU: CAN FOTA Upgrade
+    GTPHD: Photo Data
+    GTFSD: Fuel Sensor Data
     GTCID: ICCID of the SIM care
     GTCRD: Crash Data
     GTCSQ: GSM Signal Level
     GTCVN: CAN Version
     GTDAT: CAN Config Data
+    GTCSN: CAN Serial Number
+    GTCML: CAN Car Model
+    GTCLT: CANBUS information alarm
     GTDOS: Status Of Wave Shape 1 Output Changes
     GTGCR: Location as Center of Geo-Fence
     GTGEO: Entering/Exiting Geo fence
     GTGES: Entering/Exiting Geo fence
+    GTGIN: Geo-Fence Enter
+    GTGOT: Geo-Fence Out
     GTGPJ: GPS jamming status
     GTGSM: Service And Neighbor Cell Information
     GTGSV: GNSS Satellite Information
@@ -133,11 +141,17 @@
     GTJDS: jamming detection status
     GTLBC: Location by Call
     GTMOA: Mobileye System Alert Report
+    GTPHL: Location before Photo Data
+    GTFTP: Location after tranferring to FTP server
+    GTEXP: Malfunction of the digital fuel sensor
     GTRMD: enter or leave GSM roam state
+    GTRSS: Real time information of the temperature and motion sensor
     GTSWG: Switched on or off Geo-Fence 0 via function key
     GTTEM: Temperature Alarm
+    GTTMP: Temperature Alarm
     GTTMZ: Timezone Report
     GTUPC: OTA Update
+    GTUVN: Version Number of UFSxxx Fuel Sensor
     GTVER: Version
     GTVMS: Virtual Ignition Mode Selection
     GTVVS: Voltage Virtual Ignition Settings
@@ -227,7 +241,7 @@
   count: 22
 
 - subtypes: [ GTPNA, GTPFA, GTPDP ]
-  versions: [ "360701", "360801", "360901" ]
+  versions: [ "360701", "360801", "360901", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -256,7 +270,7 @@
   count: 19
 
 - subtypes: [ GTSTT ]
-  versions: [ "360701", "360801", "360901" ]
+  versions: [ "360701", "360801", "360901", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -277,7 +291,7 @@
   count: 19
 
 - subtypes: [ GTIGN ]
-  versions: [ "360701", "360801", "360901" ]
+  versions: [ "360701", "360801", "360901", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -300,7 +314,7 @@
   count: 21
 
 - subtypes: [ GTIGF ]
-  versions: [ "360701", "360801", "360901" ]
+  versions: [ "360701", "360801", "360901", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -323,7 +337,7 @@
   count: 21
 
 - subtypes: [ GTMPN, GTMPF, GTBTC, GTCRA ]
-  versions: [ "360701", "360801", "360901" ]
+  versions: [ "360701", "360801", "360901", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -343,7 +357,7 @@
   count: 18
 
 - subtypes: [ GTSTC ]
-  versions: [ "360701", "360801", "360901" ]
+  versions: [ "360701", "360801", "360901", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -387,7 +401,7 @@
   count: 21
 
 - subtypes: [ GTIDF ]
-  versions: [ "360701", "360801", "360901" ]
+  versions: [ "360701", "360801", "360901", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -410,7 +424,7 @@
   count: 21
 
 - subtypes: [ GTGSS ]
-  versions: [ "360701", "360801" ]
+  versions: [ "360701", "360801", "F1030B" ]
   imei: 2
   vin: 3
   name: 4
@@ -514,6 +528,38 @@
   odometer: 20
   sent: 21
   count: 22
+
+#
+# gv350mb
+#
+- subtypes: [ GTFRI]
+  versions: [ "F1030B" ]
+  imei: 2
+  name: 3
+  uext: 4
+  rit: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 18
+  odometer: 19
+  hmc: 20
+  aiv: 21
+  batt: 22
+  devs: 23
+  reserved: 24
+  reserved: 25
+  sent: 26
+  count: 27
 
 #
 # gv65, gv65+
@@ -849,8 +895,8 @@
 
 # shared
 
-- subtypes: [ GTTOW, GTDIS, GTIOB, GTGEO, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL, GTVGL, GTHBM ]
-  versions: [ "450202", "420201", "420401", "310603", "380603", "310701", "380701", "310905", "380905", "300102" ]
+- subtypes: [ GTTOW, GTDIS, GTIOB, GTGEO, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL, GTPNL, GTVGL, GTHBM ]
+  versions: [ "450202", "420201", "420401", "310603", "380603", "310701", "380701", "310905", "380905", "300102", "F1030B" ]
   imei: 2
   name: 3
   reserved: 4
@@ -873,7 +919,7 @@
   count: 21
 
 - subtypes: [ GTAIS, GTEPS ]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "300102", "420201", "420401" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "300102", "420201", "420401", "F1030B" ]
   imei: 2
   name: 3
   uext: 4
@@ -1001,7 +1047,7 @@
   count: 18
 
 - subtypes: [ GTBPL ]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401", "F1030B" ]
   imei: 2
   name: 3
   ubatt: 4
@@ -1021,7 +1067,7 @@
   count: 18
 
 - subtypes: [ GTIDN, GTSTP, GTSTR, GTLSP]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401", "F1030B" ]
   imei: 2
   name: 3
   reserved: 4
