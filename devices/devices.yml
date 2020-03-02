@@ -1117,29 +1117,6 @@
 # gl300w
 #
 
-- subtypes: [ GTFRI , GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDIS, GTDOG, GTIGL, GTMSA] 
-  versions: [ "2C0600" ]
-  imei: 2
-  name: 3
-  rid: 4
-  rty: 5
-  number: 6
-  acc: 7
-  vel: 8
-  cog: 9
-  alt: 10
-  lon: 11
-  lat: 12
-  utc: 13
-  mcc: 14
-  mnc: 15
-  lac: 16
-  cid: 17
-  odometer: 18
-  batt: 19
-  sent: 20
-  count: 21
-
 - subtypes: [ GTLGL ]
   versions: [ "2C0600" ]
   imei: 2
@@ -1193,7 +1170,7 @@
 # GL300M
 #
 
-- subtypes: [ GTFRI, GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDOG, GTDIS, GTIGL, GTLOC ] 
+- subtypes: [ GTLOC, GTNMR] 
   versions: [ "F50701"]
   imei: 2
   name: 3
@@ -1281,6 +1258,29 @@
 # shared gl300
 #
 
+- subtypes: [ GTFRI, GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDOG, GTDIS, GTIGL, GTMSA ] 
+  versions: [ "2C0600", "F50701"]
+  imei: 2
+  name: 3
+  rid: 4
+  rty: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  odometer: 18
+  batt: 19
+  sent: 20
+  count: 21
+  
 - subtypes: [ GTEPN, GTEPF ]
   versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
