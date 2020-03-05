@@ -1170,7 +1170,7 @@
 # GL300M
 #
 
-- subtypes: [ GTLOC, GTNMR] 
+- subtypes: [ GTLOC ] 
   versions: [ "F50701"]
   imei: 2
   name: 3
