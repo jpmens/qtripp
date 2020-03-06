@@ -39,6 +39,7 @@
     42: GMT200N
     45: GB100
     F1: GV350MB
+    F5: GL300M
 
 # messages
 #
@@ -88,6 +89,7 @@
 
     GTSTT: Device Motion State Changed
     GTNMD: Device Movement Status Changes
+    GTNMR: Device Movement Status Changes
 
     GTPDP: GPRS Connection Establishment
 
@@ -156,6 +158,7 @@
     GTVMS: Virtual Ignition Mode Selection
     GTVVS: Voltage Virtual Ignition Settings
     GTAVS: Accelerometer Virtual Ignition Settings
+    GTLOC: Current location
 #
 # GV500
 # Most fields are shared, but all messages include a VIN after IMEI
@@ -942,7 +945,7 @@
   count: 21
 
 - subtypes: [ GTPNA, GTPFA, GTPDP ]
-  versions: [ "450202", "2C0600", "300800", "310603", "380603", "420201", "420401" ]
+  versions: [ "450202", "2C0600", "300800", "310603", "380603", "420201", "420401", "F50701" ]
   imei: 2
   name: 3
   sent: 4
@@ -1114,29 +1117,6 @@
 # gl300w
 #
 
-- subtypes: [ GTFRI , GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDIS, GTDOG, GTIGL, GTMSA] 
-  versions: [ "2C0600" ]
-  imei: 2
-  name: 3
-  rid: 4
-  rty: 5
-  number: 6
-  acc: 7
-  vel: 8
-  cog: 9
-  alt: 10
-  lon: 11
-  lat: 12
-  utc: 13
-  mcc: 14
-  mnc: 15
-  lac: 16
-  cid: 17
-  odometer: 18
-  batt: 19
-  sent: 20
-  count: 21
-
 - subtypes: [ GTLGL ]
   versions: [ "2C0600" ]
   imei: 2
@@ -1185,12 +1165,124 @@
   sent: 21
   count: 22
 
+
+#
+# GL300M
+#
+
+- subtypes: [ GTLOC ] 
+  versions: [ "F50701"]
+  imei: 2
+  name: 3
+  rid: 4
+  rty: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  odometer: 18
+  batt: 19
+  sent: 20
+  count: 21
+
+- subtypes: [ GTLBC ] 
+  versions: [ "F50701" ]
+  imei: 2
+  name: 3
+  reserved: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 9
+  lat: 10
+  utc: 11
+  mcc: 12
+  mnc: 13
+  lac: 14
+  cid: 15
+  odometer: 16
+  reserved: 17
+  sent: 18
+  count: 19
+
+  
+- subtypes: [ GTVER ] 
+  versions: [ "F50701" ]
+  imei: 2
+  name: 3
+  reserved: 4   # device type
+  reserved: 5   # HEX firmware version MAMI for MAjor MInor
+  reserved: 6   # HEX hardware version MAMI for MAjor MInor
+  reserved: 7
+  reserved: 8   # modem hardware version
+  reserved: 9   # modem software version
+  sent: 10
+  count: 11
+
+
+- subtypes: [ GTINF ] 
+  versions: [ "F50701" ]
+  imei: 2
+  name: 3
+  mst: 4        # state ignON (21-stopped|22-moving) or ignOFF (41-stopped|42-moving)
+  reserved: 5   # ICCID
+  reserved: 6   # CSQ RSSI
+  reserved: 7   # CSQ BER
+  reserved: 8   # external power (0=false|1=true)
+  odometer: 9
+  ubatt: 10     # battery voltage 0.0-4.5V
+  reserved: 11  # battery charging (0=false|1=true)
+  reserved: 12  # LED mode (0-2)
+  reserved: 13  # GPS mode (0-2)
+  reserved: 14
+  reserved: 15
+  reserved: 16  # last GPS fix time YYYYMMDDHHMMSS
+  batt: 17      # battery percentage
+  reserved: 18
+  reserved: 19  # temp (-)XX.X
+  reserved: 20
+  reserved: 21
+  sent: 22
+  count: 23
+
 #
 # shared gl300
 #
 
+- subtypes: [ GTFRI, GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDOG, GTDIS, GTIGL, GTMSA ] 
+  versions: [ "2C0600", "F50701"]
+  imei: 2
+  name: 3
+  rid: 4
+  rty: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  odometer: 18
+  batt: 19
+  sent: 20
+  count: 21
+  
 - subtypes: [ GTEPN, GTEPF ]
-  versions: [ "2C0600", "300800" ]
+  versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
   name: 3
   acc: 4
@@ -1209,7 +1301,7 @@
   count: 17
 
 - subtypes: [ GTBPL ]
-  versions: [ "2C0600", "300800" ]
+  versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
   name: 3
   ubatt: 4
@@ -1229,7 +1321,7 @@
   count: 18
 
 - subtypes: [ GTBTC ]
-  versions: [ "2C0600", "300800" ]
+  versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
   name: 3
   acc: 4
@@ -1248,7 +1340,7 @@
   count: 17
 
 - subtypes: [ GTSTC ]
-  versions: [ "2C0600", "300800" ]
+  versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
   name: 3
   reserved: 4
@@ -1268,7 +1360,7 @@
   count: 18
 
 - subtypes: [ GTSTT ]
-  versions: [ "2C0600", "300800" ]
+  versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
   name: 3
   mst: 4
@@ -1288,7 +1380,7 @@
   count: 18
 
 - subtypes: [ GTIGN ]
-  versions: [ "2C0600", "300800" ]
+  versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
   name: 3
   doff: 4
@@ -1308,7 +1400,7 @@
   count: 18
 
 - subtypes: [ GTIGF ]
-  versions: [ "2C0600", "300800" ]
+  versions: [ "2C0600", "300800", "F50701" ]
   imei: 2
   name: 3
   don: 4
