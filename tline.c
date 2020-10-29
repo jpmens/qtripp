@@ -265,7 +265,7 @@ void dump_stats(struct udata *ud)
  * to add to it.
  */
 
-void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
+void transmit_json(struct udata *ud, char *imei, JsonNode *obj, bool retain)
 {
 	JsonNode *e, *extra;
 	char *js;
@@ -311,7 +311,7 @@ void transmit_json(struct udata *ud, char *imei, JsonNode *obj)
 	if ((js = json_encode(obj)) != NULL) {
 		xlog(ud, "PUBLISH: %s %s\n", topic, js);
 		STATSD_INC(ud->cf->sd, "mqtt.message.publish");
-		pub(ud, topic, js, true);
+		pub(ud, topic, js, retain);
 
 		free(js);
 	}
@@ -359,7 +359,7 @@ void pseudo_lwt(struct udata *ud, char *imei)
 	json_append_member(o, "imei", json_mkstring(imei));
 	json_append_member(o, "tst", json_mknumber(time(0)));
 
-	transmit_json(ud, imei, o);
+	transmit_json(ud, imei, o, false);
 #ifdef WITH_BEAN
 	bean_put(ud, o);
 #endif
@@ -509,7 +509,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				json_append_member(obj, "sent", json_mknumber(time(0)));
 				json_append_member(obj, "t", json_mkstring("p"));
 
-				transmit_json(ud, imei, obj);
+				transmit_json(ud, imei, obj, true);
 				json_delete(obj);
 			}
 		}
@@ -1185,7 +1185,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				json_append_member(obj, jm->key, json_mkbool(jm->bool_));
 		}
 
-		transmit_json(ud, imei, obj);
+		transmit_json(ud, imei, obj, true);
 
 
 #ifdef WITH_BEAN
