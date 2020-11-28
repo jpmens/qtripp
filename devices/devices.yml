@@ -1214,21 +1214,6 @@
   sent: 18
   count: 19
 
-  
-- subtypes: [ GTVER ] 
-  versions: [ "F50701" ]
-  imei: 2
-  name: 3
-  reserved: 4   # device type
-  reserved: 5   # HEX firmware version MAMI for MAjor MInor
-  reserved: 6   # HEX hardware version MAMI for MAjor MInor
-  reserved: 7
-  reserved: 8   # modem hardware version
-  reserved: 9   # modem software version
-  sent: 10
-  count: 11
-
-
 - subtypes: [ GTINF ] 
   versions: [ "F50701" ]
   imei: 2
@@ -1419,3 +1404,15 @@
   sent: 17
   count: 18
 
+- subtypes: [ GTVER ] 
+  versions: [ "2C0600", "300800", "F50701" ]
+  imei: 2
+  name: 3
+  d_type: 4     # device type
+  ver_fw: 5     # HEX firmware version MAMI for MAjor MInor
+  ver_hw: 6     # HEX hardware version MAMI for MAjor MInor
+  reserved: 7
+  reserved: 8
+  reserved: 9
+  sent: 10
+  count: 11
