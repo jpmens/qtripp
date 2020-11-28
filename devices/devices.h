@@ -31,17 +31,17 @@ struct _device {
 	int rid;		/* report id */
 	int rty;		/* report type */
 	int num;		/* number of position entries */
-	int acc;			/* repeats */
-	int cog;			/* repeats */
-	int alt;			/* repeats */
-	int vel;			/* repeats */
-	int lon;			/* repeats */
-	int lat;			/* repeats */
-	int utc;			/* repeats */
-	int mcc;			/* repeats */
-	int mnc;			/* repeats */
-	int lac;			/* repeats */
-	int cid;			/* repeats */
+	int acc;			/* gps accuracy - repeats */
+	int cog;			/* azimuth 		- repeats */
+	int alt;			/* altitude 	- repeats */
+	int vel;			/* velocity 	- repeats */
+	int lon;			/* longitude 	- repeats */
+	int lat;			/* latitude 	- repeats */
+	int utc;			/* utc time		- repeats */
+	int mcc;			/* MCC 			- repeats */
+	int mnc;			/* MNC 			- repeats */
+	int lac;			/* LAC 			- repeats */
+	int cid;			/* cell ID 		- repeats */
 	int odometer;		/* milage */
 	int hmc;		/* hour meter count */
 	int aiv;		/* analog input voltage */
@@ -58,25 +58,29 @@ struct _device {
 	int don;		/* duration ignition on */
 	int doff;		/* duration ignition off */
 	int nmds;		/* non motion detection status */
-	int erim;
-	int can;
-	int uart;
-	int anum;
-	int adid;
-	int adty;
-	int adda;
-	int dgn;
-	int da;
-	int xyz;
+	int erim;		/* ERI mask */
+	int can;		
+	int uart;		/* UART device type */
+	int anum;		/* 1wire devices number */
+	int adid;		/* 1wire devices id  */
+	int adty;		/* 1wire devices type */
+	int adda;		/* 1wire devices DATA */
+	int dgn;		
+	int da;			
+	int xyz;		
 
-	int vin;	/* Vehicle Identification Number */
-	int rpm;	/* engine rpm */
-	int fcon;	/* fuel consumption L / 100 km or Inf or NaN */
-	int flvl;	/* fuel level in percent 0-100 */
+	int vin;		/* Vehicle Identification Number */
+	int rpm;		/* engine rpm */
+	int fcon;		/* fuel consumption L / 100 km or Inf or NaN */
+	int flvl;		/* fuel level in percent 0-100 */
+
+	int d_type;		/* String representation of the device type e.g. gl300m */
+	int ver_fw;		/* HEX firmware version MAMI for MAjor MInor */
+	int ver_hw;		/* HEX hardware version MAMI for MAjor MInor */
 
 	char *add_name;
 
-        UT_hash_handle hh;
+	UT_hash_handle hh;
 };
 
 void load_devices();
