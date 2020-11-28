@@ -74,6 +74,9 @@ struct _device devices[] = {
 		{% set rpm  = dev['rpm'] | default(-1) %}
 		{% set fcon  = dev['fcon'] | default(-1) %}
 		{% set flvl  = dev['flvl'] | default(-1) %}
+		{% set d_type  = dev['d_type'] | default(-1) %}
+		{% set ver_fw  = dev['ver_fw'] | default(-1) %}
+		{% set ver_hw  = dev['ver_hw'] | default(-1) %}
 
 		{% set add_name = dev['add_name'] | default("NULL") %}
     {
@@ -88,7 +91,8 @@ struct _device devices[] = {
 	{{erim}}, {{can}}, {{uart}}, {{anum}}, {{adid}},
 	{{adty}}, {{adda}},
 	{{dgn}}, {{da}}, {{xyz}},
-	{{vin}}, {{rpm}}, {{fcon}}, {{flvl}}, {{add_name}}
+	{{vin}}, {{rpm}}, {{fcon}}, {{flvl}}, 
+	{{d_type}}, {{ver_fw}}, {{ver_hw}}, {{add_name}}
 },
 {%      endfor %}
 {%   endfor %}
