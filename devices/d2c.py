@@ -20,13 +20,9 @@
 #/
 
 from __future__ import print_function
-import os
-import sys
-import glob
-import yaml
-import datetime
 import codecs
-import json
+import sys
+import yaml
 from jinja2 import Environment, FileSystemLoader
 
 TEMPLATE_ENV = Environment(
@@ -35,12 +31,12 @@ TEMPLATE_ENV = Environment(
     loader=FileSystemLoader(".")
     )
 
+
 def render_template(filename, context):
     return TEMPLATE_ENV.get_template(filename).render(context)
 
 
 def loadf(filename):
-
     try:
         f = codecs.open(filename, 'r', 'utf-8')
         str = f.read()
@@ -49,9 +45,7 @@ def loadf(filename):
 
         if not doc:
             print("Can't load file %s" % filename)
-
         return doc
-
     except KeyboardInterrupt:
         sys.exit(1)
     except:
@@ -69,11 +63,10 @@ if __name__ == '__main__':
     doc = loadf(path)
     # print(json.dumps(doc, indent=4))
 
-    devicelist = []
-
+    device_list = []
     for o in doc:
         if 'subtypes' in o:
-            devicelist.append(o)
+            device_list.append(o)
             continue
 
         if otype in o:
@@ -85,12 +78,11 @@ if __name__ == '__main__':
             print(output)
             sys.exit(0)
 
-    if len(devicelist):
+    if len(device_list):
         # print(json.dumps(devicelist, indent=4))
         data = {
-            'devices' : devicelist,
+            'devices' : device_list,
         }
         output = render_template('devices.j2', data)
         print(output)
         sys.exit(0)
-
