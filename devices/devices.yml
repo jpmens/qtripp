@@ -1214,31 +1214,6 @@
   sent: 18
   count: 19
 
-- subtypes: [ GTINF ] 
-  versions: [ "F50701" ]
-  imei: 2
-  name: 3
-  mst: 4        # state ignON (21-stopped|22-moving) or ignOFF (41-stopped|42-moving)
-  reserved: 5   # ICCID
-  reserved: 6   # CSQ RSSI
-  reserved: 7   # CSQ BER
-  reserved: 8   # external power (0=false|1=true)
-  odometer: 9
-  ubatt: 10     # battery voltage 0.0-4.5V
-  reserved: 11  # battery charging (0=false|1=true)
-  reserved: 12  # LED mode (0-2)
-  reserved: 13  # GPS mode (0-2)
-  reserved: 14
-  reserved: 15
-  reserved: 16  # last GPS fix time YYYYMMDDHHMMSS
-  batt: 17      # battery percentage
-  reserved: 18
-  reserved: 19  # temp (-)XX.X
-  reserved: 20
-  reserved: 21
-  sent: 22
-  count: 23
-
 #
 # shared gl300
 #
@@ -1416,3 +1391,29 @@
   reserved: 9
   sent: 10
   count: 11
+
+- subtypes: [ GTINF ] 
+  versions: [ "2C0600", "300800", "F50701" ]
+  imei: 2
+  name: 3
+  mst: 4        # state ignON (21-stopped|22-moving) or ignOFF (41-stopped|42-moving)
+  reserved: 5   # ICCID
+  reserved: 6   # CSQ RSSI
+  reserved: 7   # CSQ BER
+  reserved: 8   # external power (0=false|1=true)
+  odometer: 9
+  reserved: 10
+  ubatt: 11     # battery voltage 0.0-4.5V
+  reserved: 12  # battery charging (0=false|1=true)
+  reserved: 13  # LED mode (0-2)
+  reserved: 14  # GPS mode (0-2)
+  reserved: 15
+  reserved: 16
+  reserved: 17  # last GPS fix time YYYYMMDDHHMMSS
+  batt: 18      # battery percentage
+  reserved: 19
+  reserved: 20  # temp (-)XX.X
+  reserved: 21
+  reserved: 22
+  sent: 23
+  count: 24
