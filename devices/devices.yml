@@ -112,6 +112,8 @@
     GTALS: Configuration Information
     GTALL: Configuration Information
     GTANT: external GPS antenna status reported
+    GTASC: Calibration Data
+    GTATI: Basic Device Information
     GTBAT: Power Supply Information
     GTCFU: CAN FOTA Upgrade
     GTPHD: Photo Data
@@ -244,7 +246,7 @@
   count: 22
 
 - subtypes: [ GTPNA, GTPFA, GTPDP ]
-  versions: [ "360701", "360801", "360901", "F1030B" ]
+  versions: [ "360701", "360801", "360901" ]
   imei: 2
   vin: 3
   name: 4
@@ -273,7 +275,7 @@
   count: 19
 
 - subtypes: [ GTSTT ]
-  versions: [ "360701", "360801", "360901", "F1030B" ]
+  versions: [ "360701", "360801", "360901", "F1030B", "F10401" ]
   imei: 2
   vin: 3
   name: 4
@@ -294,7 +296,7 @@
   count: 19
 
 - subtypes: [ GTIGN ]
-  versions: [ "360701", "360801", "360901", "F1030B" ]
+  versions: [ "360701", "360801", "360901", "F1030B", "F10401" ]
   imei: 2
   vin: 3
   name: 4
@@ -317,7 +319,7 @@
   count: 21
 
 - subtypes: [ GTIGF ]
-  versions: [ "360701", "360801", "360901", "F1030B" ]
+  versions: [ "360701", "360801", "360901", "F1030B", "F10401" ]
   imei: 2
   vin: 3
   name: 4
@@ -340,7 +342,7 @@
   count: 21
 
 - subtypes: [ GTMPN, GTMPF, GTBTC, GTCRA ]
-  versions: [ "360701", "360801", "360901", "F1030B" ]
+  versions: [ "360701", "360801", "360901", "F1030B", "F10401" ]
   imei: 2
   vin: 3
   name: 4
@@ -360,7 +362,7 @@
   count: 18
 
 - subtypes: [ GTSTC ]
-  versions: [ "360701", "360801", "360901", "F1030B" ]
+  versions: [ "360701", "360801", "360901", "F1030B", "F10401" ]
   imei: 2
   vin: 3
   name: 4
@@ -404,7 +406,7 @@
   count: 21
 
 - subtypes: [ GTIDF ]
-  versions: [ "360701", "360801", "360901", "F1030B" ]
+  versions: [ "360701", "360801", "360901", "F1030B", "F10401" ]
   imei: 2
   vin: 3
   name: 4
@@ -427,7 +429,7 @@
   count: 21
 
 - subtypes: [ GTGSS ]
-  versions: [ "360701", "360801", "F1030B" ]
+  versions: [ "360701", "360801", "F1030B", "F10401" ]
   imei: 2
   vin: 3
   name: 4
@@ -536,7 +538,7 @@
 # gv350mb
 #
 - subtypes: [ GTFRI]
-  versions: [ "F1030B" ]
+  versions: [ "F1030B", "F10401" ]
   imei: 2
   name: 3
   uext: 4
@@ -899,7 +901,7 @@
 # shared
 
 - subtypes: [ GTTOW, GTDIS, GTIOB, GTGEO, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL, GTPNL, GTVGL, GTHBM ]
-  versions: [ "450202", "420201", "420401", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "300102", "F1030B" ]
+  versions: [ "450202", "420201", "420401", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "300102", "F1030B", "F10401" ]
   imei: 2
   name: 3
   reserved: 4
@@ -922,7 +924,7 @@
   count: 21
 
 - subtypes: [ GTAIS, GTEPS ]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "300102", "420201", "420401", "F1030B" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "300102", "420201", "420401", "F1030B", "F10401" ]
   imei: 2
   name: 3
   uext: 4
@@ -945,7 +947,7 @@
   count: 21
 
 - subtypes: [ GTPNA, GTPFA, GTPDP ]
-  versions: [ "450202", "2C0600", "300800", "310603", "380603", "420201", "420401", "F50701" ]
+  versions: [ "450202", "2C0600", "300800", "310603", "380603", "420201", "420401", "F50701", "F1030B", "F10401" ]
   imei: 2
   name: 3
   sent: 4
@@ -1050,7 +1052,7 @@
   count: 18
 
 - subtypes: [ GTBPL ]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "420201", "420401", "F1030B" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "420201", "420401", "F1030B", "F10401" ]
   imei: 2
   name: 3
   ubatt: 4
@@ -1070,7 +1072,7 @@
   count: 18
 
 - subtypes: [ GTIDN, GTSTP, GTSTR, GTLSP]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401", "F1030B" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401", "F1030B", "F10401" ]
   imei: 2
   name: 3
   reserved: 4
