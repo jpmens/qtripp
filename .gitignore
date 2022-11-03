@@ -21,3 +21,4 @@ contrib/bean-get
 *.make
 .make
 db/
+venv
