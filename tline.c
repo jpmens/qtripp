@@ -431,10 +431,15 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 
 	char *imei = GET_S(2);
-	char *protov = GET_S(1);	/* MOMAMI
-					 * MO = model
-					 * MA = major
-					 * MI = minor
+
+	// the protocol version consists of a model identifier (2 or 6 bytes) plus 4 bytes of version string
+	// e.g. 380D01 for GV65Plus (x38) version 13.1
+	// e.g. 8020030100 for GV58CEU (x802003) version 1.0
+	char *protov = GET_S(1);	/* MOMAMI or MMMOOOMAMI
+					 * MO = model 2 hex digits
+					 * MMMOOO = model 6 hex digits
+					 * MA = major 2 hex digits
+					 * MI = minor 2 hex digits
 					 */
 	/*
 	 * If we have neither IMEI nor protov forget the rest; impossible to

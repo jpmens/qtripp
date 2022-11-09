@@ -52,14 +52,16 @@ void free_models()
 struct _model *lookup_models(char *key)
 {
 	struct _model *s;
-	char t[3];
 
-	if (!key || strlen(key) < 2)
+	// the key consists of a model identifier (2 or 6 bytes) plus 4 bytes of version string
+	// e.g. 380D01 for GV65Plus (x38) version 13.1
+	// e.g. 8020030100 for GV58CEU (x802003) version 1.0
+	char t[6+1];
+
+	if (!key || strlen(key) < 5)
 		return (NULL);
 
-	t[0] = *key++;
-	t[1] = *key++;
-	t[2] = 0;
+	strncpy(t, key, strlen(key) - 4);
 
 	HASH_FIND_STR(myhash, t, s);
 	return (s);
