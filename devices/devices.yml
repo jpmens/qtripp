@@ -38,6 +38,7 @@
     38: GV65+
     42: GMT200N
     45: GB100
+    C3: GL320M
     F1: GV350MB
     F5: GL300M
     802003: GV58CEU
@@ -992,7 +993,7 @@
   count: 21
 
 - subtypes: [ GTPNA, GTPFA, GTPDP ]
-  versions: [ "450202", "2C0600", "300800", "301500", "310603", "380603", "420201", "420401", "F50701", "F1030B", "F10401", "F1040A", "8020030100" ]
+  versions: [ "450202", "2C0600", "300800", "301500", "310603", "380603", "420201", "420401", "C30203", "F50701", "F1030B", "F10401", "F1040A", "8020030100" ]
   imei: 2
   name: 3
   sent: 4
@@ -1161,11 +1162,11 @@
   count: 20
 
 #
-# gl300w
+# gl300w and gl3230mg
 #
 
 - subtypes: [ GTLGL ]
-  versions: [ "2C0600" ]
+  versions: [ "2C0600", "C30203" ]
   imei: 2
   name: 3
   rty: 4
@@ -1214,11 +1215,11 @@
 
 
 #
-# GL300M
+# GL300M and GL320MG
 #
 
 - subtypes: [ GTLOC ] 
-  versions: [ "F50701"]
+  versions: [ "C30203", "F50701"]
   imei: 2
   name: 3
   rid: 4
@@ -1244,8 +1245,8 @@
 # shared gl300
 #
 
-- subtypes: [ GTFRI, GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDOG, GTDIS, GTIGL, GTMSA ] 
-  versions: [ "2C0600", "F50701"]
+- subtypes: [ GTFRI, GTGEO, GTSPD, GTSOS, GTRTL, GTPNL, GTMNR, GTDOG, GTDIS, GTIGL ] 
+  versions: [ "2C0600", "C30203", "F50701"]
   imei: 2
   name: 3
   rid: 4
@@ -1268,7 +1269,7 @@
   count: 21
   
 - subtypes: [ GTEPN, GTEPF ]
-  versions: [ "2C0600", "300800", "301500", "F50701" ]
+  versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
   name: 3
   acc: 4
@@ -1287,7 +1288,7 @@
   count: 17
 
 - subtypes: [ GTBPL ]
-  versions: [ "2C0600", "300800", "301500", "F50701" ]
+  versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
   name: 3
   ubatt: 4
@@ -1307,7 +1308,7 @@
   count: 18
 
 - subtypes: [ GTBTC ]
-  versions: [ "2C0600", "300800", "301500", "F50701" ]
+  versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
   name: 3
   acc: 4
@@ -1326,7 +1327,7 @@
   count: 17
 
 - subtypes: [ GTSTC ]
-  versions: [ "2C0600", "300800", "301500", "F50701" ]
+  versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
   name: 3
   reserved: 4
@@ -1346,7 +1347,7 @@
   count: 18
 
 - subtypes: [ GTSTT ]
-  versions: [ "2C0600", "300800", "301500", "F50701" ]
+  versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
   name: 3
   mst: 4
@@ -1366,7 +1367,7 @@
   count: 18
 
 - subtypes: [ GTIGN ]
-  versions: [ "2C0600", "300800", "301500", "F50701" ]
+  versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
   name: 3
   doff: 4
@@ -1386,7 +1387,7 @@
   count: 18
 
 - subtypes: [ GTIGF ]
-  versions: [ "2C0600", "300800", "301500", "F50701" ]
+  versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
   name: 3
   don: 4
