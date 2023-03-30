@@ -609,7 +609,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 
 	/* io status (ios) is present if indicated for one protocol version */
 	bool iospresent = true;
-	if (!strcmp(subtype, "GTFRI") && !strcmp(protov, "300800")) {
+	if (!strcmp(subtype, "GTFRI") && (!strcmp(protov, "300800") || !strcmp(protov, "301500"))) {
 		if ((rid & 0x01) == 0) {
 			iospresent = false;
 		}
