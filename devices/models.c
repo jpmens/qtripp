@@ -57,6 +57,7 @@ struct _model *lookup_models(char *key)
 	// e.g. 380D01 for GV65Plus (x38) version 13.1
 	// e.g. 8020030100 for GV58CEU (x802003) version 1.0
 	char t[6+1];
+	memset(t, 0, sizeof(t));
 
 	if (!key || strlen(key) < 5)
 		return (NULL);
