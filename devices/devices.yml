@@ -1521,50 +1521,6 @@
   sent: 17
   count: 18
 
-# gv620mg
-- subtypes: [ GTSTC ]
-  versions: [ "C2010B", "C2010D" ]
-  imei: 2
-  name: 3
-  acc: 4
-  vel: 5
-  cog: 6
-  alt: 7
-  lon: 8
-  lat: 9
-  utc: 10
-  mcc: 11
-  mnc: 12
-  lac: 13
-  cid: 14
-  reserved: 15
-  sent: 16
-  count: 17
-
-# gv620mg
-- subtypes: [  GTPNL, GTTOW, GTDIS, GTIOB, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL ]
-  versions: [ "C2010B", "C2010D" ]
-  imei: 2
-  name: 3
-  rit: 5
-  number: 6
-  acc: 7
-  vel: 8
-  cog: 9
-  alt: 10
-  lon: 11
-  lat: 12
-  utc: 13
-  mcc: 14
-  mnc: 15
-  lac: 16
-  cid: 17
-  odometer: 19
-  devs: 24
-  sent: 28
-  count: 29
-
-
 - subtypes: [ GTSTT ]
   versions: [ "2C0600", "300800", "301500", "C30203", "F50701" ]
   imei: 2
