@@ -1,4 +1,4 @@
-
+UNAME_S := $(shell uname -s)
 
 # Point BSC at the directory into which you've built beanstalk-client
 BSC=/usr/local/src/beanstalk-client
@@ -21,7 +21,15 @@ CFLAGS += -DMAXSPLITPARTS=500 -Idevices/ -I. -I/usr/local/include -Wall -Werror
 ifdef LOGFILE_SIZE
 CFLAGS += -DLOGFILE_SIZE=$(LOGFILE_SIZE)
 endif
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS += -I/opt/homebrew/include
+endif
+
 LDFLAGS=-L /usr/local/lib -lmosquitto -lm -lcdb
+ifeq ($(UNAME_S),Darwin)
+	LDFLAGS+= -L /opt/homebrew/lib
+endif
+
 
 OBJS=	util.o \
 	json.o \
