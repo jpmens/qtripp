@@ -2,6 +2,7 @@
 ## Mac OS/X
 
 ```console
+brew install mosquitto tinycdb
 (
 cd devices
 /usr/bin/python3 -mvenv venv
@@ -15,7 +16,7 @@ make
 
 ## Debian
 
-apt-get install libcdb-dev tinycdb
+apt-get install mosquitto libmosquitto-dev libcdb-dev tinycdb
 
 ## OpenBSD
 
