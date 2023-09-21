@@ -61,6 +61,7 @@ qtripp.o: qtripp.c conf.h util.h json.h ini.h devices/devices.h devices/models.h
 util.o: util.c util.h json.h udata.h constfile.h
 bean.o: bean.c udata.h constfile.h
 constfile.o: constfile.c constfile.h
+mongoose.o: mongoose.c mongoose.h
 
 .PHONY: libdev
 
