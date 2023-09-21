@@ -614,10 +614,10 @@
   count: 27
 
 #
-# gv65, gv65+
+# gv65, gv65+, gv620mg
 #
-- subtypes: [ GTFRI]
-  versions: [ "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01" ]
+- subtypes: [ GTFRI ]
+  versions: [ "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "C2010B", "C2010D" ]
   imei: 2
   name: 3
   uext: 4
@@ -682,7 +682,7 @@
   count: 32
 
 - subtypes: [ GTERI ]
-  versions: [ "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01" ]
+  versions: [ "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01" , "C2010B", "C2010D"]
   imei: 2
   name: 3
   erim: 4
@@ -762,7 +762,7 @@
   sent: 19
   count: 20
 
-# added gl620mg
+# added gv620mg
 - subtypes: [ GTGSS ]
   versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "F1030B", "F10401", "F1040A", "8020030100", "8020030303", "C2010B", "C2010D" ]
   imei: 2
@@ -787,7 +787,7 @@
   count: 21
 
 
-# gl620mg
+# gv620mg
 - subtypes: [ GTINF ]
   versions: [ "C2010B", "C2010D" ]
   imei: 2
@@ -802,6 +802,134 @@
   dout: 21
   sent: 24
   count: 25
+
+# gv620mg
+- subtypes: [ GTIGN, GTVGN ]
+  versions: [ "C2010B", "C2010D" ]
+  imei: 2
+  name: 3
+  doff: 4
+  acc: 5
+  vel: 6
+  cog: 7
+  alt: 8
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  hmc: 18
+  odometer: 19
+  reserved: 20
+  reserved: 21
+  reserved: 22
+  reserved: 23
+  devs: 24
+  reserved: 25
+  reserved: 26
+  reserved: 27
+  sent: 28
+  count: 29
+
+
+# gv620mg
+- subtypes: [ GTSTC ]
+  versions: [ "C2010B", "C2010D" ]
+  imei: 2
+  name: 3
+  acc: 4
+  vel: 5
+  cog: 6
+  alt: 7
+  lon: 8
+  lat: 9
+  utc: 10
+  mcc: 11
+  mnc: 12
+  lac: 13
+  cid: 14
+  reserved: 15
+  sent: 16
+  count: 17
+
+# gv620mg
+- subtypes: [ GTPNL, GTTOW, GTDIS, GTIOB, GTSPD, GTSOS, GTRTL, GTDOG, GTIGL ]
+  versions: [ "C2010B", "C2010D" ]
+  imei: 2
+  name: 3
+  rit: 5
+  number: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  odometer: 19
+  devs: 24
+  sent: 28
+  count: 29
+
+# gv620mg
+- subtypes: [ GTIGF ]
+  versions: [ "C2010B", "C2010D" ]
+  imei: 2
+  vin: 3
+  name: 4
+  don: 5
+  acc: 6
+  vel: 7
+  cog: 8
+  alt: 9
+  lon: 10
+  lat: 11
+  utc: 12
+  mcc: 13
+  mnc: 14
+  lac: 15
+  cid: 16
+  reserved: 17
+  hmc: 18
+  odometer: 19
+  reserved: 20
+  reserved: 21
+  reserved: 22
+  reserved: 23
+  devs: 24
+  reserved: 25
+  reserved: 26
+  reserved: 27
+  sent: 28
+  count: 29
+
+- subtypes: [ GTFLA ]
+  versions: [ "C2010B", "C2010D" ]
+  imei: 2
+  name: 3
+  din: 4
+  flvl: 6
+  acc: 7
+  vel: 8
+  cog: 9
+  alt: 10
+  lon: 11
+  lat: 12
+  utc: 13
+  mcc: 14
+  mnc: 15
+  lac: 16
+  cid: 17
+  reserved: 18
+  sent: 19
+  count: 20
 
 - subtypes: [ GTFLA ]
   versions: [ "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01" ]
@@ -989,7 +1117,7 @@
   count: 21
 
 - subtypes: [ GTAIS, GTEPS ]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "300102", "420201", "420401", "F1030B", "F10401", "F1040A", "8020030100", "8020030303" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "300102", "420201", "420401", "F1030B", "F10401", "F1040A", "8020030100", "8020030303", "C2010B", "C2010D" ]
   imei: 2
   name: 3
   uext: 4
@@ -1119,7 +1247,7 @@
 
 
 - subtypes: [ GTBPL ]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "420201", "420401", "F1030B", "F10401", "F1040A", "8020030100", "8020030303" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "420201", "420401", "F1030B", "F10401", "F1040A", "8020030100", "8020030303", "C2010B", "C2010D" ]
   imei: 2
   name: 3
   ubatt: 4
@@ -1138,8 +1266,8 @@
   sent: 17
   count: 18
 
-- subtypes: [ GTIDN, GTSTP, GTSTR, GTLSP]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401", "F1030B", "F10401", "F1040A" ]
+- subtypes: [ GTIDN, GTSTP, GTSTR, GTLSP ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "420201", "420401", "F1030B", "F10401", "F1040A", "C2010B", "C2010D"  ]
   imei: 2
   name: 3
   reserved: 4
@@ -1161,7 +1289,7 @@
   count: 20
 
 - subtypes: [ GTIDF ]
-  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "420201", "420401", "F1030B", "F10401", "F1040A", "8020030100", "8020030303" ]
+  versions: [ "450202", "310603", "380603", "310701", "380701", "310905", "380905", "311004", "381004", "310C00", "380C00", "380D01", "420201", "420401", "F1030B", "F10401", "F1040A", "8020030100", "8020030303", "C2010B", "C2010D" ]
   imei: 2
   name: 3
   mst: 4
