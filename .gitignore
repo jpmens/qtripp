@@ -22,3 +22,6 @@ contrib/bean-get
 .make
 db/
 venv
+.idea/
+CMakeLists.txt
+cmake-build-debug/
