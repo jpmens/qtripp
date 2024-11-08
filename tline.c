@@ -692,7 +692,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 					char *adda = GET_S(((nreports - 1) * 12) + a * 3 + dp->adda);
 					//fprintf(stderr, "adid %s adty %s adda %s\n", adid ? adid : "NULL", adty ? adty : "NULL", adda ? adda : "NULL");
 					if (adid != NULL && adty != NULL && adda != NULL) {
-						static char identifier[16];
+						static char identifier[16+1];
 						/* "adid-xx" we append the item number to the name */
 						sprintf(identifier, "adid-%02d", a);
 						//fprintf(stderr, "identifier %s\n", identifier);
@@ -750,7 +750,7 @@ char *handle_report(struct udata *ud, char *line, char **response)
 				char *xyz = GET_S(((nreports - 1) * 12) + x * 2 + dp->xyz);
 				//fprintf(stderr, "da %g xyz %s\n", da, xyz ? xyz : "NULL");
 				if (xyz != NULL) {
-					static char identifier[18];
+					static char identifier[16+1];
 					/* "da-xx" we append the item number to the name */
 					sprintf(identifier, "da-%02d", x);
 					//fprintf(stderr, "identifier %s\n", identifier);
